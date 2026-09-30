@@ -3235,6 +3235,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final count = widget.media.length;
     final tripId = (widget.tripId ?? '').trim();
     final canReview = _isPending && tripId.isNotEmpty;
@@ -3274,7 +3275,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$count ${count == 1 ? 'file' : 'files'} posted by driver',
+                      l10n.trackingPodFilesPosted(count),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -4109,7 +4110,9 @@ class _PremiumCrewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  driverName.isEmpty ? 'Driver pending' : driverName,
+                  driverName.isEmpty
+                      ? AppLocalizations.of(context)!.trackingDriverPending
+                      : driverName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -4120,7 +4123,9 @@ class _PremiumCrewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  truckName.isEmpty ? 'Truck not assigned' : truckName,
+                  truckName.isEmpty
+                      ? AppLocalizations.of(context)!.trackingTruckNotAssigned
+                      : truckName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -4156,7 +4161,7 @@ class _ExpressBadge extends StatelessWidget {
           const Icon(AppIcons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
           const SizedBox(width: 3),
           Text(
-            'Express',
+            AppLocalizations.of(context)!.express,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: const Color(0xFFC2410C),
               fontWeight: FontWeight.w800,
@@ -4229,7 +4234,9 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
           size: 18,
         ),
         title: Text(
-          'Driver changed (${history.length})',
+          AppLocalizations.of(
+            context,
+          )!.trackingDriverChangedCount(history.length),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w800,
@@ -4251,7 +4258,14 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${entry.fromDriverName.isEmpty ? 'Unassigned' : entry.fromDriverName} -> ${entry.toDriverName.isEmpty ? 'Unknown' : entry.toDriverName}',
+                      AppLocalizations.of(context)!.trackingCrewHandoff(
+                        entry.fromDriverName.isEmpty
+                            ? AppLocalizations.of(context)!.unassigned
+                            : entry.fromDriverName,
+                        entry.toDriverName.isEmpty
+                            ? AppLocalizations.of(context)!.unknown
+                            : entry.toDriverName,
+                      ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                         fontWeight: FontWeight.w800,
@@ -4431,7 +4445,9 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cancel this booking?',
+                        AppLocalizations.of(
+                          context,
+                        )!.clientTrackingCancelTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: 19,
                           fontWeight: FontWeight.w800,
@@ -4441,7 +4457,9 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Tell us why — it helps us do better.',
+                        AppLocalizations.of(
+                          context,
+                        )!.trackingCancelWhyHint,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -4548,9 +4566,9 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    child: const Text(
-                      'Keep booking',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                    child: Text(
+                      AppLocalizations.of(context)!.trackingKeepBooking,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -4582,9 +4600,9 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'Yes, cancel',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                      child: Text(
+                        AppLocalizations.of(context)!.clientTrackingYesCancel,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -4725,7 +4743,7 @@ class _BookingActionsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Booking actions',
+                AppLocalizations.of(context)!.trackingBookingActions,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -4915,7 +4933,7 @@ class _ClientBookingChatSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Booking chat',
+                      AppLocalizations.of(context)!.trackingBookingChat,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -5197,6 +5215,7 @@ class _LegacyClientBookingChatSheetState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return FractionallySizedBox(
       heightFactor: 0.88,
@@ -5226,7 +5245,7 @@ class _LegacyClientBookingChatSheetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Booking chat',
+                          AppLocalizations.of(context)!.trackingBookingChat,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontSize: 18,
@@ -5236,7 +5255,9 @@ class _LegacyClientBookingChatSheetState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Thread updates over REST + Socket.IO',
+                          AppLocalizations.of(
+                            context,
+                          )!.trackingChatSocketHint,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -5256,7 +5277,9 @@ class _LegacyClientBookingChatSheetState
                     : _loadError
                     ? Center(
                         child: Text(
-                          'Could not load this chat.',
+                          AppLocalizations.of(
+                            context,
+                          )!.clientTrackingChatLoadFailed,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -5264,7 +5287,9 @@ class _LegacyClientBookingChatSheetState
                     : _messages.isEmpty
                     ? Center(
                         child: Text(
-                          'No messages yet.',
+                          AppLocalizations.of(
+                            context,
+                          )!.trackingChatNoMessages,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -5357,7 +5382,7 @@ class _LegacyClientBookingChatSheetState
                                         const SizedBox(height: 4),
                                       Text(
                                         messageText.isEmpty
-                                            ? 'Message'
+                                            ? l10n.trackingChatEmptyMessage
                                             : messageText,
                                         style: Theme.of(context)
                                             .textTheme
@@ -5389,7 +5414,7 @@ class _LegacyClientBookingChatSheetState
                                       ),
                                       if (isMine && isRead)
                                         Text(
-                                          'Read',
+                                          l10n.trackingChatRead,
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelSmall
@@ -5411,7 +5436,7 @@ class _LegacyClientBookingChatSheetState
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Typing...',
+                    l10n.trackingChatTyping,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                       fontStyle: FontStyle.italic,
@@ -5751,7 +5776,9 @@ class _BookingNegotiationSheetState
                       children: [
                         Expanded(
                           child: Text(
-                            'Change driver fare',
+                            AppLocalizations.of(
+                              context,
+                            )!.trackingChangeDriverFare,
                             style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
@@ -5774,7 +5801,12 @@ class _BookingNegotiationSheetState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Current offer: ${request.amountText.isNotEmpty ? request.amountText : rupees(base)}',
+                            AppLocalizations.of(context)!
+                                .trackingCurrentOffer(
+                                  request.amountText.isNotEmpty
+                                      ? request.amountText
+                                      : rupees(base),
+                                ),
                             style: Theme.of(dialogContext).textTheme.bodySmall,
                           ),
                           Slider(
@@ -5803,7 +5835,9 @@ class _BookingNegotiationSheetState
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Your fare change: ${rupees(value)}',
+                            AppLocalizations.of(
+                              context,
+                            )!.trackingYourFareChange(rupees(value)),
                             style: Theme.of(dialogContext).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
@@ -6122,7 +6156,7 @@ class _BookingNegotiationSheetState
               ),
               const SizedBox(height: 16),
               Text(
-                'Negotiation & offers',
+                AppLocalizations.of(context)!.trackingNegotiationOffers,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -6131,7 +6165,9 @@ class _BookingNegotiationSheetState
               ),
               const SizedBox(height: 6),
               Text(
-                'Driver requests and broker offers from the client flow.',
+                AppLocalizations.of(
+                  context,
+                )!.trackingNegotiationOffersSubtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -6143,7 +6179,10 @@ class _BookingNegotiationSheetState
                     : _loadError
                     ? Center(
                         child: Text(
-                          _errorMessage ?? 'Could not load negotiation data.',
+                          _errorMessage ??
+                              AppLocalizations.of(
+                                context,
+                              )!.trackingNegotiationLoadFailed,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textSecondary),
@@ -6195,7 +6234,9 @@ class _BookingNegotiationSheetState
                                   children: [
                                     _NegotiationSectionTitle(
                                       title: acceptedRequest != null
-                                          ? 'Confirmed driver'
+                                          ? AppLocalizations.of(
+                                              context,
+                                            )!.clientTrackingConfirmedDriver
                                           : AppLocalizations.of(
                                               context,
                                             )!.nearbyDriverOffers(
@@ -6279,10 +6320,14 @@ class _BookingNegotiationSheetState
                                   child: _NegotiationCard(
                                     title: offer.brokerName.isNotEmpty
                                         ? offer.brokerName
-                                        : 'Broker offer',
+                                        : AppLocalizations.of(
+                                            context,
+                                          )!.trackingBrokerOffer,
                                     subtitle: offer.note.isNotEmpty
                                         ? offer.note
-                                        : 'Broker offer received',
+                                        : AppLocalizations.of(
+                                            context,
+                                          )!.trackingBrokerOfferReceived,
                                     amountText: offer.amountText,
                                     statusText: _offerStatusText(offer),
                                     note: offer.note,
@@ -6315,41 +6360,43 @@ extension on _BookingNegotiationSheetState {
   }
 
   String _offerStatusText(ClientBookingOffer offer) {
+    final l10n = AppLocalizations.of(context)!;
     if (offer.isClientTurnToConfirm) {
-      return 'Your turn';
+      return l10n.trackingYourTurn;
     }
     if (offer.isWaitingForCounterpartyConfirmation) {
-      return 'Waiting for broker confirmation';
+      return l10n.trackingWaitingBrokerConfirmation;
     }
     if (offer.isCountered) {
-      return 'Your turn';
+      return l10n.trackingYourTurn;
     }
     if (offer.normalizedStatus == 'accepted') {
-      return 'Confirmed';
+      return l10n.trackingConfirmed;
     }
     if (offer.normalizedStatus == 'declined') {
-      return 'No longer available';
+      return l10n.clientTrackingNoLongerAvailable;
     }
-    return 'Waiting for broker response';
+    return l10n.trackingWaitingBrokerResponse;
   }
 
   String _driverRequestStatusText(ClientBookingOffer request) {
+    final l10n = AppLocalizations.of(context)!;
     if (request.isClientTurnToConfirm) {
-      return 'Your turn';
+      return l10n.trackingYourTurn;
     }
     if (request.isWaitingForCounterpartyConfirmation) {
-      return 'Waiting for driver confirmation';
+      return l10n.trackingWaitingDriverConfirmation;
     }
     if (request.isCountered) {
-      return 'Your turn';
+      return l10n.trackingYourTurn;
     }
     if (request.normalizedStatus == 'accepted') {
-      return 'Confirmed';
+      return l10n.trackingConfirmed;
     }
     if (request.normalizedStatus == 'declined') {
-      return 'No longer available';
+      return l10n.clientTrackingNoLongerAvailable;
     }
-    return 'Waiting for driver response';
+    return l10n.trackingWaitingDriverResponse;
   }
 
   String _driverOfferSubtitle(ClientBookingOffer request) {
@@ -6361,7 +6408,7 @@ extension on _BookingNegotiationSheetState {
       return meta.isNotEmpty ? '${request.note} · $meta' : request.note;
     }
     if (meta.isNotEmpty) return meta;
-    return 'Direct truck request';
+    return AppLocalizations.of(context)!.trackingDirectTruckRequest;
   }
 
   List<Widget> _clientActionButtonsForDriverRequests(
@@ -6658,7 +6705,11 @@ class _NegotiationCardState extends State<_NegotiationCard> {
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            'Negotiation history (${widget.offer.offerHistory.length})',
+                            AppLocalizations.of(
+                              context,
+                            )!.trackingNegotiationHistoryCount(
+                              widget.offer.offerHistory.length,
+                            ),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: context.colors.textSecondary),
                           ),

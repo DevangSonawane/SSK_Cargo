@@ -311,7 +311,7 @@ class _BrokerNotificationsScreenState
           notification: notification,
           effectiveRead: _isEffectivelyRead(notification),
           onTap: () => _openNotification(notification),
-          onAction: _actionLabel(notification) == null
+          onAction: _actionLabel(notification, AppLocalizations.of(context)!) == null
               ? null
               : () => _openNotification(notification),
         ));
@@ -379,7 +379,12 @@ class _NotificationsHeader extends StatelessWidget {
               foregroundColor: AppColors.brandDark,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
-            child: Text(markingAllRead ? 'Saving...' : 'Mark all read'),
+            child: Text(
+              markingAllRead
+                  ? AppLocalizations.of(context)!.saving
+                  : AppLocalizations.of(context)!
+                        .brokerNotificationsMarkAllRead,
+            ),
           ),
       ],
     );
@@ -409,11 +414,11 @@ class _NotificationTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    const tabs = [
-      (_NotificationTab.all, 'All'),
-      (_NotificationTab.operations, 'Ops'),
-      (_NotificationTab.system, 'System'),
-      (_NotificationTab.financial, 'Money'),
+    final tabs = [
+      (_NotificationTab.all, l10n.clientNotificationsFilterAll),
+      (_NotificationTab.operations, l10n.brokerNotificationsTabOps),
+      (_NotificationTab.system, l10n.brokerNotificationsTabSystem),
+      (_NotificationTab.financial, l10n.brokerNotificationsTabMoney),
     ];
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
@@ -599,7 +604,7 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final meta = _metaFor(notification);
-    final actionLabel = _actionLabel(notification);
+    final actionLabel = _actionLabel(notification, l10n);
     final isRead = effectiveRead ?? notification.isRead;
     final title = notification.title.isEmpty
         ? 'Notification'
@@ -1154,14 +1159,17 @@ _NotificationMeta _metaFor(ClientNotification notification) {
   }
 }
 
-String? _actionLabel(ClientNotification notification) {
+String? _actionLabel(
+  ClientNotification notification, [
+  AppLocalizations? l10n,
+]) {
   switch (_notificationType(notification)) {
     case 'booking':
-      return 'View Details';
+      return l10n?.brokerNotificationsViewDetails ?? 'View Details';
     case 'incident':
-      return 'View Trip';
+      return l10n?.brokerNotificationsViewTrip ?? 'View Trip';
     case 'chat':
-      return 'Open Chat';
+      return l10n?.brokerNotificationsOpenChat ?? 'Open Chat';
     default:
       return null;
   }

@@ -621,7 +621,7 @@ class _HistoryBookingCard extends StatelessWidget {
             _HistoryRouteLine(
               label: l10n.brokerHistoryPickup,
               value: booking.pickupLocation.isEmpty
-                  ? 'Pickup location not available'
+                  ? l10n.brokerPickupLocationNotAvailable
                   : booking.pickupLocation,
               color: AppColors.brandBright,
             ),
@@ -629,7 +629,7 @@ class _HistoryBookingCard extends StatelessWidget {
             _HistoryRouteLine(
               label: l10n.brokerHistoryDrop,
               value: booking.dropoffLocation.isEmpty
-                  ? 'Drop location not available'
+                  ? l10n.brokerDropLocationNotAvailable
                   : booking.dropoffLocation,
               color: AppColors.dangerIcon,
             ),

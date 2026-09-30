@@ -67,6 +67,7 @@ class _BrokerTrackLiveScreenState
     _tripStatusSubscription = socket.tripStatusStream.listen((payload) {
       if (!mounted) return;
       if (!_matchesShipment(payload)) return;
+      final l10n = AppLocalizations.of(context)!;
       final status = _readString(payload, const [
         'status',
         'trip_status',
@@ -75,7 +76,9 @@ class _BrokerTrackLiveScreenState
       ]);
       setState(() {
         _shipment = _shipment.copyWith(
-          status: status.isEmpty ? _shipment.status : _statusLabel(status),
+          status: status.isEmpty
+              ? _shipment.status
+              : _statusLabel(l10n, status),
           bookingStatus: status.isEmpty
               ? _shipment.bookingStatus
               : status.toLowerCase(),
@@ -193,7 +196,10 @@ class _BrokerTrackLiveScreenState
         .toLowerCase()
         .replaceAll('-', '_')
         .replaceAll(' ', '_');
-    final statusLabel = _statusLabel(_shipment.bookingStatus ?? _shipment.status);
+    final statusLabel = _statusLabel(
+      l10n,
+      _shipment.bookingStatus ?? _shipment.status,
+    );
     final statusColor = _trackStatusColor(statusKey);
     final driverName = _shipment.assignedDriverName?.trim() ?? '';
     final driverPhone = _shipment.assignedDriverPhone?.trim() ?? '';
@@ -536,7 +542,7 @@ class _TrackRouteCard extends StatelessWidget {
                   ),
                   label: l10n.brokerTrackLivePickup,
                   value: shipment.fromLocation.trim().isEmpty
-                      ? 'Pickup pending'
+                      ? l10n.pickupPending
                       : shipment.fromLocation.trim(),
                 ),
                 Padding(
@@ -559,7 +565,7 @@ class _TrackRouteCard extends StatelessWidget {
                   ),
                   label: l10n.brokerTrackLiveDropOff,
                   value: shipment.toLocation.trim().isEmpty
-                      ? 'Drop pending'
+                      ? l10n.dropPending
                       : shipment.toLocation.trim(),
                 ),
               ],
@@ -732,12 +738,12 @@ class _TrackProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    const steps = [
-      ('assigned', 'Assigned'),
-      ('en_route_pickup', 'En Route'),
-      ('picked_up', 'Picked Up'),
-      ('in_transit', 'In Transit'),
-      ('delivered', 'Delivered'),
+    final steps = [
+      ('assigned', l10n.assigned),
+      ('en_route_pickup', l10n.brokerTrackLiveStepEnRoute),
+      ('picked_up', l10n.brokerTrackLiveStepPickedUp),
+      ('in_transit', l10n.brokerTrackLiveStepInTransit),
+      ('delivered', l10n.delivered),
     ];
     final rawIndex = steps.indexWhere((step) => step.$1 == statusKey);
     final activeIndex = rawIndex < 0 ? 0 : rawIndex;
@@ -1016,9 +1022,9 @@ Color _trackStatusColor(String status) {
   };
 }
 
-String _statusLabel(String status) {
+String _statusLabel(AppLocalizations l10n, String status) {
   final cleaned = status.trim().replaceAll(RegExp(r'[_-]+'), ' ');
-  if (cleaned.isEmpty) return 'In transit';
+  if (cleaned.isEmpty) return l10n.inTransit;
   return cleaned
       .split(RegExp(r'\s+'))
       .where((word) => word.isNotEmpty)

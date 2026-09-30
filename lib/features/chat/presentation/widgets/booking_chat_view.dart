@@ -318,7 +318,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
           'id': localMessageId,
           'threadId': threadId,
           'senderId': widget.currentUserId,
-          'senderName': 'You',
+          'senderName': AppLocalizations.of(context)!.chatCurrentUserSenderName,
           'senderRole': 'client',
           'message': message,
           'createdAt': DateTime.now().toIso8601String(),

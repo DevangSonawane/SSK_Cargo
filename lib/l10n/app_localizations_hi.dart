@@ -6176,4 +6176,1221 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get driverKycSubmittedDescription =>
       'आपका KYC सफलतापूर्वक जमा कर दिया गया है। हमारी सत्यापन टीम आपके दस्तावेजों की समीक्षा करेगी। इसमें आमतौर पर 24-48 घंटे लगते हैं।';
+
+  @override
+  String get vehicleOption3Wheeler => '3 व्हीलर';
+
+  @override
+  String get vehicleOptionTataAce => 'टाटा एस';
+
+  @override
+  String get vehicleOptionPickup8ft => 'पिकअप 8 फुट';
+
+  @override
+  String get vehicleOptionPickup10ft => 'पिकअप 10 फुट';
+
+  @override
+  String get vehicleOption14ftTruck => '14 फुट ट्रक';
+
+  @override
+  String get vehicleOption17ftTruck => '17 फुट ट्रक';
+
+  @override
+  String get vehicleOption19ftTruck => '19 फुट ट्रक';
+
+  @override
+  String get vehicleOption22ftTruck => '22 फुट ट्रक';
+
+  @override
+  String get vehiclePriceShared => 'साझा';
+
+  @override
+  String get vehiclePriceOnRequest => 'अनुरोध पर';
+
+  @override
+  String vehiclePriceWithToll(Object baseFare, Object toll) {
+    return '$baseFare + टोल $toll';
+  }
+
+  @override
+  String get pickupOtpVerifiedTitle => 'पिकअप सत्यापित';
+
+  @override
+  String get pickupOtpCodeTitle => 'पिकअप कोड';
+
+  @override
+  String get pickupOtpVerifiedMessage => 'आपके कोड से पिकअप सत्यापित हो गया';
+
+  @override
+  String get pickupOtpShareMessage =>
+      'पिकअप की पुष्टि के लिए ड्राइवर के पहुँचने पर यह कोड उसे दें';
+
+  @override
+  String get trackingTimelineBookingCreated => 'बुकिंग बनाई गई';
+
+  @override
+  String get trackingTimelineVehicleAssigned => 'वाहन आवंटित';
+
+  @override
+  String get trackingTimelineDriverAssigned => 'ड्राइवर आवंटित';
+
+  @override
+  String get trackingTimelineCompletedSuccessfully => 'सफलतापूर्वक पूरा हुआ';
+
+  @override
+  String get trackingTimelineWaitingForAssignment => 'आवंटन की प्रतीक्षा में';
+
+  @override
+  String get trackingTimelineBookingCancelled => 'बुकिंग रद्द की गई';
+
+  @override
+  String get locationArcPickUpFrom => 'यहाँ से पिकअप करें';
+
+  @override
+  String packageCardTrackingId(Object trackingId) {
+    return '#ट्रैकिंग आईडी: $trackingId';
+  }
+
+  @override
+  String get tripTypeChooseTitle => 'यात्रा का प्रकार चुनें';
+
+  @override
+  String get tripTypeFullTruck => 'फुल ट्रक';
+
+  @override
+  String get tripTypePartTruck => 'पार्ट ट्रक';
+
+  @override
+  String get tripTypeFullTruckHelper => 'एक शिपमेंट के लिए समर्पित ट्रक';
+
+  @override
+  String get tripTypePartTruckHelper => 'क्षमता साझा करें और लागत घटाएँ';
+
+  @override
+  String get locationFlowSavedAddress => 'सहेजा गया पता';
+
+  @override
+  String get locationFlowSetPickupLocation => 'पिकअप स्थान चुनें';
+
+  @override
+  String get locationFlowSetDropLocation => 'ड्रॉप-ऑफ़ स्थान चुनें';
+
+  @override
+  String get locationFlowFindingAddress => 'पता खोजा जा रहा है...';
+
+  @override
+  String get locationFlowUseThisPickup => 'यह पिकअप स्थान चुनें';
+
+  @override
+  String get locationFlowUseThisDrop => 'यह ड्रॉप-ऑफ़ स्थान चुनें';
+
+  @override
+  String get clientBookingAvailableTruck => 'उपलब्ध ट्रक';
+
+  @override
+  String get clientBookingLocationValidationFailed =>
+      'ये पिकअप/ड्रॉप स्थान इस ट्रिप के लिए मान्य नहीं हैं';
+
+  @override
+  String get clientBookingStepLocation => 'स्थान';
+
+  @override
+  String get clientBookingStepWeight => 'वजन';
+
+  @override
+  String get clientBookingStepPayment => 'भुगतान';
+
+  @override
+  String get clientBookingStepWaiting => 'इंतज़ार';
+
+  @override
+  String get clientBookingFindingBrokers => 'ब्रोकर खोजे जा रहे हैं';
+
+  @override
+  String get clientBookingScanningBrokerOffers =>
+      'इस रूट पर ब्रोकर के ऑफर खोजे जा रहे हैं।';
+
+  @override
+  String clientBookingNegotiateWith(Object broker) {
+    return '$broker से बातचीत करें';
+  }
+
+  @override
+  String get clientBookingChooseTrucksTitle => 'ट्रक चुनें';
+
+  @override
+  String get clientBookingPickBrokerForRoute => 'इस रूट के लिए ब्रोकर चुनें';
+
+  @override
+  String get clientBookingLocating => 'लोकेशन खोजी जा रही है...';
+
+  @override
+  String get clientBookingMaterialWeight => 'सामग्री का वजन';
+
+  @override
+  String clientBookingBookLaterAt(Object time) {
+    return 'बाद में बुक करें: $time';
+  }
+
+  @override
+  String clientBookingFreeHaltingNote(Object hours, Object rate) {
+    return '$hours घंटे तक रुकना मुफ़्त, फिर $rate/घंटा।';
+  }
+
+  @override
+  String get clientBookingFetchingAdvance => 'एडवांस राशि ली जा रही है';
+
+  @override
+  String get clientBookingAdvanceUnavailable => 'एडवांस उपलब्ध नहीं है';
+
+  @override
+  String clientBookingAdvanceAmountNow(Object amount) {
+    return 'अभी $amount';
+  }
+
+  @override
+  String get clientBookingPayAdvance => 'एडवांस भुगतान करें';
+
+  @override
+  String get clientBookingPaySecurely => 'सुरक्षित भुगतान करें';
+
+  @override
+  String get clientBookingCheckoutMapNote =>
+      'चेकआउट पूरा करने तक मैप लाइव रहेगा।';
+
+  @override
+  String get clientDeliveryBookingFallback => 'बुकिंग';
+
+  @override
+  String get clientDeliveryTruckFallback => 'ट्रक';
+
+  @override
+  String get clientPublicTimelineBookingCreated => 'बुकिंग बन गई';
+
+  @override
+  String get clientPublicTimelineVehicleAssigned => 'वाहन असाइन किया गया';
+
+  @override
+  String get clientPublicTimelineDropLocation => 'ड्रॉप-ऑफ स्थान';
+
+  @override
+  String get clientPublicTimelineCompletedSuccessfully =>
+      'सफलतापूर्वक पूरा हुआ';
+
+  @override
+  String get clientSavedAddressUpdated => 'पता अपडेट हो गया।';
+
+  @override
+  String get clientSavedAddressSaved => 'पता सेव हो गया।';
+
+  @override
+  String get clientSavedLocationServicesOff => 'लोकेशन सेवाइज़ बंद हैं।';
+
+  @override
+  String get clientSavedLocationPermissionRequired =>
+      'लोकेशन की अनुमति ज़रूरी है।';
+
+  @override
+  String get clientSavedLoadErrorSubtitle =>
+      'सेव किए गए पतों पर वापस जाएं और इसे फिर से एडिट करने की कोशिश करें।';
+
+  @override
+  String get clientSavedTypeLabel => 'प्रकार';
+
+  @override
+  String get clientSavedNameLabel => 'नाम';
+
+  @override
+  String get clientSavedAddressLabel => 'पता';
+
+  @override
+  String clientSavedCityValue(Object city) {
+    return 'शहर: $city';
+  }
+
+  @override
+  String get clientSavedFloorUnitLabel => 'मंज़िल / यूनिट';
+
+  @override
+  String get clientSavedTapMapForExactSpot =>
+      'सही जगह चुनने के लिए मैप पर टैप करें';
+
+  @override
+  String get clientSavedDefaultBadge => 'डिफॉल्ट';
+
+  @override
+  String trackingPodFilesPosted(Object count) {
+    return 'ड्राइवर द्वारा पोस्ट की गई $count फ़ाइलें';
+  }
+
+  @override
+  String get trackingDriverPending => 'ड्राइवर बाकी है';
+
+  @override
+  String get trackingTruckNotAssigned => 'ट्रक असाइन नहीं हुई';
+
+  @override
+  String trackingCrewHandoff(Object from, Object to) {
+    return '$from -> $to';
+  }
+
+  @override
+  String trackingDriverChangedCount(Object count) {
+    return 'ड्राइवर बदला ($count)';
+  }
+
+  @override
+  String get trackingCancelWhyHint =>
+      'हमें बताएं क्यों — इससे हम बेहतर हो सकते हैं।';
+
+  @override
+  String get trackingKeepBooking => 'बुकिंग बनाए रखें';
+
+  @override
+  String get trackingBookingActions => 'बुकिंग एक्शन';
+
+  @override
+  String get trackingBookingChat => 'बुकिंग चैट';
+
+  @override
+  String get trackingChatSocketHint =>
+      'थ्रेड अपडेट REST + Socket.IO से आते हैं';
+
+  @override
+  String get trackingChatNoMessages => 'अभी कोई संदेश नहीं।';
+
+  @override
+  String get trackingChatEmptyMessage => 'संदेश';
+
+  @override
+  String get trackingChatRead => 'पढ़ा गया';
+
+  @override
+  String get trackingChatTyping => 'टाइप कर रहे हैं...';
+
+  @override
+  String get trackingChangeDriverFare => 'ड्राइवर का किराया बदलें';
+
+  @override
+  String trackingCurrentOffer(Object amount) {
+    return 'मौजूदा ऑफर: $amount';
+  }
+
+  @override
+  String trackingYourFareChange(Object amount) {
+    return 'आपका बदला किराया: $amount';
+  }
+
+  @override
+  String get trackingNegotiationOffers => 'बातचीत और ऑफर';
+
+  @override
+  String get trackingNegotiationOffersSubtitle =>
+      'क्लाइंट फ्लो से ड्राइवर अनुरोध और ब्रोकर ऑफर।';
+
+  @override
+  String get trackingNegotiationLoadFailed => 'बातचीत का डेटा लोड नहीं हो सका।';
+
+  @override
+  String get trackingBrokerOffer => 'ब्रोकर ऑफर';
+
+  @override
+  String get trackingBrokerOfferReceived => 'ब्रोकर ऑफर मिला';
+
+  @override
+  String get trackingYourTurn => 'आपकी बारी';
+
+  @override
+  String get trackingWaitingBrokerConfirmation =>
+      'ब्रोकर की पुष्टि की प्रतीक्षा';
+
+  @override
+  String get trackingWaitingBrokerResponse => 'ब्रोकर के जवाब की प्रतीक्षा';
+
+  @override
+  String get trackingWaitingDriverConfirmation =>
+      'ड्राइवर की पुष्टि की प्रतीक्षा';
+
+  @override
+  String get trackingWaitingDriverResponse => 'ड्राइवर के जवाब की प्रतीक्षा';
+
+  @override
+  String get trackingConfirmed => 'पुष्ट';
+
+  @override
+  String get trackingDirectTruckRequest => 'सीधी ट्रक रिक्वेस्ट';
+
+  @override
+  String trackingNegotiationHistoryCount(Object count) {
+    return 'बातचीत का इतिहास ($count)';
+  }
+
+  @override
+  String get brokerFlowDropOffUnavailable => 'ड्रॉप-ऑफ़ स्थान उपलब्ध नहीं';
+
+  @override
+  String brokerFlowTripWithStatus(Object status) {
+    return 'यात्रा $status';
+  }
+
+  @override
+  String get brokerFlowActiveOnTrip => 'यात्रा सक्रिय है';
+
+  @override
+  String brokerFlowActiveOnBooking(Object bookingRef) {
+    return 'बुकिंग $bookingRef सक्रिय है';
+  }
+
+  @override
+  String get brokerFlowIdleAwaitingAssignment =>
+      'निष्क्रिय - असाइनमेंट की प्रतीक्षा';
+
+  @override
+  String get brokerFlowVehicleIdle => 'निष्क्रिय';
+
+  @override
+  String get brokerFlowOnTrip => 'यात्रा में';
+
+  @override
+  String get brokerFlowMaintenance => 'रखरखाव';
+
+  @override
+  String get brokerFlowRecentlyCompleted => 'हाल ही में पूरा हुआ';
+
+  @override
+  String brokerFlowSinceAgo(Object value) {
+    return '$value पहले';
+  }
+
+  @override
+  String get brokerFlowReassigning => 'पुनर्नियुक्ति हो रही है...';
+
+  @override
+  String get brokerActiveJobsNotAssigned => 'असाइन नहीं किया गया';
+
+  @override
+  String get brokerActiveJobsBreakdownReported => 'ब्रेकडाउन की सूचना दी गई';
+
+  @override
+  String get brokerActiveJobsIssueReported => 'समस्या की सूचना दी गई';
+
+  @override
+  String get brokerActiveJobsRouteDistancePending => 'रूट की दूरी लंबित';
+
+  @override
+  String brokerActiveJobsRouteKm(Object distance) {
+    return '$distance किमी मार्ग';
+  }
+
+  @override
+  String get brokerActiveJobsStepEnRoute => 'मार्ग पर';
+
+  @override
+  String get brokerActiveJobsStepPickedUp => 'उठाया गया';
+
+  @override
+  String get brokerActiveJobsStepInTransit => 'परिवहन में';
+
+  @override
+  String get brokerActiveJobsIssueDamagedGoods => 'क्षतिग्रस्त माल';
+
+  @override
+  String get brokerActiveJobsIssuePaymentDelay => 'भुगतान में देरी';
+
+  @override
+  String get brokerActiveJobsIssueCancellationFee => 'रद्दीकरण शुल्क';
+
+  @override
+  String get brokerActiveJobsIssueRouteDispute => 'मार्ग विवाद';
+
+  @override
+  String get brokerActiveJobsIssueLateDelivery => 'विलंबित डिलीवरी';
+
+  @override
+  String get brokerActiveJobsIssueFuelSurcharge => 'ईंधन अधिभार';
+
+  @override
+  String get brokerActiveJobsIssueWrongItems => 'गलत सामान';
+
+  @override
+  String get brokerActiveJobsIssueWeightDiscrepancy => 'वजन में असमानता';
+
+  @override
+  String get brokerPickupLocationNotAvailable => 'पिकअप स्थान उपलब्ध नहीं';
+
+  @override
+  String get brokerDropLocationNotAvailable => 'ड्रॉप स्थान उपलब्ध नहीं';
+
+  @override
+  String get brokerTruckHistoryNoTripsMatchSearch =>
+      'आपकी खोज से कोई यात्रा मेल नहीं खाती';
+
+  @override
+  String get brokerTruckHistoryDriverPending => 'ड्राइवर लंबित';
+
+  @override
+  String get brokerTruckHistoryDistancePending => 'दूरी लंबित';
+
+  @override
+  String get brokerTruckHistoryEarningsPending => 'कमाई लंबित';
+
+  @override
+  String brokerTrackingAssignedTo(Object plate) {
+    return '$plate को सौंपा गया';
+  }
+
+  @override
+  String get brokerTrackingTimedOutNegotiation => 'समय-सीमा समाप्त वार्ता';
+
+  @override
+  String get brokerTrackingOpenToContinueNegotiation =>
+      'वार्ता जारी रखने के लिए खोलें।';
+
+  @override
+  String get brokerTrackingNoDriversYet => 'अभी तक कोई ड्राइवर नहीं';
+
+  @override
+  String brokerTrackingNoDriversMatch(Object query) {
+    return '\"$query\" से मेल खाने वाला कोई ड्राइवर नहीं';
+  }
+
+  @override
+  String get brokerTrackingCreateDriverFromPlus =>
+      'ट्रैकिंग शुरू करने के लिए + बटन से ड्राइवर बनाएं।';
+
+  @override
+  String get brokerTrackingTryDifferentQuery =>
+      'कोई दूसरा नाम, फोन या वाहन नंबर आज़माएं।';
+
+  @override
+  String get brokerTrackingNoActiveTripIncidentData =>
+      'इस ड्राइवर का कोई सक्रिय यात्रा घटना डेटा नहीं है।';
+
+  @override
+  String get brokerTrackingNoIncidentsYet => 'अभी तक कोई घटना दर्ज नहीं है।';
+
+  @override
+  String get brokerTrackingIncident => 'घटना';
+
+  @override
+  String get brokerTrackingDestinationNotAvailable => 'गंतव्य उपलब्ध नहीं';
+
+  @override
+  String get addTruckAddedSuccessfully => 'ट्रक सफलतापूर्वक जोड़ा गया।';
+
+  @override
+  String get addTruckUpdatedSuccessfully => 'ट्रक सफलतापूर्वक अपडेट किया गया।';
+
+  @override
+  String get addTruckEditTruck => 'ट्रक संपादित करें';
+
+  @override
+  String get addTruckAddTruck => 'ट्रक जोड़ें';
+
+  @override
+  String get addTruckErrRegistrationLooksInvalid =>
+      'पंजीकरण अमान्य लगता है, जैसे MH-12-AB-1234।';
+
+  @override
+  String get brokerHomeTheDriver => 'ड्राइवर';
+
+  @override
+  String get brokerNotificationsMarkAllRead => 'सभी को पढ़ा हुआ चिह्नित करें';
+
+  @override
+  String get brokerNotificationsTabOps => 'ऑप्स';
+
+  @override
+  String get brokerNotificationsTabSystem => 'सिस्टम';
+
+  @override
+  String get brokerNotificationsTabMoney => 'वित्त';
+
+  @override
+  String get brokerVehiclesRowType => 'प्रकार';
+
+  @override
+  String get brokerVehiclesRowInsurance => 'बीमा';
+
+  @override
+  String get brokerEarningsAcrossAllSettledTrips => 'सभी निपटान यात्राओं में';
+
+  @override
+  String get brokerEarningsAcrossAllSettledTripsVsLastMonth =>
+      'सभी निपटान यात्राओं में • पिछले महीने की तुलना में';
+
+  @override
+  String get brokerEarningsFlatVsLastMonth =>
+      'पिछले महीने के मुकाबले स्थिर — निरंतर प्रदर्शन।';
+
+  @override
+  String brokerEarningsUpVsLastMonth(Object change) {
+    return 'पिछले महीने की तुलना में $change% ऊपर — गति बनाए रखें।';
+  }
+
+  @override
+  String brokerEarningsDownVsLastMonth(Object change) {
+    return 'पिछले महीने की तुलना में $change% नीचे।';
+  }
+
+  @override
+  String get brokerEarningsSettlementPending => 'निपटान लंबित';
+
+  @override
+  String get brokerReqDetailAutoSelectedDriver => 'स्वतः चयनित ड्राइवर';
+
+  @override
+  String get brokerReqDetailAutoSelectedTruck => 'स्वतः चयनित ट्रक';
+
+  @override
+  String brokerTruckLocationDriverLabel(Object name) {
+    return 'ड्राइवर: $name';
+  }
+
+  @override
+  String get brokerDriverRequestsAccepted => 'अनुरोध स्वीकार कर लिया गया।';
+
+  @override
+  String get brokerDriverRequestsDeclined => 'अनुरोध अस्वीकार कर दिया गया।';
+
+  @override
+  String get brokerDriverRequestsTimedOut => 'समय-सीमा समाप्त';
+
+  @override
+  String get driverDetailNotOnTrip => 'यात्रा पर नहीं';
+
+  @override
+  String get driverDetailAwaitingLiveLocation => 'लाइव स्थान की प्रतीक्षा';
+
+  @override
+  String get brokerTruckAssignAssigning => 'सौंपा जा रहा है...';
+
+  @override
+  String get driverTripToday => 'आज';
+
+  @override
+  String get driverEarningsRecent => 'हाल का';
+
+  @override
+  String get driverRiderAllTripsTitle => 'सभी ट्रिप';
+
+  @override
+  String get driverRiderAllTripsSubtitle => 'नईतम गतिविधि और पूर्ण डिलीवरी';
+
+  @override
+  String get driverRiderRecentlyCompleted => 'हाल में पूरी हुई डिलीवरी';
+
+  @override
+  String get driverRiderPendingDeliveries => 'बाकी डिलीवरी और निपटान';
+
+  @override
+  String get driverRiderViewAll => 'सभी देखें';
+
+  @override
+  String get driverRiderNoDeliveriesDoneYet =>
+      'अभी तक कोई डिलीवरी पूरी नहीं हुई, काम शुरू करें';
+
+  @override
+  String get driverRiderNoLatestTripYet => 'अभी कोई नई ट्रिप नहीं';
+
+  @override
+  String get driverRiderToday => 'आज';
+
+  @override
+  String get driverRiderYesterday => 'कल';
+
+  @override
+  String driverRiderTripCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ट्रिप',
+      one: '1 ट्रिप',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get driverRiderToLabel => 'किसे:';
+
+  @override
+  String get driverRiderStatusLabel => 'स्थिति:';
+
+  @override
+  String get driverRiderFromLocationUnavailable => 'शुरुआती स्थान उपलब्ध नहीं';
+
+  @override
+  String get driverRiderToLocationUnavailable => 'गंतव्य स्थान उपलब्ध नहीं';
+
+  @override
+  String get driverRiderLocatingPickup => 'पिकअप लोकेशन खोजा जा रहा है…';
+
+  @override
+  String get driverRiderLocatingDropoff => 'ड्रॉप-ऑफ लोकेशन खोजा जा रहा है…';
+
+  @override
+  String get driverRiderViewDetails => 'विवरण देखें';
+
+  @override
+  String get driverHomeOffline => 'ऑफलाइन';
+
+  @override
+  String get driverHomeOnline => 'ऑनलाइन';
+
+  @override
+  String get driverHomeToggleOffline => 'ऑफलाइन करें';
+
+  @override
+  String get driverHomeToggleOnline => 'ऑनलाइन करें';
+
+  @override
+  String get driverHomeCantGoOffline =>
+      'चल रही ट्रिप के दौरान आप ऑफलाइन नहीं जा सकते';
+
+  @override
+  String get driverHomeCannotGoOfflineSnack =>
+      'ट्रिप चल रही है तब आप ऑफलाइन नहीं जा सकते।';
+
+  @override
+  String get driverHomeActiveTripLocksOnline =>
+      'ट्रिप चल रही है। ट्रिप पूरी होने तक ऑनलाइन मोड्य लॉक रहेगा।';
+
+  @override
+  String get driverHomeMoreRequests => 'और अनुरोध';
+
+  @override
+  String get driverHomeDeliveryId => 'डिलीवरी आईडी';
+
+  @override
+  String get driverHomeBrokerHandoffActive => 'ब्रोकर हैंडओव सक्रिय';
+
+  @override
+  String get driverHomeClientCountered =>
+      'ग्राहक ने काउंटर ऑफर दिया है। जवाब देने के लिए अनुरोध खोलें।';
+
+  @override
+  String get driverHomeWaitingForClientResponse =>
+      'ग्राहक के जवाब की प्रतीक्षा';
+
+  @override
+  String get driverHomeClientAccepted =>
+      'ग्राहक ने स्वीकार कर लिया। पुष्टि के लिए अनुरोध खोलें।';
+
+  @override
+  String get driverHomeWaitingForClientConfirmation =>
+      'ग्राहक की पुष्टि की प्रतीक्षा';
+
+  @override
+  String get driverHomeNegotiationUnavailable => 'बातचीत उपलब्ध नहीं';
+
+  @override
+  String get driverHomeClientRequest => 'ग्राहक का अनुरोध';
+
+  @override
+  String get driverHomeBrokerAssignedNotice =>
+      'ब्रोकर द्वारा सौंपा गया — स्वीकार करें या अस्वीकार करें, बातचीत नहीं होगी।';
+
+  @override
+  String driverHomeLocationFallback(Object label) {
+    return '$label स्थान';
+  }
+
+  @override
+  String get driverOrderClientAcceptedRequest =>
+      'ग्राहक ने अनुरोध स्वीकार कर लिया';
+
+  @override
+  String get driverOrderClientAcceptedBody =>
+      'ग्राहक ने आपका ऑफर स्वीकार कर लिया। बुकिंग पूरी करने के लिए पुष्टि करें या अस्वीकार करने के लिए रिजेक्ट करें।';
+
+  @override
+  String get driverOrderBookingSyncing => 'बुकिंग अभी सिंक हो रही है।';
+
+  @override
+  String get driverOrderOpeningTripWhenReady =>
+      'ट्रिप तैयार होते ही हम सक्रिय ट्रिप दृश्य खोलेंगे।';
+
+  @override
+  String get driverOrderCheckingApis =>
+      'हम हर 5 सेकंड में अनुरोध, बुकिंग और ट्रिप API जाँचते हैं।';
+
+  @override
+  String get driverOrderCheckNow => 'अभी जाँचें';
+
+  @override
+  String get driverOrderBookingFinalized => 'बुकिंग पूरी हुई';
+
+  @override
+  String get driverOrderOpeningActiveTrip =>
+      'सक्रिय ट्रिप दृश्य खोला जा रहा है।';
+
+  @override
+  String get driverOrderYourOffer => 'आपका ऑफर';
+
+  @override
+  String driverOrderBaseAmount(Object amount) {
+    return 'बेस $amount';
+  }
+
+  @override
+  String get driverOrderClientAcceptedYourRequest =>
+      'ग्राहक ने आपका अनुरोध स्वीकार कर लिया';
+
+  @override
+  String get driverOrderConfirmOrDeclinePrompt =>
+      'ऊपर दिखाए गए प्रॉम्प्ट से पुष्टि करें या अस्वीकार करें।';
+
+  @override
+  String get driverOrderAcceptedWaitingClient =>
+      'स्वीकृत — ग्राहक की पुष्टि की प्रतीक्षा।';
+
+  @override
+  String get driverOrderRealtimeUpdates =>
+      'हम इसे रियल टाइम में अपडेट करते हैं।';
+
+  @override
+  String get driverOrderFareChangeSent =>
+      'किराया बदलने का ऑफर भेजा गया। ग्राहक के जवाब की प्रतीक्षा...';
+
+  @override
+  String get driverOrderUnlockAfterClientAccepts =>
+      'ग्राहक ऑफर स्वीकार करने के बाद हम ट्रैकिंग बटन अनलॉक कर देंगे।';
+
+  @override
+  String get driverOrderFareChangesUsedUp =>
+      'आपकी किराया बदलने की सीमा पूरी हो चुकी है — स्वीकार करें या अस्वीकार करें।';
+
+  @override
+  String get driverOrderBrokerTakeover => 'ब्रोकर का कंट्रोल';
+
+  @override
+  String get driverOrderLocked => 'लॉक';
+
+  @override
+  String get driverOrderAnyMomentNow => 'किसी भी समय';
+
+  @override
+  String get driverOrderHandedOverToBroker => 'ब्रोकर को सौंप दिया गया';
+
+  @override
+  String get driverOrderFinalizingTrip => 'ट्रिप पूरी की जा रही है';
+
+  @override
+  String get driverOrderSetYourFareChange => 'अपना किराया बदलें';
+
+  @override
+  String get driverOrderNegotiatingWithClient => 'ग्राहक से बातचीत जारी';
+
+  @override
+  String get driverOrderHandedOver => 'सौंपा गया';
+
+  @override
+  String get driverOrderHandoff => 'हैंडओव';
+
+  @override
+  String get driverOrderBrokerAssignedTrip => 'ब्रोकर द्वारा सौंपी गई ट्रिप';
+
+  @override
+  String get driverOrderAlreadyAgreedWithBroker =>
+      'ब्रोकर के साथ पहले से तय है — स्वीकार करें या अस्वीकार करें, किराया नहीं बदल सकते।';
+
+  @override
+  String get driverOrderFixedPrice => 'तय किराया';
+
+  @override
+  String get driverOrderAgreedAmount => 'तय राशि';
+
+  @override
+  String get driverOrderAssignedTripBody =>
+      'यह ट्रिप ब्रोकर द्वारा तय राशि पर सौंपी गई है। यदि आप उपलब्ध नहीं हैं तो आप इसे अस्वीकार कर सकते हैं।';
+
+  @override
+  String get driverOrderBrokerControlsRequest =>
+      'अब इस अनुरोध पर ब्रोकर का नियंत्रण है — नए अवसरों की प्रतीक्षा।';
+
+  @override
+  String get driverOrderBaseOffer => 'बेस ऑफर';
+
+  @override
+  String get driverOrderBrokerHandling => 'ब्रोकर संभाल रहे हैं';
+
+  @override
+  String get driverOrderClientResponded => 'ग्राहक ने जवाब दिया';
+
+  @override
+  String get driverOrderFareWindow => 'किराये की समय-सीमा';
+
+  @override
+  String get driverOrderAwaitingResponse => 'जवाब की प्रतीक्षा';
+
+  @override
+  String get deliveryDetailsTripStartedHeadingToPickup =>
+      'ट्रिप शुरू। पिकअप की ओर जा रहे हैं।';
+
+  @override
+  String get deliveryDetailsPickupMarkedStartDelivery =>
+      'पिकअप दर्ज हुआ। अब डिलीवरी शुरू करें।';
+
+  @override
+  String get deliveryDetailsNowInTransit => 'डिलीवरी अब रास्ते में है।';
+
+  @override
+  String get deliveryDetailsMarkedAsDelivered =>
+      'डिलीवरी पूरी के रूप में दर्ज की गई।';
+
+  @override
+  String deliveryDetailsCompleteLoadingStopsFirst(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'पहले $count लोडिंग स्टॉप पूरे करें',
+      one: 'पहले 1 लोडिंग स्टॉप पूरा करें',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deliveryDetailsCompleteUnloadingStopsFirst(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'पहले $count अनलोडिंग स्टॉप पूरे करें',
+      one: 'पहले 1 अनलोडिंग स्टॉप पूरा करें',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deliveryDetailsOnRoute => 'रास्ते में';
+
+  @override
+  String get deliveryDetailsActiveBadge => 'सक्रिय';
+
+  @override
+  String get deliveryDetailsUseActionToAdvance =>
+      'ट्रिप आगे बढ़ाने के लिए नीचे दिए गए बटन का उपयोग करें।';
+
+  @override
+  String get deliveryDetailsCurrentStatus => 'वर्तमान स्थिति';
+
+  @override
+  String get deliveryDetailsSyncingTrip => 'ट्रिप सिंक हो रही है...';
+
+  @override
+  String get deliveryDetailsDecliningEllipsis => 'अस्वीकार किया जा रहा है...';
+
+  @override
+  String get deliveryDetailsTripFallbackLabel => 'ट्रिप';
+
+  @override
+  String get deliveryDetailsEmergencyAssistance => 'आपातकालीन सहायता';
+
+  @override
+  String get deliveryDetailsNavigateToPickup => 'पिकअप तक जाएँ';
+
+  @override
+  String get deliveryDetailsAskCustomerForCode =>
+      'ग्राहक से उनका 4-अंकों कोड लें';
+
+  @override
+  String get deliveryDetailsDelayCharge => 'डिलीवरी विलंब शुल्क';
+
+  @override
+  String get deliveryDetailsSla => 'डिलीवरी एसएलए';
+
+  @override
+  String deliveryDetailsDelayChargeBody(Object amount, Object hours) {
+    return 'अपेक्षित डिलीवरी समय से $hours घंटे अधिक के लिए $amount।';
+  }
+
+  @override
+  String deliveryDetailsExpectedWithin(Object hours) {
+    return 'डिलीवरी लगभग $hours घंटे के भीतर अपेक्षित।';
+  }
+
+  @override
+  String get deliveryDetailsBookingChat => 'बुकिंग चैट';
+
+  @override
+  String get deliveryDetailsMechanicStatus => 'मैकेनिक स्थिति';
+
+  @override
+  String get deliveryDetailsLiveIncidentUpdates =>
+      'इस ट्रिप के लिए लाइव घटनाओं की जानकारी।';
+
+  @override
+  String get deliveryDetailsIncident => 'घटना';
+
+  @override
+  String deliveryDetailsMechanicLine(Object name) {
+    return 'मैकेनिक: $name';
+  }
+
+  @override
+  String get deliveryDetailsPendingAssignment => 'नियुक्ति बाकी';
+
+  @override
+  String deliveryDetailsPhoneLine(Object phone) {
+    return 'फोन: $phone';
+  }
+
+  @override
+  String deliveryDetailsStatusLine(Object status) {
+    return 'स्थिति: $status';
+  }
+
+  @override
+  String get deliveryDetailsRequestedLabel => 'अनुरोधित';
+
+  @override
+  String get driverKycVerifiedSnack =>
+      'आप सत्यापित हैं — पूरी पहुँच खुल गई है।';
+
+  @override
+  String get driverKycSubmittedForReviewSnack =>
+      'KYC समीक्षा के लिए सबमिट कर दी गई।';
+
+  @override
+  String get driverKycConfirmAccuracyDeclaration =>
+      'मैं पुष्टि करता हूं कि दी गई सभी जानकारी सही है।';
+
+  @override
+  String get driverKycVerifyIdentity => 'अपनी पहचान सत्यापित करें';
+
+  @override
+  String get driverKycFinish => 'समाप्त करें';
+
+  @override
+  String get driverKycResubmitForReview => 'समीक्षा के लिए पुनः सबमिट करें';
+
+  @override
+  String get driverKycDriverKycTitle => 'ड्राइवर KYC';
+
+  @override
+  String get chatCurrentUserSenderName => 'आप';
+
+  @override
+  String clientNotificationsTimeMinutesAgo(Object minutes) {
+    return '$minutes मिनट पहले';
+  }
+
+  @override
+  String clientNotificationsTimeHoursAgo(Object hours) {
+    return '$hours घंटे पहले';
+  }
+
+  @override
+  String clientNotificationsTimeDaysAgo(Object days) {
+    return '$days दिन पहले';
+  }
+
+  @override
+  String get negotiationYourFare => 'आपका किराया';
+
+  @override
+  String get negotiationFareChangesExhausted =>
+      'आपने अपने किराया बदलाव का उपयोग कर लिया है — इसके बजाय स्वीकार या अस्वीकार करें।';
+
+  @override
+  String get negotiationWaitingDriverAcceptedTitle =>
+      'ड्राइवर ने अनुरोध स्वीकार कर लिया';
+
+  @override
+  String get negotiationWaitingDriverTurnToConfirmTitle =>
+      'ड्राइवर ने स्वीकार कर लिया - पुष्टि करने का आपका मोड़';
+
+  @override
+  String get negotiationWaitingDriverConfirmationTitle =>
+      'ड्राइवर की पुष्टि का इंतजार';
+
+  @override
+  String get negotiationWaitingFareChangeReceivedTitle =>
+      'किराया बदलाव प्राप्त हुआ';
+
+  @override
+  String get negotiationWaitingDriverResponseTypeTitle =>
+      'ड्राइवर के जवाब का इंतजार';
+
+  @override
+  String get negotiationWaitingDriverAcceptedBody =>
+      'ड्राइवर ने आपका अनुरोध स्वीकार कर लिया है। आप बुकिंग की पुष्टि कर सकते हैं और भुगतान जारी रख सकते हैं।';
+
+  @override
+  String get negotiationWaitingDriverCommittedBody =>
+      'ड्राइवर पहले से ही प्रतिबद्ध हो चुए हैं। हैंडशेक पूरा करने के लिए कन्फर्म या अस्वीकार करें।';
+
+  @override
+  String get negotiationWaitingDriverYourConfirmBody =>
+      'आपने पहले ही यह ऑफर कन्फर्म कर दिया है। अब हम ड्राइवर की पुष्टि का इंतजार कर रहे हैं।';
+
+  @override
+  String get negotiationWaitingDriverChangedFareBody =>
+      'ड्राइवर ने किराया बदल दिया है। इसे यहां समीक्षा करें और तुरंत जवाब दें।';
+
+  @override
+  String get negotiationWaitingDriverTimedOutBody =>
+      'ड्राइवर समय पर जवाब नहीं दिया। अब ब्रोकर इसमें हस्तक्षेप कर सकता है।';
+
+  @override
+  String get negotiationWaitingDriverLiveBody =>
+      'आपका अनुरोध लाइव है। जब ट्रक जवाब देगा तभी हम इस पॉपअप को अपडेट करेंगे।';
+
+  @override
+  String negotiationBookingReference(Object bookingNumber) {
+    return 'बुकिंग #$bookingNumber';
+  }
+
+  @override
+  String get negotiationLiveUpdatesAppearHere => 'लाइव अपडेट यहां दिखेंगे।';
+
+  @override
+  String negotiationCurrentAmount(Object amount) {
+    return 'वर्तमान राशि: $amount';
+  }
+
+  @override
+  String negotiationHistoryCount(Object count) {
+    return 'नेगोशिएशन हिस्ट्री ($count)';
+  }
+
+  @override
+  String negotiationHistoryEntryOffered(Object amount, Object displayBy) {
+    return '$displayBy ने ₹$amount पेश किया';
+  }
+
+  @override
+  String get negotiationWaitingLiveFareChange =>
+      'लाइव किराया बदलाव का इंतजार...';
+
+  @override
+  String get negotiationPickPayment =>
+      'चुनें कि यह माल बुकिंग कैसे सेटल की जानी चाहिए। एडवांस नवीनतम एडमिन-कॉन्फिगर किए गए राशि का उपयोग करता है।';
+
+  @override
+  String get negotiationRazorpayCheckoutNote =>
+      'Razorpay चेकआउट पे भुगतान करने से पहले उपलब्ध भुगतान विधियां दिखाएगा।';
+
+  @override
+  String get negotiationConfirmPaymentStage => 'भुगतान चरण की पुष्टि करें';
+
+  @override
+  String get negotiationContinueToSecureCheckout =>
+      'सुरक्षित चेकआउट पर जारी रखें';
+
+  @override
+  String get negotiationWaitingNextDriverUpdate =>
+      'अगले ड्राइवर अपडेट का इंतजार...';
+
+  @override
+  String get negotiationUseSliderHint =>
+      'जारी रखने के लिए स्लाइडर का उपयोग करके वह राशि सेट करें जो आप चाहते हैं।';
+
+  @override
+  String get negotiationDragToSetPrice => 'अपनी कीमत सेट करने के लिए खींचें';
+
+  @override
+  String get brokerSettlementsGrossAmount => 'सकल राशि';
+
+  @override
+  String get brokerSettlementsPlatformFee => 'प्लेटफ़ॉर्म शुल्क';
+
+  @override
+  String get brokerSettlementsRoutePending => 'मार्ग लंबित';
+
+  @override
+  String get brokerTrackLiveStepEnRoute => 'रास्ते में';
+
+  @override
+  String get brokerTrackLiveStepPickedUp => 'उठाया गया';
+
+  @override
+  String get brokerTrackLiveStepInTransit => 'परिवहन में';
+
+  @override
+  String get addDriverSharedSeparately => 'अलग से साझा किया जाएगा';
+
+  @override
+  String get addDriverAadhaarMustBe12Digits => 'आधार 12 अंकों का होना चाहिए';
+
+  @override
+  String get addDriverUseAValidDate => 'मान्य तिथि दर्ज करें';
+
+  @override
+  String get addDriverLicenseExpiryCannotBeInThePast =>
+      'लाइसेंस की समाप्ति पिछले समय में नहीं हो सकती।';
+
+  @override
+  String get addDriverTapToUpdateTheDriverPhoto =>
+      'ड्राइवर की फोटो बदलने के लिए टैप करें';
+
+  @override
+  String get addDriverTapTheCameraToAddADriverPhoto =>
+      'ड्राइवर की फोटो जोड़ने के लिए कैमरा टैप करें';
+
+  @override
+  String get addVehicleTruckAddedSuccessfully => 'ट्रक सफलतापूर्वक जोड़ा गया।';
+
+  @override
+  String get addVehicleTruckUpdatedSuccessfully =>
+      'ट्रक सफलतापूर्वक अपडेट किया गया।';
+
+  @override
+  String get addVehicleUseYyyyMmdd => 'YYYY-MM-DD प्रारूप का उपयोग करें';
+
+  @override
+  String get brokerKycInDetails => 'विवरण में';
+
+  @override
+  String get brokerKycIncludedInDetails => 'विवरण में शामिल';
+
+  @override
+  String get brokerKycSubmittedUrl => 'सबमिट किया गया URL';
+
+  @override
+  String get brokerKycNoActiveSessionFound => 'कोई सक्रिय सत्र नहीं मिला।';
+
+  @override
+  String get brokerKycPleaseConfirmAllInformationIsAccurate =>
+      'कृपया पुष्टि करें कि सभी जानकारी सही है।';
+
+  @override
+  String get brokerKycYouAreVerified =>
+      'आप सत्यापित हैं - पूर्ण पहुँच अनलॉक हो गई है।';
+
+  @override
+  String get brokerKycSubmittedForReview =>
+      'KYC समीक्षा के लिए सबमिट कर दिया गया।';
+
+  @override
+  String get driverTrackingSignInAgainBeforeEnablingLocation =>
+      'लोकेशन शेयरिंग चालू करने से पहले कृपया फिर से साइन इन करें।';
+
+  @override
+  String get driverTrackingEnableLocationServices =>
+      'लाइव ट्रैकिंग साझा करने के लिए डिवाइस में लोकेशन सेवाएँ चालू करें।';
+
+  @override
+  String get driverTrackingLocationPermissionRequired =>
+      'लाइव ड्राइवर ट्रैकिंग के लिए लोकेशन की अनुमति आवश्यक है।';
+
+  @override
+  String get driverTrackingLocationPermissionDeniedForever =>
+      'लोकेशन की अनुमति स्थायी रूप से अस्वीकार की गई है। इसे चालू करने के लिए ऐप सेटिंग्स खोलें।';
+
+  @override
+  String get driverTrackingUnableToStartLiveTracking =>
+      'इस डिवाइस पर लाइव ट्रैकिंग शुरू नहीं हो सकी।';
+
+  @override
+  String get driverTrackingSignInAgainBeforeRefreshingLocation =>
+      'लोकेशन रीफ़्रेश करने से पहले कृपया फिर से साइन इन करें।';
+
+  @override
+  String get negotiationWindowAnyMomentNow =>
+      'किसी भी समय - सर्वर हस्तांतरण की प्रतीक्षा है।';
+
+  @override
+  String negotiationWindowRemaining(Object countdown, Object label) {
+    return '$label $countdown शेष';
+  }
 }

@@ -289,16 +289,17 @@ class _SavedAddressSearchField extends StatelessWidget {
     required this.controller,
     required this.query,
     required this.onQueryChanged,
-    this.hint = 'Search saved addresses...',
+    this.hint,
   });
 
   final TextEditingController controller;
   final String query;
   final ValueChanged<String> onQueryChanged;
-  final String hint;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -319,7 +320,7 @@ class _SavedAddressSearchField extends StatelessWidget {
               controller: controller,
               onChanged: onQueryChanged,
               decoration: InputDecoration(
-                hintText: hint,
+                hintText: hint ?? l10n.clientSavedSearchHintField,
                 filled: false,
                 fillColor: Colors.transparent,
                 border: InputBorder.none,
@@ -636,7 +637,7 @@ class _ClientSavedAddressEditorScreenState
     try {
       final session = ref.read(authSessionProvider).valueOrNull;
       if (session == null) {
-        throw const ApiException('Please sign in again to save this address.');
+        throw ApiException(AppLocalizations.of(context)!.clientSavedSignInToSave);
       }
       final draft = _draft.copyWith(
         label: label,
@@ -677,7 +678,11 @@ class _ClientSavedAddressEditorScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEditing ? 'Address updated.' : 'Address saved.'),
+          content: Text(
+            _isEditing
+                ? AppLocalizations.of(context)!.clientSavedAddressUpdated
+                : AppLocalizations.of(context)!.clientSavedAddressSaved,
+          ),
         ),
       );
       context.pop(true);
@@ -789,6 +794,7 @@ class _ClientSavedAddressEditorScreenState
 
   Future<void> _useCurrentLocation() async {
     if (_locating) return;
+    final l10n = AppLocalizations.of(context)!;
     FocusManager.instance.primaryFocus?.unfocus();
 
     setState(() {
@@ -799,7 +805,7 @@ class _ClientSavedAddressEditorScreenState
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw const ApiException('Location services are turned off.');
+        throw ApiException(l10n.clientSavedLocationServicesOff);
       }
 
       var permission = await Geolocator.checkPermission();
@@ -808,7 +814,7 @@ class _ClientSavedAddressEditorScreenState
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        throw const ApiException('Location permission is required.');
+        throw ApiException(l10n.clientSavedLocationPermissionRequired);
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -828,7 +834,7 @@ class _ClientSavedAddressEditorScreenState
         _locating = false;
         _errorMessage = error is ApiException
             ? error.message
-            : 'Could not get your current location.';
+            : l10n.clientSavedCurrentLocationError;
       });
     }
   }
@@ -895,8 +901,9 @@ class _ClientSavedAddressEditorScreenState
                 icon: AppIcons.error_outline_rounded,
                 title: AppLocalizations.of(context)!.savedAddressCouldNotLoad,
                 subtitle:
-                    'Go back to saved addresses and try editing it again.',
-                actionLabel: 'Back to Saved Addresses',
+                    AppLocalizations.of(context)!.clientSavedLoadErrorSubtitle,
+                actionLabel:
+                    AppLocalizations.of(context)!.clientSavedBackToAddresses,
                 onAction: () => context.pop(false),
               ),
             ],
@@ -928,7 +935,7 @@ class _ClientSavedAddressEditorScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _FieldLabel(text: 'Type'),
+                  _FieldLabel(text: l10n.clientSavedTypeLabel),
                   const SizedBox(height: 8),
                   _AddressTypeSelector(
                     value: _draft.addressType,
@@ -937,7 +944,7 @@ class _ClientSavedAddressEditorScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _FieldLabel(text: 'Name'),
+                  _FieldLabel(text: l10n.clientSavedNameLabel),
                   const SizedBox(height: 8),
                   _CardField(
                     leading: AppIcons.business_outlined,
@@ -974,7 +981,7 @@ class _ClientSavedAddressEditorScreenState
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const _FieldLabel(text: 'Address'),
+                      _FieldLabel(text: l10n.clientSavedAddressLabel),
                       const Spacer(),
                       TextButton.icon(
                         onPressed: _locating ? null : _useCurrentLocation,
@@ -1027,7 +1034,7 @@ class _ClientSavedAddressEditorScreenState
                   ),
                   const SizedBox(height: 7),
                   Text(
-                    'Search, tap the map, or drag the pin once it is placed.',
+                    l10n.clientSavedMapPickerHint,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colors.textTertiary,
                       height: 1.3,
@@ -1036,7 +1043,7 @@ class _ClientSavedAddressEditorScreenState
                   if (_draft.city.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'City: ${_draft.city}',
+                      l10n.clientSavedCityValue(_draft.city),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.textSecondary,
                         fontWeight: FontWeight.w700,
@@ -1044,7 +1051,10 @@ class _ClientSavedAddressEditorScreenState
                     ),
                   ],
                   const SizedBox(height: 12),
-                  _FieldLabel(text: 'Floor / Unit', trailing: '(optional)'),
+                  _FieldLabel(
+                    text: l10n.clientSavedFloorUnitLabel,
+                    trailing: l10n.clientSavedOptional,
+                  ),
                   const SizedBox(height: 8),
                   _CardField(
                     child: TextField(
@@ -1188,7 +1198,11 @@ class _ClientSavedAddressEditorScreenState
                                 ),
                               ),
                             )
-                          : Text(_isEditing ? 'Save Changes' : 'Save Address'),
+                          : Text(
+                            _isEditing
+                                ? l10n.clientSavedSaveChanges
+                                : l10n.clientSavedSaveAddress,
+                          ),
                     ),
                   ),
                 ],
@@ -1270,6 +1284,7 @@ class _EditorMapPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Stack(
@@ -1352,7 +1367,7 @@ class _EditorMapPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       address.isEmpty
-                          ? 'Tap the map to choose an exact spot'
+                          ? l10n.clientSavedTapMapForExactSpot
                           : address,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1456,6 +1471,7 @@ class _SavedAddressMapPickerState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Stack(
         children: [
@@ -1559,7 +1575,7 @@ class _SavedAddressMapPickerState
                   Expanded(
                     child: Text(
                       _selectedAddress.isEmpty
-                          ? 'Tap the map to choose an exact spot'
+                          ? l10n.clientSavedTapMapForExactSpot
                           : _selectedAddress,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1789,6 +1805,7 @@ class _DefaultBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? 7 : 9,
@@ -1808,7 +1825,7 @@ class _DefaultBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            'Default',
+            l10n.clientSavedDefaultBadge,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: const Color(0xFF2FA56E),
               fontSize: dense ? 10 : 11,

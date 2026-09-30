@@ -356,7 +356,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Offline',
+                    l10n.driverHomeOffline,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: isOnline
@@ -367,10 +367,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   const SizedBox(width: 10),
                   Tooltip(
                     message: hasActiveTrip && isOnline
-                        ? "Can't go offline while you have an active trip"
+                        ? l10n.driverHomeCantGoOffline
                         : isOnline
-                        ? 'Toggle offline'
-                        : 'Toggle online',
+                        ? l10n.driverHomeToggleOffline
+                        : l10n.driverHomeToggleOnline,
                     child: Switch(
                       value: isOnline,
                       onChanged: (isOnline && hasActiveTrip)
@@ -378,9 +378,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           : (value) {
                               if (!value && hasActiveTrip) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                      'You cannot go offline while a trip is active.',
+                                      l10n.driverHomeCannotGoOfflineSnack,
                                     ),
                                   ),
                                 );
@@ -403,7 +403,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Online',
+                    l10n.driverHomeOnline,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: isOnline
@@ -428,7 +428,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   border: Border.all(color: AppColors.divider),
                 ),
                 child: Text(
-                  'Active trip in progress. Online mode stays locked until the trip is completed.',
+                  l10n.driverHomeActiveTripLocksOnline,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
@@ -527,7 +527,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       if (newRequests.length > 1) ...[
                         const SizedBox(height: 18),
                         Text(
-                          'More requests',
+                          l10n.driverHomeMoreRequests,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: AppColors.textPrimary,
@@ -659,10 +659,11 @@ class _DeliveryOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final amount = request.amount > 0 ? request.amount : 0.0;
     final brokerAssigned = request.isBrokerAssigned;
     final canOpen = request.canNegotiate || brokerAssigned;
-    final statusLabel = _driverRequestStatusLabel(request);
+    final statusLabel = _driverRequestStatusLabel(l10n, request);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -683,7 +684,7 @@ class _DeliveryOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Delivery ID',
+                      l10n.driverHomeDeliveryId,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textTertiary,
                         fontWeight: FontWeight.w600,
@@ -749,7 +750,7 @@ class _DeliveryOrderCard extends StatelessWidget {
           ],
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
-            const _BrokerAssignedNotice(),
+            _BrokerAssignedNotice(),
           ],
           const SizedBox(height: 14),
           if (brokerAssigned)
@@ -777,25 +778,28 @@ class _DeliveryOrderCard extends StatelessWidget {
   }
 }
 
-String _driverRequestStatusLabel(DriverRequestItem request) {
+String _driverRequestStatusLabel(
+  AppLocalizations l10n,
+  DriverRequestItem request,
+) {
   final status = request.status.trim().toLowerCase();
   final pendingBy = request.pendingConfirmationBy.trim().toLowerCase();
   if (request.driverTimedOut) {
-    return 'Broker handoff active';
+    return l10n.driverHomeBrokerHandoffActive;
   }
   if (status == 'countered') {
     if (request.canNegotiate) {
-      return 'Client countered. Open the request to respond.';
+      return l10n.driverHomeClientCountered;
     }
-    return 'Waiting for the client response';
+    return l10n.driverHomeWaitingForClientResponse;
   }
   if (status == 'awaiting_confirmation') {
     if (pendingBy == 'client') {
-      return 'Client accepted. Open the request to confirm.';
+      return l10n.driverHomeClientAccepted;
     }
-    return 'Waiting for client confirmation';
+    return l10n.driverHomeWaitingForClientConfirmation;
   }
-  return 'Negotiation unavailable';
+  return l10n.driverHomeNegotiationUnavailable;
 }
 
 class _DriverRequestCard extends StatefulWidget {
@@ -820,11 +824,12 @@ class _DriverRequestCard extends StatefulWidget {
 class _DriverRequestCardState extends State<_DriverRequestCard> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final request = widget.request;
     final amount = request.amount > 0 ? request.amount : 0.0;
     final brokerAssigned = request.isBrokerAssigned;
     final canOpen = request.canNegotiate || brokerAssigned;
-    final statusLabel = _driverRequestStatusLabel(request);
+    final statusLabel = _driverRequestStatusLabel(l10n, request);
 
     return Container(
       width: double.infinity,
@@ -856,7 +861,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                     Text(
                       request.clientName.isNotEmpty
                           ? request.clientName
-                          : 'Client request',
+                          : l10n.driverHomeClientRequest,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
@@ -933,7 +938,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           ],
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
-            const _BrokerAssignedNotice(),
+            _BrokerAssignedNotice(),
           ],
           const SizedBox(height: 14),
           if (brokerAssigned) ...[
@@ -1059,7 +1064,7 @@ class _BrokerAssignedNotice extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Broker-assigned - accept or decline, no negotiation.',
+              AppLocalizations.of(context)!.driverHomeBrokerAssignedNotice,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.brand,
                 fontWeight: FontWeight.w800,
@@ -1123,7 +1128,11 @@ class _RoutePointCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hasValue ? parts.title : '$label location',
+            hasValue
+                ? parts.title
+                : AppLocalizations.of(context)!.driverHomeLocationFallback(
+                    label,
+                  ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

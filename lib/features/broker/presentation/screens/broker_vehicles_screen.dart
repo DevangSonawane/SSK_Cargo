@@ -509,19 +509,22 @@ class _TruckActionDialog extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _TruckSummaryRow('Type', _vehicleType(vehicle)),
                 _TruckSummaryRow(
-                  'Capacity',
+                  AppLocalizations.of(context)!.brokerVehiclesRowType,
+                  _vehicleType(vehicle),
+                ),
+                _TruckSummaryRow(
+                  AppLocalizations.of(context)!.addTruckCapacity,
                   vehicle.capacity.isEmpty ? '-' : vehicle.capacity,
                 ),
                 _TruckSummaryRow(
-                  'Driver',
+                  AppLocalizations.of(context)!.driver,
                   vehicle.assignedDriverName.isEmpty
-                      ? 'Unassigned'
+                      ? AppLocalizations.of(context)!.unassigned
                       : vehicle.assignedDriverName,
                 ),
                 _TruckSummaryRow(
-                  'Insurance',
+                  AppLocalizations.of(context)!.brokerVehiclesRowInsurance,
                   vehicle.insuranceExpiry.isEmpty
                       ? '-'
                       : vehicle.insuranceExpiry,
@@ -678,7 +681,7 @@ class _VehicleStatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        vehicleStatusLabel(status),
+        vehicleStatusLabel(status, l10n),
         style: TextStyle(
           color: color,
           fontSize: 11,

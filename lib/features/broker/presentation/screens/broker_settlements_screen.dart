@@ -114,6 +114,7 @@ class _BrokerSettlementsScreenState
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
+        final l10n = AppLocalizations.of(sheetContext)!;
         return Padding(
           padding: EdgeInsets.only(
             left: 14,
@@ -178,11 +179,11 @@ class _BrokerSettlementsScreenState
                 ],
                 SizedBox(height: 16),
                 _detailLine(
-                  'Gross amount',
+                  l10n.brokerSettlementsGrossAmount,
                   '₹${settlement.amount.toStringAsFixed(0)}',
                 ),
                 _detailLine(
-                  'Platform fee',
+                  l10n.brokerSettlementsPlatformFee,
                   '₹${settlement.platformFee.toStringAsFixed(2)}',
                 ),
                 Container(
@@ -376,7 +377,7 @@ class _SettlementCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         settlement.route.isEmpty
-                            ? 'Route pending'
+                            ? l10n.brokerSettlementsRoutePending
                             : settlement.route,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -591,7 +592,7 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        status.isEmpty ? 'Pending' : status,
+        status.isEmpty ? l10n.pending : status,
         style: TextStyle(
           color: fg,
           fontSize: 11,
@@ -606,7 +607,10 @@ class _StatusPill extends StatelessWidget {
 /// Splits a backend route string ("Mumbai → Pune", "Mumbai - Pune",
 /// "Mumbai to Pune") into pickup / drop. Falls back to the whole string
 /// as pickup when no separator is found.
-({String pickup, String drop}) _splitSettlementRoute(String route) {
+({String pickup, String drop}) _splitSettlementRoute(
+  AppLocalizations l10n,
+  String route,
+) {
   const separators = ['→', '->', '—', '–', ' to ', ' To ', ' TO '];
   for (final separator in separators) {
     final index = route.indexOf(separator);
@@ -630,8 +634,8 @@ class _StatusPill extends StatelessWidget {
   }
   final trimmed = route.trim();
   return (
-    pickup: trimmed.isEmpty ? 'Pickup pending' : trimmed,
-    drop: trimmed.isEmpty ? 'Drop pending' : '',
+    pickup: trimmed.isEmpty ? l10n.pickupPending : trimmed,
+    drop: trimmed.isEmpty ? l10n.dropPending : '',
   );
 }
 
@@ -643,7 +647,7 @@ class _SettlementRouteRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final split = _splitSettlementRoute(route);
+    final split = _splitSettlementRoute(l10n, route);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -685,7 +689,7 @@ class _SettlementRouteRail extends StatelessWidget {
               size: 20,
             ),
             label: l10n.brokerSettlementsDROP,
-            value: split.drop.isEmpty ? 'Drop pending' : split.drop,
+            value: split.drop.isEmpty ? l10n.dropPending : split.drop,
           ),
         ],
       ),

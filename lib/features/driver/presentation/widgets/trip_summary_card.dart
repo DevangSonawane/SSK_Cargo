@@ -23,12 +23,7 @@ class TripSummaryCard extends StatelessWidget {
         ? trip.bookingNumber
         : trip.bookingId;
     final status = trip.status.trim().toLowerCase();
-    final rawStatusLabel = tripStatusLabel(trip.status);
-    final statusLabel = rawStatusLabel == 'In Progress'
-        ? l10n.tripSummaryInProgress
-        : rawStatusLabel == 'Delivered'
-        ? l10n.tripSummaryDelivered
-        : rawStatusLabel;
+    final statusLabel = tripStatusLabel(l10n, trip.status);
     final isCompleted =
         status == 'completed' ||
         status == 'delivered' ||
@@ -73,6 +68,7 @@ class TripSummaryCard extends StatelessWidget {
         : l10n.tripSummaryLocationUnavailable;
     final dateLine = [
       _formatTripTimestamp(
+        l10n,
         trip.bookingTime.isNotEmpty ? trip.bookingTime : '—',
       ),
       if (bookingRef.isNotEmpty) bookingRef,
@@ -261,13 +257,13 @@ class _RailDot extends StatelessWidget {
 
 /// Human-friendly driver trip status label shared by the history cards and
 /// the active delivery card.
-String tripStatusLabel(String status) {
+String tripStatusLabel(AppLocalizations l10n, String status) {
   final normalized = status.trim().toLowerCase();
   if (normalized.isEmpty) {
-    return 'In Progress';
+    return l10n.tripSummaryInProgress;
   }
   if (normalized == 'delivered') {
-    return 'Delivered';
+    return l10n.tripSummaryDelivered;
   }
   if (normalized == 'accepted' ||
       normalized == 'confirmed' ||
@@ -278,7 +274,7 @@ String tripStatusLabel(String status) {
       normalized == 'in transit' ||
       normalized == 'picked_up' ||
       normalized == 'picked up') {
-    return 'In Progress';
+    return l10n.tripSummaryInProgress;
   }
   return normalized
       .split(RegExp(r'[_\s-]+'))
@@ -297,7 +293,7 @@ String _locationLead(String value) {
   return first.isEmpty ? trimmed : first;
 }
 
-String _formatTripTimestamp(String value) {
+String _formatTripTimestamp(AppLocalizations l10n, String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) {
     return value;
@@ -309,25 +305,25 @@ String _formatTripTimestamp(String value) {
       local.year == now.year &&
       local.month == now.month &&
       local.day == now.day;
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = [
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   final dateLabel = sameDay
-      ? 'Today'
+      ? l10n.driverTripToday
       : '${months[local.month - 1]} ${local.day}';
   final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
   final minute = local.minute.toString().padLeft(2, '0');
-  final period = local.hour >= 12 ? 'PM' : 'AM';
+  final period = local.hour >= 12 ? l10n.timePeriodPm : l10n.timePeriodAm;
   return '$dateLabel, $hour:$minute $period';
 }

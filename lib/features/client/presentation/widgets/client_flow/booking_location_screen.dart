@@ -43,14 +43,17 @@ class _EligibleBroker {
     required this.truckCount,
   });
 
-  factory _EligibleBroker.fromJson(Map<String, dynamic> json) {
+  factory _EligibleBroker.fromJson(
+    Map<String, dynamic> json, {
+    String fallbackName = 'Broker',
+  }) {
     return _EligibleBroker(
       id: _readString(json, const ['id', 'broker_id', 'uuid']),
       name: _readString(json, const [
         'name',
         'broker_name',
         'displayName',
-      ]).ifEmpty('Broker'),
+      ]).ifEmpty(fallbackName),
       phone: _readString(json, const ['phone', 'mobile', 'phone_number']),
       serviceCity: _readString(json, const [
         'serviceCity',
@@ -888,6 +891,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Future<void> _loadEligibleBrokers() async {
     if (_loadingEligibleBrokers) return;
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
     setState(() {
@@ -901,7 +905,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             accessToken: session.tokens.accessToken,
             city: _draft.city,
           );
-      final brokers = _eligibleBrokersFromResponse(response);
+      final brokers = _eligibleBrokersFromResponse(
+        response,
+        fallbackBrokerName: l10n.broker,
+      );
       if (!mounted) return;
       setState(() {
         _eligibleBrokers = brokers;
@@ -920,8 +927,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   List<_EligibleBroker> _eligibleBrokersFromResponse(
-    Map<String, dynamic> response,
-  ) {
+    Map<String, dynamic> response, {
+    String fallbackBrokerName = 'Broker',
+  }) {
     Object? source = response['brokers'];
     final data = response['data'];
     if (data is Map<String, dynamic>) {
@@ -930,7 +938,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (source is! List) return const [];
     return source
         .whereType<Map<String, dynamic>>()
-        .map(_EligibleBroker.fromJson)
+        .map((json) => _EligibleBroker.fromJson(json, fallbackName: fallbackBrokerName))
         .where((broker) => broker.id.isNotEmpty)
         .toList(growable: false);
   }
@@ -2244,7 +2252,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     child: Text(
                       truck.capacity.isNotEmpty
                           ? truck.capacity
-                          : 'Available truck',
+                          : AppLocalizations.of(
+                              dialogContext,
+                            )!.clientBookingAvailableTruck,
                       style: Theme.of(dialogContext).textTheme.titleMedium
                           ?.copyWith(
                             fontWeight: FontWeight.w800,
@@ -2290,6 +2300,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_resolvingDistance) {
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -2355,8 +2366,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
       if (validation['success'] == false) {
         throw ApiException(
-          (validation['message'] ??
-                  'These pickup/drop locations are not valid for this trip')
+          (validation['message'] ?? l10n.clientBookingLocationValidationFailed)
               .toString(),
         );
       }
@@ -2703,7 +2713,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (graceHours <= 0 || rate <= 0) {
       return null;
     }
-    return 'Free halting: ${graceHours.toStringAsFixed(graceHours % 1 == 0 ? 0 : 1)}h, then ${_formatRupees(rate)}/hr.';
+    return AppLocalizations.of(context)!.clientBookingFreeHaltingNote(
+      graceHours.toStringAsFixed(graceHours % 1 == 0 ? 0 : 1),
+      _formatRupees(rate),
+    );
   }
 
   Future<void> _setExpressDelivery(bool enabled) async {
@@ -3009,10 +3022,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      throw StateError('Please sign in again to create a booking.');
+      throw StateError(
+        AppLocalizations.of(context)!.signInAgainToCreateBooking,
+      );
     }
     if (!_validateScheduledDate()) {
-      throw StateError('Choose a future pickup time.');
+      throw StateError(AppLocalizations.of(context)!.chooseFuturePickupTime);
     }
 
     setState(() {
@@ -3234,6 +3249,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     void syncVehicleFromTypes(List<VehicleType>? types) {
       if (types == null || types.isEmpty || !mounted) return;
       final vehicles = resolveVehicleOptions(
@@ -3344,11 +3360,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           ),
                         )
                       : Text(switch (_step) {
-                          _BookingFlowStep.location => 'Next',
-                          _BookingFlowStep.payment => 'Continue',
-                          _BookingFlowStep.brokerSelection => 'Continue',
-                          _BookingFlowStep.itemDetails => 'Next',
-                          _BookingFlowStep.waiting => 'Continue',
+                          _BookingFlowStep.location =>
+                            l10n.clientBookingStepNext,
+                          _BookingFlowStep.payment =>
+                            l10n.clientBookingStepContinue,
+                          _BookingFlowStep.brokerSelection =>
+                            l10n.clientBookingStepContinue,
+                          _BookingFlowStep.itemDetails =>
+                            l10n.clientBookingStepNext,
+                          _BookingFlowStep.waiting =>
+                            l10n.clientBookingStepContinue,
                         }),
                 ),
               ),
@@ -3489,13 +3510,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       Text(
                                         switch (_step) {
                                           _BookingFlowStep.location =>
-                                            'Location',
+                                            l10n.clientBookingStepLocation,
                                           _BookingFlowStep.itemDetails =>
-                                            'Weight',
+                                            l10n.clientBookingStepWeight,
                                           _BookingFlowStep.brokerSelection =>
-                                            'Choose trucks',
-                                          _BookingFlowStep.payment => 'Payment',
-                                          _BookingFlowStep.waiting => 'Waiting',
+                                            l10n.clientBookingChooseTrucks,
+                                          _BookingFlowStep.payment =>
+                                            l10n.clientBookingStepPayment,
+                                          _BookingFlowStep.waiting =>
+                                            l10n.clientBookingStepWaiting,
                                         },
                                         style: Theme.of(context)
                                             .textTheme
@@ -3537,6 +3560,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildBrokerSelectionMapSheetStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final mode = _draft.searchMode ?? BookingSearchMode.truck;
     final isFindTruckSearching = _bookingCreated && !_postNegotiationPayment;
     final hideSearchPanel = _submitting || isFindTruckSearching;
@@ -3645,7 +3669,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    'Finding brokers',
+                                    l10n.clientBookingFindingBrokers,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -3656,7 +3680,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Scanning for broker offers on this route.',
+                                    l10n.clientBookingScanningBrokerOffers,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: context.colors.textSecondary,
@@ -3674,7 +3698,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'Negotiate${chosenBrokerName.isNotEmpty ? ' with $chosenBrokerName' : ''}',
+                                        chosenBrokerName.isNotEmpty
+                                            ? l10n.clientBookingNegotiateWith(
+                                                chosenBrokerName,
+                                              )
+                                            : l10n.negotiate,
                                       ),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: const Color(
@@ -3701,8 +3729,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                         : _cancelFindTruckSearch,
                                     child: Text(
                                       _cancellingFindTruckSearch
-                                          ? 'Cancelling...'
-                                          : 'Cancel search',
+                                          ? l10n.clientBookingCancelling
+                                          : l10n.clientBookingCancelSearch,
                                     ),
                                   ),
                                 ],
@@ -3810,6 +3838,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     required bool brokerMode,
     required bool isCollapsed,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -3828,7 +3857,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   children: [
                     const SizedBox(height: 14),
                     Text(
-                      'Choose Trucks',
+                      l10n.clientBookingChooseTrucksTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: context.colors.textPrimary,
                         fontWeight: FontWeight.w900,
@@ -3838,8 +3867,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     const SizedBox(height: 3),
                     Text(
                       brokerMode
-                          ? 'Pick a broker for this route'
-                          : 'Select truck type and search radius',
+                          ? l10n.clientBookingPickBrokerForRoute
+                          : l10n.clientBookingChooseTrucksSubtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -3973,6 +4002,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   // ignore: unused_element
   Widget _buildBrokerSelectionStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final mode = _draft.searchMode ?? BookingSearchMode.truck;
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -4016,7 +4046,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'Choose Trucks',
+                          l10n.clientBookingChooseTrucksTitle,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: context.colors.textPrimary,
@@ -4532,13 +4562,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildLocationStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Location',
+              l10n.clientBookingStepLocation,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -4559,8 +4590,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   : const Icon(AppIcons.gps_fixed_rounded, size: 14),
               label: Text(
                 _resolvingCurrentLocation
-                    ? 'Locating...'
-                    : 'Use current location',
+                    ? l10n.clientBookingLocating
+                    : l10n.locationFlowUseCurrent,
               ),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
@@ -4578,10 +4609,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         const SizedBox(height: 10),
         _LocationLaunchCard(
           pickupValue: _fromController.text.isEmpty
-              ? 'Enter loading location'
+              ? l10n.clientBookingEnterLoading
               : _fromController.text,
           dropValue: _toController.text.isEmpty
-              ? 'Enter unloading location'
+              ? l10n.clientBookingEnterUnloading
               : _toController.text,
           onPickupTap: () async {
             final selection = await _openLocationDetailsScreen(
@@ -4624,6 +4655,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildItemDetailsStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final weight = double.tryParse(_weightController.text.trim()) ?? 0;
     final quickWeights = [1.0, 4.5, 7.0, 12.0, 15.0, 18.0, 25.0];
 
@@ -4739,7 +4771,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Material weight',
+                      l10n.clientBookingMaterialWeight,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context.colors.textPrimary,
                         fontSize: 17,
@@ -4853,6 +4885,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildScheduleHeaderActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -4870,8 +4903,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _HeaderScheduleIconButton(
           icon: AppIcons.event_available_rounded,
           tooltip: _draft.scheduledDate == null
-              ? 'Book later'
-              : 'Book later: ${_formatDateTime(_draft.scheduledDate!)}',
+              ? l10n.checkoutBookLater
+              : l10n.clientBookingBookLaterAt(
+                  _formatDateTime(_draft.scheduledDate!),
+                ),
           selected: _draft.isScheduled,
           onTap: _pickScheduledDateTime,
         ),
@@ -4880,6 +4915,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildWeightBottomActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(18, 12, 18, bottomInset + 12),
@@ -4923,9 +4959,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              icon: const Text(
-                'Next',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              icon: Text(
+                l10n.clientBookingStepNext,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               label: const Icon(AppIcons.chevron_right_rounded, size: 22),
             ),
@@ -4976,6 +5015,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildPaymentMapSheetStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final mediaQuery = MediaQuery.of(context);
     final view = View.of(context);
     final viewBottomInset =
@@ -4996,21 +5036,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final allowToBeBilled =
         _postNegotiationPayment && _activeBookingId?.isNotEmpty == true;
     final advanceSubtitle = _loadingAdvanceAmount
-        ? 'Fetching advance'
+        ? l10n.clientBookingFetchingAdvance
         : _advanceAmount == null
-        ? 'Advance unavailable'
-        : '${_formatRupees(_advanceAmount!)} now';
+        ? l10n.clientBookingAdvanceUnavailable
+        : l10n.clientBookingAdvanceAmountNow(_formatRupees(_advanceAmount!));
     final fullSelected =
         selectedMethod != PaymentMethod.advance &&
         selectedMethod != PaymentMethod.payLater &&
         selectedMethod != PaymentMethod.toBeBilled;
     final ctaLabel = selectedMethod == PaymentMethod.payLater
-        ? 'Confirm To Pay'
+        ? l10n.clientBookingConfirmToPay
         : selectedMethod == PaymentMethod.toBeBilled
-        ? 'Confirm Billing'
+        ? l10n.clientBookingConfirmBilling
         : selectedMethod == PaymentMethod.advance
-        ? 'Pay Advance'
-        : 'Pay Securely';
+        ? l10n.clientBookingPayAdvance
+        : l10n.clientBookingPaySecurely;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -5127,7 +5167,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Choose payment',
+                                        l10n.clientBookingChoosePayment,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleLarge
@@ -5138,7 +5178,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
-                                        'Map stays live while you finish checkout.',
+                                        l10n.clientBookingCheckoutMapNote,
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall

@@ -7,12 +7,20 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../network/api_client.dart';
+import '../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 
 class DriverLocationTracker {
   DriverLocationTracker(this._ref);
 
   final Ref _ref;
+
+  /// Localizations for the user-facing messages this tracker returns. The
+  /// tracker has no BuildContext, so it looks them up for the current app
+  /// locale directly.
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(_ref.read(localeProvider));
 
   StreamSubscription<Position>? _subscription;
   String? _activeTripId;
@@ -27,12 +35,13 @@ class DriverLocationTracker {
 
     final session = _ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      return 'Please sign in again before enabling location sharing.';
+      return _l10n
+          .driverTrackingSignInAgainBeforeEnablingLocation;
     }
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return 'Enable location services on the device to share live tracking.';
+      return _l10n.driverTrackingEnableLocationServices;
     }
 
     final permission = await Geolocator.checkPermission();
@@ -40,10 +49,10 @@ class DriverLocationTracker {
       final requested = await Geolocator.requestPermission();
       if (requested == LocationPermission.denied ||
           requested == LocationPermission.deniedForever) {
-        return 'Location permission is required for live driver tracking.';
+        return _l10n.driverTrackingLocationPermissionRequired;
       }
     } else if (permission == LocationPermission.deniedForever) {
-      return 'Location permission is permanently denied. Open app settings to enable it.';
+      return _l10n.driverTrackingLocationPermissionDeniedForever;
     }
 
     if (_subscription != null) {
@@ -75,7 +84,7 @@ class DriverLocationTracker {
         error: error,
         stackTrace: stackTrace,
       );
-      return 'Unable to start live tracking on this device.';
+      return _l10n.driverTrackingUnableToStartLiveTracking;
     }
 
     return null;
@@ -114,12 +123,12 @@ class DriverLocationTracker {
   Future<String?> refreshCurrentLocation() async {
     final session = _ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      return 'Please sign in again before refreshing location.';
+      return _l10n.driverTrackingSignInAgainBeforeRefreshingLocation;
     }
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return 'Enable location services on the device to share live tracking.';
+      return _l10n.driverTrackingEnableLocationServices;
     }
 
     final permission = await Geolocator.checkPermission();
@@ -127,10 +136,10 @@ class DriverLocationTracker {
       final requested = await Geolocator.requestPermission();
       if (requested == LocationPermission.denied ||
           requested == LocationPermission.deniedForever) {
-        return 'Location permission is required for live driver tracking.';
+        return _l10n.driverTrackingLocationPermissionRequired;
       }
     } else if (permission == LocationPermission.deniedForever) {
-      return 'Location permission is permanently denied. Open app settings to enable it.';
+      return _l10n.driverTrackingLocationPermissionDeniedForever;
     }
 
     final settings = _trackingSettings();

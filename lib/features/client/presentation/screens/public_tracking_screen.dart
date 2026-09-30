@@ -73,7 +73,7 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
           : response;
       if (!mounted) return;
       setState(() {
-        _shipment = _shipmentFromPublicTracking(data);
+        _shipment = _shipmentFromPublicTracking(data, l10n);
         _incident = _payloadMap(data['incident']).isEmpty
             ? null
             : _payloadMap(data['incident']);
@@ -438,7 +438,10 @@ class _PublicTrackingMessage extends StatelessWidget {
   }
 }
 
-TrackingDemoShipment _shipmentFromPublicTracking(Map<String, dynamic> data) {
+TrackingDemoShipment _shipmentFromPublicTracking(
+  Map<String, dynamic> data,
+  AppLocalizations l10n,
+) {
   final status = _readPublicString(data, const ['status', 'booking_status']);
   final pickup = _readPublicString(data, const [
     'pickup',
@@ -461,7 +464,9 @@ TrackingDemoShipment _shipmentFromPublicTracking(Map<String, dynamic> data) {
   ]);
   return TrackingDemoShipment(
     packageName: 'Shipment',
-    trackingId: bookingNumber.isEmpty ? 'Live tracking' : bookingNumber,
+    trackingId: bookingNumber.isEmpty
+        ? l10n.driverDetailLiveTracking
+        : bookingNumber,
     fromLocation: pickup,
     toLocation: drop,
     status: _titleCase(status.isEmpty ? 'pending' : status),
@@ -522,7 +527,7 @@ TrackingDemoShipment _shipmentFromPublicTracking(Map<String, dynamic> data) {
       'truckReg',
       'truck_reg',
     ]),
-    timeline: _publicTimeline(status, pickup, drop),
+    timeline: _publicTimeline(status, pickup, drop, l10n),
   );
 }
 
@@ -530,6 +535,7 @@ List<TrackingTimelineStep> _publicTimeline(
   String status,
   String pickup,
   String drop,
+  AppLocalizations l10n,
 ) {
   final normalized = status.trim().toLowerCase();
   final inTransit = const {
@@ -543,23 +549,27 @@ List<TrackingTimelineStep> _publicTimeline(
   final delivered = normalized == 'delivered' || normalized == 'completed';
   return [
     TrackingTimelineStep(
-      title: 'Booking created',
-      subtitle: pickup.isEmpty ? 'Pickup location' : pickup,
+      title: l10n.clientPublicTimelineBookingCreated,
+      subtitle: pickup.isEmpty ? l10n.pickupLocation : pickup,
       completed: true,
     ),
     TrackingTimelineStep(
-      title: 'Assigned',
-      subtitle: 'Vehicle assigned',
+      title: l10n.assigned,
+      subtitle: l10n.clientPublicTimelineVehicleAssigned,
       completed: inTransit,
     ),
     TrackingTimelineStep(
-      title: 'In transit',
-      subtitle: drop.isEmpty ? 'Drop-off location' : drop,
+      title: l10n.inTransit,
+      subtitle: drop.isEmpty
+          ? l10n.clientPublicTimelineDropLocation
+          : drop,
       completed: inTransit,
     ),
     TrackingTimelineStep(
-      title: 'Delivered',
-      subtitle: delivered ? 'Completed successfully' : 'Pending',
+      title: l10n.delivered,
+      subtitle: delivered
+          ? l10n.clientPublicTimelineCompletedSuccessfully
+          : l10n.pending,
       completed: delivered,
     ),
   ];

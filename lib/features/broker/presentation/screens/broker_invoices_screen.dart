@@ -67,9 +67,10 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
                     accessToken: session.tokens.accessToken,
                     id: booking.id,
                     to: session.user.email ?? 'broker@ssklogistics.in',
-                    subject: 'Invoice for ${booking.bookingNumber}',
-                    message:
-                        'Please find attached the invoice for ${booking.bookingNumber}.',
+                    subject: AppLocalizations.of(context)!
+                        .invoiceForBooking(booking.bookingNumber),
+                    message: AppLocalizations.of(context)!
+                        .invoiceEmailMessage(booking.bookingNumber),
                   );
               if (!mounted) return;
               messenger.showSnackBar(

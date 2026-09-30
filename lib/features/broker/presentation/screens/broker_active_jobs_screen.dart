@@ -264,15 +264,16 @@ class _BrokerActiveJobsScreenState
   }
 
   Future<void> _showDisputeSheet(_ActiveBrokerJob job) async {
-    const issueTypes = [
-      ('damaged_goods', 'Damaged Goods'),
-      ('payment_delay', 'Payment Delay'),
-      ('cancellation_fee', 'Cancellation Fee'),
-      ('route_dispute', 'Route Dispute'),
-      ('late_delivery', 'Late Delivery'),
-      ('fuel_surcharge', 'Fuel Surcharge'),
-      ('wrong_items', 'Wrong Items'),
-      ('weight_discrepancy', 'Weight Discrepancy'),
+    final l10n = AppLocalizations.of(context)!;
+    final issueTypes = [
+      ('damaged_goods', l10n.brokerActiveJobsIssueDamagedGoods),
+      ('payment_delay', l10n.brokerActiveJobsIssuePaymentDelay),
+      ('cancellation_fee', l10n.brokerActiveJobsIssueCancellationFee),
+      ('route_dispute', l10n.brokerActiveJobsIssueRouteDispute),
+      ('late_delivery', l10n.brokerActiveJobsIssueLateDelivery),
+      ('fuel_surcharge', l10n.brokerActiveJobsIssueFuelSurcharge),
+      ('wrong_items', l10n.brokerActiveJobsIssueWrongItems),
+      ('weight_discrepancy', l10n.brokerActiveJobsIssueWeightDiscrepancy),
     ];
     String issueType = issueTypes.first.$1;
     final descriptionController = TextEditingController();
@@ -456,7 +457,8 @@ class _BrokerActiveJobsScreenState
                       icon: AppIcons.local_shipping_rounded,
                       label: AppLocalizations.of(context)!.brokerActiveJobsCurrentlyAssigned,
                       value: job.driverName.isEmpty
-                          ? 'Not Assigned'
+                          ? AppLocalizations.of(context)!
+                                .brokerActiveJobsNotAssigned
                           : job.driverName,
                     ),
                     const SizedBox(height: 12),
@@ -484,7 +486,10 @@ class _BrokerActiveJobsScreenState
                             child: Text(
                               [
                                 driver.name.isEmpty ? driver.id : driver.name,
-                                driverStatusLabel(driver.status),
+                                driverStatusLabel(
+                                  driver.status,
+                                  AppLocalizations.of(context)!,
+                                ),
                               ].join(' - '),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -525,7 +530,11 @@ class _BrokerActiveJobsScreenState
                           backgroundColor: AppColors.brand,
                         ),
                         child: Text(
-                          submitting ? 'Reassigning...' : 'Reassign Driver',
+                          submitting
+                              ? AppLocalizations.of(sheetContext)!
+                                    .brokerFlowReassigning
+                              : AppLocalizations.of(sheetContext)!
+                                    .brokerActiveJobsReassignDriver,
                         ),
                       ),
                     ),
@@ -679,8 +688,8 @@ class _ActiveJobCard extends StatelessWidget {
                     if (job.incident != null)
                       _StatusPill(
                         label: job.incident!.reason == 'breakdown'
-                            ? 'Breakdown Reported'
-                            : 'Issue Reported',
+                            ? l10n.brokerActiveJobsBreakdownReported
+                            : l10n.brokerActiveJobsIssueReported,
                         color: AppColors.dangerIcon,
                       ),
                   ],
@@ -711,8 +720,8 @@ class _ActiveJobCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             job.distance <= 0
-                ? 'Route distance pending'
-                : '${job.distance} km route',
+                ? l10n.brokerActiveJobsRouteDistancePending
+                : l10n.brokerActiveJobsRouteKm(job.distance.toString()),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textTertiary,
               fontWeight: FontWeight.w700,
@@ -748,7 +757,9 @@ class _ActiveJobCard extends StatelessWidget {
                 child: _MiniInfoTile(
                   icon: AppIcons.local_shipping_rounded,
                   label: AppLocalizations.of(context)!.brokerActiveJobsTruck,
-                  value: job.truckReg.isEmpty ? 'Not Assigned' : job.truckReg,
+                  value: job.truckReg.isEmpty
+                      ? l10n.brokerActiveJobsNotAssigned
+                      : job.truckReg,
                 ),
               ),
               const SizedBox(width: 10),
@@ -757,7 +768,7 @@ class _ActiveJobCard extends StatelessWidget {
                   icon: AppIcons.person_rounded,
                   label: AppLocalizations.of(context)!.brokerActiveJobsDriver,
                   value: job.driverName.isEmpty
-                      ? 'Not Assigned'
+                      ? l10n.brokerActiveJobsNotAssigned
                       : job.driverName,
                 ),
               ),
@@ -1066,12 +1077,12 @@ class _ProgressDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    const steps = [
-      ('assigned', 'Assigned'),
-      ('en_route_pickup', 'En Route'),
-      ('picked_up', 'Picked Up'),
-      ('in_transit', 'In Transit'),
-      ('delivered', 'Delivered'),
+    final steps = [
+      ('assigned', l10n.assigned),
+      ('en_route_pickup', l10n.brokerActiveJobsStepEnRoute),
+      ('picked_up', l10n.brokerActiveJobsStepPickedUp),
+      ('in_transit', l10n.brokerActiveJobsStepInTransit),
+      ('delivered', l10n.delivered),
     ];
     final index = steps.indexWhere((step) => step.$1 == status);
     final activeIndex = index < 0 ? 0 : index;

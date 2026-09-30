@@ -39,6 +39,17 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   bool _showingLoginAttemptAlert = false;
   OverlayEntry? _loginAttemptAlertEntry;
 
+  /// Localizations for code that runs outside a widget `build`. Prefers the
+  /// messenger's context (which sits under the localizations delegates) and
+  /// falls back to a direct lookup for the current app locale.
+  AppLocalizations get _l10n {
+    final messengerContext = _messengerKey.currentContext;
+    final fromContext = messengerContext == null
+        ? null
+        : AppLocalizations.of(messengerContext);
+    return fromContext ?? lookupAppLocalizations(ref.read(localeProvider));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -131,17 +142,12 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   void _handleChatMessage(Map<String, dynamic> payload) {
     _incrementChatUnreadCount(payload);
-    final messengerContext = _messengerKey.currentContext;
-    final l10n = messengerContext == null
-        ? null
-        : AppLocalizations.of(messengerContext);
-    final senderFallback = l10n?.appChatSupportFallback ?? 'Support';
+    final l10n = _l10n;
+    final senderFallback = l10n.appChatSupportFallback;
     final text = _chatPreview(payload['message']?.toString() ?? '');
-    final title = l10n == null
-        ? 'New message from ${payload['senderName']?.toString() ?? senderFallback}'
-        : l10n.appNewMessageFrom(
-            payload['senderName']?.toString() ?? senderFallback,
-          );
+    final title = l10n.appNewMessageFrom(
+      payload['senderName']?.toString() ?? senderFallback,
+    );
     _showChatMessage(
       title: title,
       message: text,
@@ -150,23 +156,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   void _handleChatEscalated(Map<String, dynamic> payload) {
     _incrementChatUnreadCount(payload);
-    final messengerContext = _messengerKey.currentContext;
-    final l10n = messengerContext == null
-        ? null
-        : AppLocalizations.of(messengerContext);
+    final l10n = _l10n;
     final booking = payload['bookingNumber']?.toString();
-    final byFallback = l10n?.appChatClientFallback ?? 'a client';
-    final byName = payload['byName']?.toString() ?? byFallback;
-    if (l10n == null) {
-      final suffix = booking == null || booking.isEmpty
-          ? ''
-          : ' - Booking #$booking';
-      _showChatMessage(
-        title: 'New chat request',
-        message: 'New chat request from $byName$suffix',
-      );
-      return;
-    }
+    final byName = payload['byName']?.toString() ?? l10n.appChatClientFallback;
     final suffix = booking == null || booking.isEmpty
         ? ''
         : l10n.appNewChatBookingSuffix(booking);
@@ -265,11 +257,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       if (overlay == null) {
         return;
       }
-      final overlayContext = navigatorState?.context;
-      final l10n = overlayContext == null
-          ? null
-          : AppLocalizations.of(overlayContext);
-      final message = _loginAttemptAlertMessage(payload, l10n);
+      final message = _loginAttemptAlertMessage(payload, _l10n);
 
       _loginAttemptAlertEntry?.remove();
       _loginAttemptAlertEntry = OverlayEntry(
@@ -376,7 +364,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   }
 
   String _loginAttemptAlertMessage(
-      Map<String, dynamic> payload, AppLocalizations? l10n) {
+    Map<String, dynamic> payload,
+    AppLocalizations l10n,
+  ) {
     final message = payload['message']?.toString().trim();
     if (message != null &&
         message.isNotEmpty &&
@@ -384,22 +374,17 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       return message;
     }
 
-    return l10n?.appLoginAttemptBlockedBody ??
-        "Someone just tried to log in to your account from another device. If this wasn't you, please contact support.";
+    return l10n.appLoginAttemptBlockedBody;
   }
 
   void _showTrackingMessage(String message) {
     final messenger = _messengerKey.currentState;
     if (messenger == null) return;
-    final actionLabel = messenger.context.mounted
-        ? AppLocalizations.of(messenger.context)?.appTrackingSettingsAction ??
-            'Settings'
-        : 'Settings';
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         action: SnackBarAction(
-          label: actionLabel,
+          label: _l10n.appTrackingSettingsAction,
           onPressed: () => Geolocator.openLocationSettings(),
         ),
       ),

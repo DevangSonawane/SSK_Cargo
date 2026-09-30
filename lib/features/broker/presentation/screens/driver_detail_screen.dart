@@ -138,7 +138,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                     _InfoBlock(
                                       title: AppLocalizations.of(context)!.driverDetailOnTripSince,
                                       value: widget.driver.onTripSince.isEmpty
-                                          ? 'Not on trip'
+                                          ? l10n.driverDetailNotOnTrip
                                           : widget.driver.onTripSince,
                                     ),
                                   ],
@@ -270,7 +270,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
                 driver: widget.driver,
                 title: l10n.driverDetailLiveDriverPosition,
                 subtitle: widget.driver.currentLocation.isEmpty
-                    ? 'Awaiting live location'
+                    ? l10n.driverDetailAwaitingLiveLocation
                     : widget.driver.currentLocation,
                 height: null,
               ),
@@ -344,7 +344,7 @@ class _DriverSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 StatusPill(
-                  label: driverStatusLabel(driver.status),
+                  label: driverStatusLabel(driver.status, l10n),
                   backgroundColor: driverStatusBackground(driver.status),
                   textColor: driverStatusColor(driver.status),
                 ),

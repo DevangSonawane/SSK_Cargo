@@ -234,11 +234,12 @@ class _DriverKycRegistrationScreenState
   }
 
   void _applyUploadedDocumentsFromSubmission(Map<String, String> documents) {
+    final l10n = AppLocalizations.of(context)!;
     final panUrl = documents['pan_photo_url'];
     if (panUrl != null && panUrl.isNotEmpty) {
       _attachments['pan_photo_url'] = _KycAttachment(
-        fileName: 'PAN Card',
-        sourceLabel: 'Submitted URL',
+        fileName: l10n.driverKycPanCard,
+        sourceLabel: l10n.driverKycSourceLabelSubmittedUrl,
         url: panUrl,
       );
     }
@@ -246,8 +247,8 @@ class _DriverKycRegistrationScreenState
     final licenseUrl = documents['license_photo_url'];
     if (licenseUrl != null && licenseUrl.isNotEmpty) {
       _attachments['license_photo_url'] = _KycAttachment(
-        fileName: 'Driving License',
-        sourceLabel: 'Submitted URL',
+        fileName: l10n.driverKycDrivingLicense,
+        sourceLabel: l10n.driverKycSourceLabelSubmittedUrl,
         url: licenseUrl,
       );
     }
@@ -255,8 +256,8 @@ class _DriverKycRegistrationScreenState
     final aadhaarUrl = documents['aadhaar_photo_url'];
     if (aadhaarUrl != null && aadhaarUrl.isNotEmpty) {
       _attachments['aadhaar_photo_url'] = _KycAttachment(
-        fileName: 'Aadhaar Card',
-        sourceLabel: 'Submitted URL',
+        fileName: l10n.driverKycAadhaarCard,
+        sourceLabel: l10n.driverKycSourceLabelSubmittedUrl,
         url: aadhaarUrl,
       );
     }
@@ -407,8 +408,9 @@ class _DriverKycRegistrationScreenState
           SnackBar(
             content: Text(
               _statusLabel == 'verified'
-                  ? "You're verified - full access unlocked."
-                  : 'KYC submitted for review.',
+                  ? AppLocalizations.of(context)!.driverKycVerifiedSnack
+                  : AppLocalizations.of(context)!
+                        .driverKycSubmittedForReviewSnack,
             ),
             backgroundColor: AppColors.brand,
           ),
@@ -762,8 +764,9 @@ class _DriverKycRegistrationScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(
-          title: 'Upload Documents',
-          subtitle: 'Upload clear photos of the following documents.',
+          title: AppLocalizations.of(context)!.driverKycUploadDocumentsTitle,
+          subtitle: AppLocalizations.of(context)!
+              .driverKycUploadDocumentsSubtitle,
         ),
         const SizedBox(height: 16),
         for (var i = 0; i < _kycDocuments.length; i++) ...[
@@ -892,7 +895,8 @@ class _DriverKycRegistrationScreenState
                 setState(() {});
               },
               title: Text(
-                'I confirm that all the information provided is accurate.',
+                AppLocalizations.of(context)!
+                    .driverKycConfirmAccuracyDeclaration,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -1287,7 +1291,7 @@ class _DriverKycRegistrationScreenState
         if (showForm) ...[
           const SizedBox(height: 16),
           _CardSection(
-            title: 'Verify Your Identity',
+            title: AppLocalizations.of(context)!.driverKycVerifyIdentity,
             child: Builder(
               builder: (context) {
                 final session = ref.watch(authSessionProvider).valueOrNull;
@@ -1313,7 +1317,8 @@ class _DriverKycRegistrationScreenState
           if (_digiNeedsFallback) ...[
             const SizedBox(height: 16),
             _CardSection(
-              title: 'Upload Documents',
+              title: AppLocalizations.of(context)!
+                  .driverKycUploadDocumentsTitle,
               child: Builder(
                 builder: (context) {
                   // Web parity: only the documents DigiLocker couldn't
@@ -1385,10 +1390,12 @@ class _DriverKycRegistrationScreenState
                   : const Icon(AppIcons.file_upload_outlined, size: 18),
               label: Text(
                 _digiAllVerified
-                    ? 'Finish'
+                    ? AppLocalizations.of(context)!.driverKycFinish
                     : (_isRejectedStatus(status)
-                          ? 'Resubmit for Review'
-                          : 'Submit for Review'),
+                          ? AppLocalizations.of(context)!
+                                .driverKycResubmitForReview
+                          : AppLocalizations.of(context)!
+                                .driverKycSubmitForReview),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brand,
@@ -1468,7 +1475,7 @@ class _DriverKycRegistrationScreenState
           ),
         ),
         title: Text(
-          'Driver KYC',
+          AppLocalizations.of(context)!.driverKycDriverKycTitle,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontSize: 22,

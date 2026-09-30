@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class PaymentMethodTypeOption {
@@ -81,18 +82,18 @@ class SavedPaymentMethod {
     );
   }
 
-  String get secondaryLabel {
+  String secondaryLabelOf(AppLocalizations l10n) {
     switch (methodType) {
       case 'upi':
         final upiId = readString(details, const ['upi_id']);
-        return upiId.isNotEmpty ? upiId : 'UPI';
+        return upiId.isNotEmpty ? upiId : l10n.clientPaymentUpiFallback;
       case 'card':
         final brand = readString(details, const ['brand']);
         final last4 = readString(details, const ['last4']);
         if (brand.isNotEmpty && last4.isNotEmpty) {
           return '$brand •••• $last4';
         }
-        return 'Card';
+        return l10n.clientPaymentTypeCard;
       case 'netbanking':
         final bank = readString(details, const ['bank']);
         final last4 = readString(details, const ['account_last4']);
@@ -101,12 +102,12 @@ class SavedPaymentMethod {
           final suffix = ifsc.isNotEmpty ? ' · $ifsc' : '';
           return '$bank •••• $last4$suffix';
         }
-        return bank.isNotEmpty ? bank : 'Netbanking';
+        return bank.isNotEmpty ? bank : l10n.clientCheckoutMethodNetbanking;
       case 'wallet':
         final wallet = readString(details, const ['wallet']);
-        return wallet.isNotEmpty ? wallet : 'Wallet';
+        return wallet.isNotEmpty ? wallet : l10n.clientPaymentTypeWallet;
       default:
-        return methodType.isNotEmpty ? methodType : 'Payment method';
+        return methodType.isNotEmpty ? methodType : l10n.clientPaymentTypeMethod;
     }
   }
 }

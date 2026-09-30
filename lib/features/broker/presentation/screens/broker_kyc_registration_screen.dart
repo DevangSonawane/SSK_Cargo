@@ -147,13 +147,6 @@ class _BrokerKycRegistrationScreenState
     ),
   ];
 
-  static const _stepLabels = <String>[
-    'Details',
-    'Documents',
-    'Review',
-    'Submit',
-  ];
-
   bool _isApprovedStatus(String status) {
     return status.contains('verified') ||
         status.contains('approved') ||
@@ -228,11 +221,12 @@ class _BrokerKycRegistrationScreenState
   }
 
   void _applyUploadedDocumentsFromSubmission(Map<String, String> documents) {
+    final l10n = AppLocalizations.of(context)!;
     final panUrl = documents['pan_photo_url'];
     if (panUrl != null && panUrl.isNotEmpty) {
       _attachments['pan_photo_url'] = _KycAttachment(
-        fileName: 'PAN Card',
-        sourceLabel: 'Submitted URL',
+        fileName: l10n.driverKycPanCard,
+        sourceLabel: l10n.brokerKycSubmittedUrl,
         url: panUrl,
       );
     }
@@ -240,8 +234,8 @@ class _BrokerKycRegistrationScreenState
     final aadhaarUrl = documents['aadhaar_photo_url'];
     if (aadhaarUrl != null && aadhaarUrl.isNotEmpty) {
       _attachments['aadhaar_photo_url'] = _KycAttachment(
-        fileName: 'Aadhaar Card',
-        sourceLabel: 'Submitted URL',
+        fileName: l10n.driverKycAadhaarCard,
+        sourceLabel: l10n.brokerKycSubmittedUrl,
         url: aadhaarUrl,
       );
     }
@@ -309,7 +303,9 @@ class _BrokerKycRegistrationScreenState
       if (mounted) {
         setState(() {
           _initialLoading = false;
-          _errorMessage = 'No active session found.';
+          _errorMessage = AppLocalizations.of(
+            context,
+          )!.brokerKycNoActiveSessionFound;
         });
       }
       return;
@@ -389,7 +385,9 @@ class _BrokerKycRegistrationScreenState
     if (!(_confirmCheckboxController.value)) {
       setState(() {
         _step = _KycStep.review;
-        _errorMessage = 'Please confirm that all information is accurate.';
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.brokerKycPleaseConfirmAllInformationIsAccurate;
       });
       return;
     }
@@ -430,8 +428,8 @@ class _BrokerKycRegistrationScreenState
           SnackBar(
             content: Text(
               _statusLabel == 'verified'
-                  ? "You're verified - full access unlocked."
-                  : 'KYC submitted for review.',
+                  ? AppLocalizations.of(context)!.brokerKycYouAreVerified
+                  : AppLocalizations.of(context)!.brokerKycSubmittedForReview,
             ),
             backgroundColor: AppColors.brand,
           ),
@@ -477,7 +475,13 @@ class _BrokerKycRegistrationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!.brokerKycIsProvidedInTheDetailsSection(document.title),
+              AppLocalizations.of(context)!
+                  .brokerKycIsProvidedInTheDetailsSection(
+                    _brokerKycDocumentTitle(
+                      AppLocalizations.of(context)!,
+                      document,
+                    ),
+                  ),
             ),
             backgroundColor: AppColors.brand,
           ),
@@ -521,7 +525,9 @@ class _BrokerKycRegistrationScreenState
           fileName: uploadedName != null && uploadedName.isNotEmpty
               ? uploadedName
               : picked.name,
-          sourceLabel: source == ImageSource.camera ? 'Camera' : 'Gallery',
+          sourceLabel: source == ImageSource.camera
+              ? AppLocalizations.of(context)!.driverKycCamera
+              : AppLocalizations.of(context)!.driverKycGallery,
           path: picked.path,
           url: uploadedUrl,
         );
@@ -558,7 +564,10 @@ class _BrokerKycRegistrationScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      document.title,
+                      _brokerKycDocumentTitle(
+                        AppLocalizations.of(context)!,
+                        document,
+                      ),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -676,7 +685,9 @@ class _BrokerKycRegistrationScreenState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  attachment.fileName ?? 'Uploaded file',
+                                  attachment.fileName ??
+                                      AppLocalizations.of(context)!
+                                          .driverKycUploadedFile,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w700,
@@ -685,7 +696,8 @@ class _BrokerKycRegistrationScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  attachment.sourceLabel ?? 'Upload',
+                                  attachment.sourceLabel ??
+                                      AppLocalizations.of(context)!.driverKycUpload,
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColors.textSecondary,
@@ -740,6 +752,13 @@ class _BrokerKycRegistrationScreenState
   }
 
   Widget _buildStepper() {
+    final l10n = AppLocalizations.of(context)!;
+    final stepLabels = <String>[
+      l10n.driverKycStepDetails,
+      l10n.driverKycStepDocuments,
+      l10n.driverKycStepReview,
+      l10n.driverKycStepSubmit,
+    ];
     final activeIndex = switch (_step) {
       _KycStep.details => 0,
       _KycStep.documents => 1,
@@ -749,7 +768,7 @@ class _BrokerKycRegistrationScreenState
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stepWidth = constraints.maxWidth / _stepLabels.length;
+        final stepWidth = constraints.maxWidth / stepLabels.length;
         final lineInset = stepWidth / 2;
 
         return SizedBox(
@@ -762,7 +781,7 @@ class _BrokerKycRegistrationScreenState
                 top: 18,
                 child: Row(
                   children: [
-                    for (var i = 0; i < _stepLabels.length - 1; i++) ...[
+                    for (var i = 0; i < stepLabels.length - 1; i++) ...[
                       Expanded(
                         child: Container(
                           height: 2,
@@ -777,10 +796,10 @@ class _BrokerKycRegistrationScreenState
               ),
               Row(
                 children: [
-                  for (var i = 0; i < _stepLabels.length; i++) ...[
+                  for (var i = 0; i < stepLabels.length; i++) ...[
                     Expanded(
                       child: _StepperItem(
-                        label: _stepLabels[i],
+                        label: stepLabels[i],
                         index: i,
                         activeIndex: activeIndex,
                       ),
@@ -1424,7 +1443,10 @@ class _BrokerKycRegistrationScreenState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _kycDocuments[i].title,
+                                    _brokerKycDocumentTitle(
+                                      AppLocalizations.of(context)!,
+                                      _kycDocuments[i],
+                                    ),
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -1437,7 +1459,8 @@ class _BrokerKycRegistrationScreenState
                                   Text(
                                     _attachments[_kycDocuments[i].key]
                                             ?.fileName ??
-                                        'Uploaded file',
+                                        AppLocalizations.of(context)!
+                                            .driverKycUploadedFile,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: AppColors.textSecondary,
@@ -1683,6 +1706,16 @@ class _KycDocument {
   final String formats;
   final String maxSize;
   final bool uploadable;
+}
+
+/// Localized document title, keyed off the stable [document.key] (an API
+/// field name — never localized). Mirrors the driver KYC screen helper.
+String _brokerKycDocumentTitle(AppLocalizations l10n, _KycDocument document) {
+  return switch (document.key) {
+    'pan_photo_url' => l10n.driverKycPanCard,
+    'aadhaar_photo_url' => l10n.driverKycAadhaarCard,
+    _ => document.title,
+  };
 }
 
 class _KycAttachment {
@@ -1947,8 +1980,8 @@ class _KycUploadCard extends StatelessWidget {
     final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
     final titleColor = uploaded ? AppColors.brandInk : AppColors.textPrimary;
     final badgeLabel = document.uploadable
-        ? (uploaded ? 'Uploaded' : document.requiredLabel)
-        : 'In details';
+        ? (uploaded ? l10n.driverKycUploaded : l10n.driverKycRequired)
+        : l10n.brokerKycInDetails;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1994,7 +2027,7 @@ class _KycUploadCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            document.title,
+                            _brokerKycDocumentTitle(l10n, document),
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
@@ -2021,7 +2054,7 @@ class _KycUploadCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      document.maxSize,
+                      l10n.driverKycMaxSize10Mb,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2240,8 +2273,8 @@ class _ReviewDocumentRow extends StatelessWidget {
     final hasPreview =
         attachment.path != null && File(attachment.path!).existsSync();
     final subtitle = document.uploadable
-        ? (uploaded ? 'Uploaded' : 'Waiting for upload')
-        : 'Included in details';
+        ? (uploaded ? l10n.driverKycUploaded : l10n.driverKycWaitingForUpload)
+        : l10n.brokerKycIncludedInDetails;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(

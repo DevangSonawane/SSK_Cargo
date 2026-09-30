@@ -45,11 +45,14 @@ class _SavedLocationShortcut {
   final String city;
   final String addressType;
 
-  factory _SavedLocationShortcut.fromJson(Map<String, dynamic> json) {
+  factory _SavedLocationShortcut.fromJson(
+    Map<String, dynamic> json, [
+    AppLocalizations? l10n,
+  ]) {
     return _SavedLocationShortcut(
       id: _locationString(json, const ['id']),
       label: _locationString(json, const ['label']).isEmpty
-          ? 'Saved address'
+          ? (l10n?.locationFlowSavedAddress ?? 'Saved address')
           : _locationString(json, const ['label']),
       address: _locationString(json, const ['address']),
       latitude: _locationDouble(json, const ['lat', 'latitude']),
@@ -89,7 +92,7 @@ class _LocationDetailsScreen extends ConsumerStatefulWidget {
     required this.initialValue,
     this.title,
     this.subtitle,
-    this.mapButtonLabel = 'Select on map',
+    this.mapButtonLabel,
     this.showCurrentLocation,
   });
 
@@ -97,7 +100,7 @@ class _LocationDetailsScreen extends ConsumerStatefulWidget {
   final String initialValue;
   final String? title;
   final String? subtitle;
-  final String mapButtonLabel;
+  final String? mapButtonLabel;
   final bool? showCurrentLocation;
 
   @override
@@ -170,12 +173,15 @@ class _LocationDetailsScreenState
           data['rows'] ??
           data['data'];
       if (raw is! List) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _savedAddresses = raw
             .whereType<Map>()
             .map(
-              (item) =>
-                  _SavedLocationShortcut.fromJson(item.cast<String, dynamic>()),
+              (item) => _SavedLocationShortcut.fromJson(
+                item.cast<String, dynamic>(),
+                l10n,
+              ),
             )
             .where(
               (address) => address.id.isNotEmpty && address.address.isNotEmpty,
@@ -413,6 +419,10 @@ class _LocationDetailsScreenState
       ? AppLocalizations.of(context)!.locationFlowUseCurrentPickup
       : AppLocalizations.of(context)!.locationFlowUseCurrent;
 
+  String get _mapButtonLabel =>
+      widget.mapButtonLabel ??
+      AppLocalizations.of(context)!.locationFlowSelectOnMap;
+
   IconData get _fieldIcon => widget.kind == _LocationFieldKind.pickup
       ? AppIcons.arrow_upward_rounded
       : AppIcons.arrow_downward_rounded;
@@ -457,7 +467,9 @@ class _LocationDetailsScreenState
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.locationFlowTurnOnLocation),
+            content: Text(
+              AppLocalizations.of(context)!.locationFlowTurnOnLocation,
+            ),
           ),
         );
         return;
@@ -472,7 +484,9 @@ class _LocationDetailsScreenState
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.locationFlowPermissionNeeded),
+            content: Text(
+              AppLocalizations.of(context)!.locationFlowPermissionNeeded,
+            ),
           ),
         );
         return;
@@ -493,7 +507,9 @@ class _LocationDetailsScreenState
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.locationFlowResolveCurrent),
+            content: Text(
+              AppLocalizations.of(context)!.locationFlowResolveCurrent,
+            ),
           ),
         );
         return;
@@ -562,7 +578,7 @@ class _LocationDetailsScreenState
                         OutlinedButton.icon(
                           onPressed: _openMapPicker,
                           icon: const Icon(AppIcons.map_outlined, size: 17),
-                          label: Text(widget.mapButtonLabel),
+                          label: Text(_mapButtonLabel),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: context.colors.infoEmphasis,
                             side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -628,9 +644,7 @@ class _LocationDetailsScreenState
                             decoration: BoxDecoration(
                               color: context.colors.surface,
                               borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: context.colors.line,
-                              ),
+                              border: Border.all(color: context.colors.line),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.04),
@@ -818,7 +832,9 @@ class _LocationDetailsScreenState
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        AppLocalizations.of(context)!.locationFlowSuggestionsError,
+                        AppLocalizations.of(
+                          context,
+                        )!.locationFlowSuggestionsError,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.colors.dangerEmphasis,
                           fontWeight: FontWeight.w600,
@@ -908,11 +924,15 @@ class _IntermediateStopDetailsScreen extends StatelessWidget {
     return _LocationDetailsScreen(
       kind: loading ? _LocationFieldKind.pickup : _LocationFieldKind.drop,
       initialValue: '',
-      title: loading ? l10n.locationFlowAddLoading : l10n.locationFlowAddUnloading,
+      title: loading
+          ? l10n.locationFlowAddLoading
+          : l10n.locationFlowAddUnloading,
       subtitle: loading
           ? l10n.locationFlowAddLoadingHint
           : l10n.locationFlowAddUnloadingHint,
-      mapButtonLabel: loading ? l10n.locationFlowPinLoading : l10n.locationFlowPinUnloading,
+      mapButtonLabel: loading
+          ? l10n.locationFlowPinLoading
+          : l10n.locationFlowPinUnloading,
       showCurrentLocation: loading,
     );
   }
@@ -940,8 +960,21 @@ class _MapLocationPickerScreenState
   bool _resolving = false;
   bool _dragging = false;
 
-  String get _locationLabel =>
-      widget.kind == _LocationFieldKind.pickup ? 'pickup' : 'drop-off';
+  bool get _isPickup => widget.kind == _LocationFieldKind.pickup;
+
+  String get _setLocationTitle {
+    final l10n = AppLocalizations.of(context)!;
+    return _isPickup
+        ? l10n.locationFlowSetPickupLocation
+        : l10n.locationFlowSetDropLocation;
+  }
+
+  String get _useThisLocationLabel {
+    final l10n = AppLocalizations.of(context)!;
+    return _isPickup
+        ? l10n.locationFlowUseThisPickup
+        : l10n.locationFlowUseThisDrop;
+  }
 
   @override
   void initState() {
@@ -965,7 +998,9 @@ class _MapLocationPickerScreenState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 15));
       });
-      unawaited(_mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 15)));
+      unawaited(
+        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 15)),
+      );
       ref.read(userLocationProvider.notifier).refreshInBackground();
       return center;
     }
@@ -1034,7 +1069,11 @@ class _MapLocationPickerScreenState
       if (ownLocation == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.locationFlowOwnUnavailable)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.locationFlowOwnUnavailable,
+            ),
+          ),
         );
         return;
       }
@@ -1070,7 +1109,11 @@ class _MapLocationPickerScreenState
       if (!mounted) return;
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.locationFlowResolvePoint)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.locationFlowResolvePoint,
+            ),
+          ),
         );
         return;
       }
@@ -1169,7 +1212,7 @@ class _MapLocationPickerScreenState
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'Set $_locationLabel location',
+                          _setLocationTitle,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
@@ -1255,27 +1298,29 @@ class _MapLocationPickerScreenState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      AppLocalizations.of(context)!.locationFlowMovePin,
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.locationFlowMovePin,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleSmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w800,
-                                            color:
-                                                context.colors.textPrimary,
+                                            color: context.colors.textPrimary,
                                           ),
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
-                                      AppLocalizations.of(context)!.locationFlowPinHint,
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.locationFlowPinHint,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
                                           ?.copyWith(
-                                            color:
-                                                context.colors.textSecondary,
+                                            color: context.colors.textSecondary,
                                           ),
                                     ),
                                   ],
@@ -1299,8 +1344,10 @@ class _MapLocationPickerScreenState
                               : const Icon(AppIcons.check_rounded),
                           label: Text(
                             _resolving
-                                ? 'Finding address...'
-                                : 'Use this $_locationLabel',
+                                ? AppLocalizations.of(
+                                    context,
+                                  )!.locationFlowFindingAddress
+                                : _useThisLocationLabel,
                           ),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1337,9 +1384,7 @@ class _MapCircleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: context.colors.surface,
-      shape: CircleBorder(
-        side: BorderSide(color: context.colors.line),
-      ),
+      shape: CircleBorder(side: BorderSide(color: context.colors.line)),
       elevation: 2,
       child: InkWell(
         onTap: onTap,
@@ -1389,9 +1434,7 @@ class _CenterPin extends StatelessWidget {
                 width: lifted ? 24 : 34,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(
-                    alpha: lifted ? 0.16 : 0.28,
-                  ),
+                  color: Colors.black.withValues(alpha: lifted ? 0.16 : 0.28),
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -1522,5 +1565,23 @@ extension TripTypeDisplayLabel on TripType {
   String get helperText => switch (this) {
     TripType.interCity => 'Dedicated truck for one shipment',
     TripType.intraCity => 'Share capacity and optimize cost',
+  };
+}
+
+/// Localized display label for a trip type. `TripType.displayLabel` stays
+/// English because callers key off it; prefer this wherever the value is
+/// only rendered.
+String localizedTripTypeLabel(AppLocalizations l10n, TripType type) {
+  return switch (type) {
+    TripType.interCity => l10n.tripTypeFullTruck,
+    TripType.intraCity => l10n.tripTypePartTruck,
+  };
+}
+
+/// Localized helper line for a trip type. See [localizedTripTypeLabel].
+String localizedTripTypeHelperText(AppLocalizations l10n, TripType type) {
+  return switch (type) {
+    TripType.interCity => l10n.tripTypeFullTruckHelper,
+    TripType.intraCity => l10n.tripTypePartTruckHelper,
   };
 }

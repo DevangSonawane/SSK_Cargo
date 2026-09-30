@@ -132,8 +132,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
         SnackBar(
           content: Text(
             widget.existingTruck == null
-                ? 'Truck added successfully.'
-                : 'Truck updated successfully.',
+                ? AppLocalizations.of(context)!.addVehicleTruckAddedSuccessfully
+                : AppLocalizations.of(context)!.addVehicleTruckUpdatedSuccessfully,
           ),
         ),
       );
@@ -412,7 +412,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                       return l10n.addVehicleErrInsuranceExpiry;
                     }
                     if (DateTime.tryParse(value.trim()) == null) {
-                      return 'Use YYYY-MM-DD';
+                      return l10n.addVehicleUseYyyyMmdd;
                     }
                     return null;
                   },

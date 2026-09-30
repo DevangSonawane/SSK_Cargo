@@ -199,7 +199,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       final removed = _pendingAssignments.remove(offer.jobRequestId) != null;
       final name = offer.driverName.isNotEmpty
           ? offer.driverName
-          : 'The driver';
+          : AppLocalizations.of(context)!.brokerHomeTheDriver;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -216,7 +216,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       _pendingAssignments.remove(offer.jobRequestId);
       final name = offer.driverName.isNotEmpty
           ? offer.driverName
-          : 'The driver';
+          : AppLocalizations.of(context)!.brokerHomeTheDriver;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.brokerHomeConfirmedTripCreated(name)),
@@ -1461,7 +1461,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
           titleOf: (driver) => driver.name.isNotEmpty ? driver.name : driver.id,
           subtitleOf: (driver) => [
             if (driver.phone.isNotEmpty) driver.phone,
-            driverStatusLabel(driver.status),
+            driverStatusLabel(driver.status, AppLocalizations.of(context)!),
           ].join(' - '),
           onChanged: (value) {
             if (value == null) return;
@@ -1486,7 +1486,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
           titleOf: _truckTitle,
           subtitleOf: (truck) => [
             if (truck.capacity.isNotEmpty) truck.capacity,
-            vehicleStatusLabel(truck.status),
+            vehicleStatusLabel(truck.status, AppLocalizations.of(context)!),
           ].join(' - '),
           onChanged: (value) => setState(() => _truckId = value),
         ),

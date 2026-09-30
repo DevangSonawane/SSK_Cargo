@@ -118,8 +118,8 @@ class _BrokerTruckHistoryScreenState
                       if (trips.isEmpty)
                         _HistoryEmptyState(
                           title: bundle.trips.isEmpty
-                              ? 'No trips yet'
-                              : 'No trips match your search',
+                              ? l10n.noTripsYet
+                              : l10n.brokerTruckHistoryNoTripsMatchSearch,
                           subtitle:
                               l10n.brokerTruckHistoryTruckTripsWillAppearHereOnceJobs,
                         )
@@ -302,18 +302,18 @@ class _TripHistoryCard extends StatelessWidget {
                   _TripMetric(
                     icon: AppIcons.person_rounded,
                     label: trip.driverName.isEmpty
-                        ? 'Driver pending'
+                        ? l10n.brokerTruckHistoryDriverPending
                         : trip.driverName,
                   ),
                   _TripMetric(
                     icon: AppIcons.route_rounded,
                     label: trip.distance > 0
                         ? '${trip.distance.toStringAsFixed(trip.distance % 1 == 0 ? 0 : 1)} km'
-                        : 'Distance pending',
+                        : l10n.brokerTruckHistoryDistancePending,
                   ),
                   _TripMetric(
                     icon: AppIcons.payments_rounded,
-                    label: _formatRupees(trip.earnings),
+                    label: _formatRupees(trip.earnings, l10n),
                   ),
                 ],
               ),
@@ -550,8 +550,10 @@ String _firstNonEmpty(List<String> values) {
   return '';
 }
 
-String _formatRupees(double value) {
-  if (value <= 0) return 'Earnings pending';
+String _formatRupees(double value, [AppLocalizations? l10n]) {
+  if (value <= 0) {
+    return l10n?.brokerTruckHistoryEarningsPending ?? 'Earnings pending';
+  }
   final fixed = value.toStringAsFixed(value % 1 == 0 ? 0 : 2);
   return 'Rs $fixed';
 }

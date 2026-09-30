@@ -352,8 +352,8 @@ class _NetHeroCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     delta == null
-                        ? 'Across all settled trips'
-                        : 'Across all settled trips • vs last month',
+                        ? l10n.brokerEarningsAcrossAllSettledTrips
+                        : l10n.brokerEarningsAcrossAllSettledTripsVsLastMonth,
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12.5,
@@ -659,10 +659,12 @@ class _TrendLine extends StatelessWidget {
           Expanded(
             child: Text(
               neutral
-                  ? 'Flat vs last month — steady performance.'
+                  ? l10n.brokerEarningsFlatVsLastMonth
                   : positive
-                  ? 'Up $change% vs last month — keep the momentum.'
-                  : 'Down ${change.abs()}% vs last month.',
+                  ? l10n.brokerEarningsUpVsLastMonth(change.toString())
+                  : l10n.brokerEarningsDownVsLastMonth(
+                      change.abs().toString(),
+                    ),
               style: TextStyle(
                 color: color,
                 fontSize: 12.5,
@@ -773,7 +775,7 @@ class _SettlementCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   settlement.route.isEmpty
-                      ? _prettyDate(settlement.settledAt)
+                      ? _prettyDate(settlement.settledAt, l10n)
                       : settlement.route,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -950,8 +952,10 @@ String _formatCurrency(double value) {
   return 'Rs ${value.toStringAsFixed(value % 1 == 0 ? 0 : 2)}';
 }
 
-String _prettyDate(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return 'Settlement pending';
+String _prettyDate(String? raw, [AppLocalizations? l10n]) {
+  if (raw == null || raw.trim().isEmpty) {
+    return l10n?.brokerEarningsSettlementPending ?? 'Settlement pending';
+  }
   final parsed = DateTime.tryParse(raw.trim());
   if (parsed == null) return raw.trim();
   const months = [

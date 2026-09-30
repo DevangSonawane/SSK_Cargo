@@ -63,7 +63,10 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                   0,
                   (sum, item) => sum + item.netEarnings,
                 );
-                final grouped = _groupByMonth(history);
+                final grouped = _groupByMonth(
+                  AppLocalizations.of(context)!,
+                  history,
+                );
                 final months = grouped.length;
                 final deliveries = history.length;
                 final average = deliveries == 0 ? 0.0 : total / deliveries;
@@ -858,11 +861,14 @@ class _EarnedTripRow {
   final double amount;
 }
 
-Map<String, List<_EarnedTripRow>> _groupByMonth(List<dynamic> history) {
+Map<String, List<_EarnedTripRow>> _groupByMonth(
+  AppLocalizations l10n,
+  List<dynamic> history,
+) {
   final buckets = <String, List<_EarnedTripRow>>{};
   for (final item in history) {
     if (item is! BrokerSettlement) continue;
-    final month = _monthLabel(item.settledAt);
+    final month = _monthLabel(l10n, item.settledAt);
     buckets
         .putIfAbsent(month, () => <_EarnedTripRow>[])
         .add(
@@ -875,24 +881,24 @@ Map<String, List<_EarnedTripRow>> _groupByMonth(List<dynamic> history) {
   return buckets;
 }
 
-String _monthLabel(String? value) {
+String _monthLabel(AppLocalizations l10n, String? value) {
   final parsed = value == null ? null : DateTime.tryParse(value);
   if (parsed == null) {
-    return 'Recent';
+    return l10n.driverEarningsRecent;
   }
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = [
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   return '${months[parsed.month - 1]}, ${parsed.year}';
 }

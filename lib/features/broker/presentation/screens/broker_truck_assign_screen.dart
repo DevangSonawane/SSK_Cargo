@@ -218,7 +218,11 @@ class _BrokerTruckAssignScreenState
                             backgroundColor: AppColors.brand,
                           ),
                           child: Text(
-                            _submitting ? 'Assigning...' : 'Assign Driver',
+                            _submitting
+                                ? AppLocalizations.of(context)!
+                                      .brokerTruckAssignAssigning
+                                : AppLocalizations.of(context)!
+                                      .brokerTruckAssignAssignDriver,
                           ),
                         ),
                       ),

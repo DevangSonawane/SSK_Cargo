@@ -2769,11 +2769,11 @@ class BrokerRequestCard extends StatelessWidget {
     final statusVisual = _bookingRequestStatusVisual(status, l10n);
     final pickupText = _bookingRequestLocationText(
       request.from,
-      'Pickup location unavailable',
+      l10n.brokerHomePickupUnavailable,
     );
     final dropText = _bookingRequestLocationText(
       request.to,
-      'Drop-off location unavailable',
+      l10n.brokerFlowDropOffUnavailable,
     );
 
     return InkWell(
@@ -3202,7 +3202,7 @@ class VehicleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final meta = _vehicleCardMeta(vehicle.status);
+    final meta = _vehicleCardMeta(vehicle.status, l10n);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -3257,7 +3257,7 @@ class VehicleCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 10),
                             _VehicleStatusBadge(
-                              label: vehicleStatusLabel(vehicle.status),
+                              label: vehicleStatusLabel(vehicle.status, l10n),
                               backgroundColor: meta.badgeBackground,
                               textColor: meta.badgeText,
                             ),
@@ -3450,34 +3450,37 @@ class _VehicleCardMeta {
   final Color secondaryValueColor;
 }
 
-_VehicleCardMeta _vehicleCardMeta(BrokerVehicleStatus status) {
+_VehicleCardMeta _vehicleCardMeta(
+  BrokerVehicleStatus status,
+  AppLocalizations l10n,
+) {
   switch (status) {
     case BrokerVehicleStatus.idle:
-      return const _VehicleCardMeta(
+      return _VehicleCardMeta(
         iconBackground: AppColors.brandFill,
         badgeBackground: AppColors.brandFill,
         badgeText: AppColors.brand,
-        secondaryLabel: 'Location',
+        secondaryLabel: l10n.brokerFlowLocation,
         secondaryValue: 'Main Hub A',
         secondaryValueColor: AppColors.textPrimary,
       );
     case BrokerVehicleStatus.onTrip:
-      return const _VehicleCardMeta(
+      return _VehicleCardMeta(
         iconBackground: AppColors.brandFill,
-        badgeBackground: Color(0xFFFFF0DB),
-        badgeText: Color(0xFFB45309),
-        secondaryLabel: 'Heading To',
+        badgeBackground: const Color(0xFFFFF0DB),
+        badgeText: const Color(0xFFB45309),
+        secondaryLabel: l10n.brokerFlowVehicleHeadingTo,
         secondaryValue: 'In transit',
         secondaryValueColor: AppColors.textPrimary,
       );
     case BrokerVehicleStatus.maintenance:
       return _VehicleCardMeta(
-        iconBackground: Color(0xFFFFF1F1),
-        badgeBackground: Color(0xFFFDECEC),
-        badgeText: Color(0xFFD92D20),
-        secondaryLabel: 'Last Known',
+        iconBackground: const Color(0xFFFFF1F1),
+        badgeBackground: const Color(0xFFFDECEC),
+        badgeText: const Color(0xFFD92D20),
+        secondaryLabel: l10n.brokerFlowVehicleLastKnown,
         secondaryValue: 'Service Bay',
-        secondaryValueColor: Color(0xFFD92D20),
+        secondaryValueColor: const Color(0xFFD92D20),
       );
   }
 }
@@ -3497,7 +3500,7 @@ class DriverListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final meta = _driverCardMeta(driver);
+    final meta = _driverCardMeta(driver, l10n);
     final visuals = _driverCardVisuals(driver);
     final canCall = driver.phone.trim().isNotEmpty;
 
@@ -3552,7 +3555,7 @@ class DriverListTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             _DriverCardMetaChip(
-                              label: driverStatusLabel(driver.status),
+                              label: driverStatusLabel(driver.status, l10n),
                             ),
                           ],
                         ),
@@ -3604,7 +3607,7 @@ class DriverListTile extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 driver.assignedVehicle.isEmpty
-                                    ? 'No vehicle assigned'
+                                    ? l10n.brokerFlowNoVehicleAssigned
                                     : driver.assignedVehicle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -3921,16 +3924,18 @@ class _DriverCardMeta {
   final IconData statusIcon;
 }
 
-_DriverCardMeta _driverCardMeta(BrokerDriver driver) {
+_DriverCardMeta _driverCardMeta(BrokerDriver driver, AppLocalizations l10n) {
   if (driver.hasCompletedTrip) {
     return _DriverCardMeta(
       statusLine: driver.tripStatus.isNotEmpty
-          ? 'Trip ${_prettyTripStatus(driver.tripStatus)}'
-          : 'Trip completed',
+          ? l10n.brokerFlowTripWithStatus(
+              _prettyTripStatus(driver.tripStatus),
+            )
+          : l10n.tripCompleted,
       lastSeen: driver.onTripSince.isEmpty
-          ? 'Recently completed'
-          : '${driver.onTripSince} ago',
-      ctaLabel: 'Settlements',
+          ? l10n.brokerFlowRecentlyCompleted
+          : l10n.brokerFlowSinceAgo(driver.onTripSince),
+      ctaLabel: l10n.settlements,
       ctaIcon: AppIcons.payments_rounded,
       statusIcon: AppIcons.verified_rounded,
     );
@@ -3940,20 +3945,20 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
     case BrokerDriverStatus.onTrip:
       return _DriverCardMeta(
         statusLine: driver.tripStatus.isNotEmpty
-            ? 'Trip ${_prettyTripStatus(driver.tripStatus)}'
+            ? l10n.brokerFlowTripWithStatus(_prettyTripStatus(driver.tripStatus))
             : driver.currentBookingRef.isEmpty
-            ? 'Active on trip'
-            : 'Active on Booking ${driver.currentBookingRef}',
+            ? l10n.brokerFlowActiveOnTrip
+            : l10n.brokerFlowActiveOnBooking(driver.currentBookingRef),
         lastSeen: driver.onTripSince.isEmpty
-            ? 'Just now'
-            : '${driver.onTripSince} ago',
-        ctaLabel: 'View Map',
+            ? l10n.brokerHomeJustNow
+            : l10n.brokerFlowSinceAgo(driver.onTripSince),
+        ctaLabel: l10n.brokerFlowCtaViewMap,
         ctaIcon: AppIcons.map_outlined,
         statusIcon: AppIcons.check_circle,
       );
     case BrokerDriverStatus.idle:
       return _DriverCardMeta(
-        statusLine: 'Idle - Awaiting Assignment',
+        statusLine: l10n.brokerFlowIdleAwaitingAssignment,
         lastSeen: '14 mins ago',
         ctaLabel: '',
         ctaIcon: AppIcons.add_task_rounded,
@@ -3961,9 +3966,9 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
       );
     case BrokerDriverStatus.offline:
       return _DriverCardMeta(
-        statusLine: 'Offline',
-        lastSeen: 'Not available',
-        ctaLabel: 'View Details',
+        statusLine: l10n.addDriverOffline,
+        lastSeen: l10n.brokerFlowLastSeenUnavailable,
+        ctaLabel: l10n.brokerFlowCtaViewDetails,
         ctaIcon: AppIcons.info_outline_rounded,
         statusIcon: AppIcons.do_not_disturb_on_outlined,
       );
@@ -4361,14 +4366,14 @@ Color vehicleStatusColor(BrokerVehicleStatus status) {
   }
 }
 
-String vehicleStatusLabel(BrokerVehicleStatus status) {
+String vehicleStatusLabel(BrokerVehicleStatus status, [AppLocalizations? l10n]) {
   switch (status) {
     case BrokerVehicleStatus.idle:
-      return 'Idle';
+      return l10n?.brokerFlowVehicleIdle ?? 'Idle';
     case BrokerVehicleStatus.onTrip:
-      return 'On Trip';
+      return l10n?.brokerFlowOnTrip ?? 'On Trip';
     case BrokerVehicleStatus.maintenance:
-      return 'Maintenance';
+      return l10n?.brokerFlowMaintenance ?? 'Maintenance';
   }
 }
 
@@ -4394,14 +4399,14 @@ Color driverStatusColor(BrokerDriverStatus status) {
   }
 }
 
-String driverStatusLabel(BrokerDriverStatus status) {
+String driverStatusLabel(BrokerDriverStatus status, [AppLocalizations? l10n]) {
   switch (status) {
     case BrokerDriverStatus.onTrip:
-      return 'On Trip';
+      return l10n?.brokerFlowOnTrip ?? 'On Trip';
     case BrokerDriverStatus.idle:
-      return 'Idle';
+      return l10n?.brokerFlowVehicleIdle ?? 'Idle';
     case BrokerDriverStatus.offline:
-      return 'Offline';
+      return l10n?.addDriverOffline ?? 'Offline';
   }
 }
 

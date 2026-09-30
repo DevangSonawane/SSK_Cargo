@@ -6182,4 +6182,1220 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get driverKycSubmittedDescription =>
       'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
+
+  @override
+  String get vehicleOption3Wheeler => '3 Wheeler';
+
+  @override
+  String get vehicleOptionTataAce => 'Tata Ace';
+
+  @override
+  String get vehicleOptionPickup8ft => 'Pickup 8ft';
+
+  @override
+  String get vehicleOptionPickup10ft => 'Pickup 10ft';
+
+  @override
+  String get vehicleOption14ftTruck => '14ft Truck';
+
+  @override
+  String get vehicleOption17ftTruck => '17ft Truck';
+
+  @override
+  String get vehicleOption19ftTruck => '19ft Truck';
+
+  @override
+  String get vehicleOption22ftTruck => '22ft Truck';
+
+  @override
+  String get vehiclePriceShared => 'Shared';
+
+  @override
+  String get vehiclePriceOnRequest => 'On request';
+
+  @override
+  String vehiclePriceWithToll(Object baseFare, Object toll) {
+    return '$baseFare + toll $toll';
+  }
+
+  @override
+  String get pickupOtpVerifiedTitle => 'Pickup verified';
+
+  @override
+  String get pickupOtpCodeTitle => 'Pickup code';
+
+  @override
+  String get pickupOtpVerifiedMessage => 'Pickup verified with your code';
+
+  @override
+  String get pickupOtpShareMessage =>
+      'Share this code with your driver when they arrive to confirm pickup';
+
+  @override
+  String get trackingTimelineBookingCreated => 'Booking created';
+
+  @override
+  String get trackingTimelineVehicleAssigned => 'Vehicle assigned';
+
+  @override
+  String get trackingTimelineDriverAssigned => 'Driver assigned';
+
+  @override
+  String get trackingTimelineCompletedSuccessfully => 'Completed successfully';
+
+  @override
+  String get trackingTimelineWaitingForAssignment => 'Waiting for assignment';
+
+  @override
+  String get trackingTimelineBookingCancelled => 'Booking was cancelled';
+
+  @override
+  String get locationArcPickUpFrom => 'Pick up from';
+
+  @override
+  String packageCardTrackingId(Object trackingId) {
+    return '#Tracking ID: $trackingId';
+  }
+
+  @override
+  String get tripTypeChooseTitle => 'Choose trip type';
+
+  @override
+  String get tripTypeFullTruck => 'Full truck';
+
+  @override
+  String get tripTypePartTruck => 'Part truck';
+
+  @override
+  String get tripTypeFullTruckHelper => 'Dedicated truck for one shipment';
+
+  @override
+  String get tripTypePartTruckHelper => 'Share capacity and optimize cost';
+
+  @override
+  String get locationFlowSavedAddress => 'Saved address';
+
+  @override
+  String get locationFlowSetPickupLocation => 'Set pickup location';
+
+  @override
+  String get locationFlowSetDropLocation => 'Set drop-off location';
+
+  @override
+  String get locationFlowFindingAddress => 'Finding address...';
+
+  @override
+  String get locationFlowUseThisPickup => 'Use this pickup';
+
+  @override
+  String get locationFlowUseThisDrop => 'Use this drop-off';
+
+  @override
+  String get clientBookingAvailableTruck => 'Available truck';
+
+  @override
+  String get clientBookingLocationValidationFailed =>
+      'These pickup/drop locations are not valid for this trip';
+
+  @override
+  String get clientBookingStepLocation => 'Location';
+
+  @override
+  String get clientBookingStepWeight => 'Weight';
+
+  @override
+  String get clientBookingStepPayment => 'Payment';
+
+  @override
+  String get clientBookingStepWaiting => 'Waiting';
+
+  @override
+  String get clientBookingFindingBrokers => 'Finding brokers';
+
+  @override
+  String get clientBookingScanningBrokerOffers =>
+      'Scanning for broker offers on this route.';
+
+  @override
+  String clientBookingNegotiateWith(Object broker) {
+    return 'Negotiate with $broker';
+  }
+
+  @override
+  String get clientBookingChooseTrucksTitle => 'Choose Trucks';
+
+  @override
+  String get clientBookingPickBrokerForRoute => 'Pick a broker for this route';
+
+  @override
+  String get clientBookingLocating => 'Locating...';
+
+  @override
+  String get clientBookingMaterialWeight => 'Material weight';
+
+  @override
+  String clientBookingBookLaterAt(Object time) {
+    return 'Book later: $time';
+  }
+
+  @override
+  String clientBookingFreeHaltingNote(Object hours, Object rate) {
+    return 'Free halting: ${hours}h, then $rate/hr.';
+  }
+
+  @override
+  String get clientBookingFetchingAdvance => 'Fetching advance';
+
+  @override
+  String get clientBookingAdvanceUnavailable => 'Advance unavailable';
+
+  @override
+  String clientBookingAdvanceAmountNow(Object amount) {
+    return '$amount now';
+  }
+
+  @override
+  String get clientBookingPayAdvance => 'Pay Advance';
+
+  @override
+  String get clientBookingPaySecurely => 'Pay Securely';
+
+  @override
+  String get clientBookingCheckoutMapNote =>
+      'Map stays live while you finish checkout.';
+
+  @override
+  String get clientDeliveryBookingFallback => 'Booking';
+
+  @override
+  String get clientDeliveryTruckFallback => 'Truck';
+
+  @override
+  String get clientPublicTimelineBookingCreated => 'Booking created';
+
+  @override
+  String get clientPublicTimelineVehicleAssigned => 'Vehicle assigned';
+
+  @override
+  String get clientPublicTimelineDropLocation => 'Drop-off location';
+
+  @override
+  String get clientPublicTimelineCompletedSuccessfully =>
+      'Completed successfully';
+
+  @override
+  String get clientSavedAddressUpdated => 'Address updated.';
+
+  @override
+  String get clientSavedAddressSaved => 'Address saved.';
+
+  @override
+  String get clientSavedLocationServicesOff =>
+      'Location services are turned off.';
+
+  @override
+  String get clientSavedLocationPermissionRequired =>
+      'Location permission is required.';
+
+  @override
+  String get clientSavedLoadErrorSubtitle =>
+      'Go back to saved addresses and try editing it again.';
+
+  @override
+  String get clientSavedTypeLabel => 'Type';
+
+  @override
+  String get clientSavedNameLabel => 'Name';
+
+  @override
+  String get clientSavedAddressLabel => 'Address';
+
+  @override
+  String clientSavedCityValue(Object city) {
+    return 'City: $city';
+  }
+
+  @override
+  String get clientSavedFloorUnitLabel => 'Floor / Unit';
+
+  @override
+  String get clientSavedTapMapForExactSpot =>
+      'Tap the map to choose an exact spot';
+
+  @override
+  String get clientSavedDefaultBadge => 'Default';
+
+  @override
+  String trackingPodFilesPosted(Object count) {
+    return '$count file(s) posted by driver';
+  }
+
+  @override
+  String get trackingDriverPending => 'Driver pending';
+
+  @override
+  String get trackingTruckNotAssigned => 'Truck not assigned';
+
+  @override
+  String trackingCrewHandoff(Object from, Object to) {
+    return '$from -> $to';
+  }
+
+  @override
+  String trackingDriverChangedCount(Object count) {
+    return 'Driver changed ($count)';
+  }
+
+  @override
+  String get trackingCancelWhyHint => 'Tell us why — it helps us do better.';
+
+  @override
+  String get trackingKeepBooking => 'Keep booking';
+
+  @override
+  String get trackingBookingActions => 'Booking actions';
+
+  @override
+  String get trackingBookingChat => 'Booking chat';
+
+  @override
+  String get trackingChatSocketHint => 'Thread updates over REST + Socket.IO';
+
+  @override
+  String get trackingChatNoMessages => 'No messages yet.';
+
+  @override
+  String get trackingChatEmptyMessage => 'Message';
+
+  @override
+  String get trackingChatRead => 'Read';
+
+  @override
+  String get trackingChatTyping => 'Typing...';
+
+  @override
+  String get trackingChangeDriverFare => 'Change driver fare';
+
+  @override
+  String trackingCurrentOffer(Object amount) {
+    return 'Current offer: $amount';
+  }
+
+  @override
+  String trackingYourFareChange(Object amount) {
+    return 'Your fare change: $amount';
+  }
+
+  @override
+  String get trackingNegotiationOffers => 'Negotiation & offers';
+
+  @override
+  String get trackingNegotiationOffersSubtitle =>
+      'Driver requests and broker offers from the client flow.';
+
+  @override
+  String get trackingNegotiationLoadFailed =>
+      'Could not load negotiation data.';
+
+  @override
+  String get trackingBrokerOffer => 'Broker offer';
+
+  @override
+  String get trackingBrokerOfferReceived => 'Broker offer received';
+
+  @override
+  String get trackingYourTurn => 'Your turn';
+
+  @override
+  String get trackingWaitingBrokerConfirmation =>
+      'Waiting for broker confirmation';
+
+  @override
+  String get trackingWaitingBrokerResponse => 'Waiting for broker response';
+
+  @override
+  String get trackingWaitingDriverConfirmation =>
+      'Waiting for driver confirmation';
+
+  @override
+  String get trackingWaitingDriverResponse => 'Waiting for driver response';
+
+  @override
+  String get trackingConfirmed => 'Confirmed';
+
+  @override
+  String get trackingDirectTruckRequest => 'Direct truck request';
+
+  @override
+  String trackingNegotiationHistoryCount(Object count) {
+    return 'Negotiation history ($count)';
+  }
+
+  @override
+  String get brokerFlowDropOffUnavailable => 'Drop-off location unavailable';
+
+  @override
+  String brokerFlowTripWithStatus(Object status) {
+    return 'Trip $status';
+  }
+
+  @override
+  String get brokerFlowActiveOnTrip => 'Active on trip';
+
+  @override
+  String brokerFlowActiveOnBooking(Object bookingRef) {
+    return 'Active on Booking $bookingRef';
+  }
+
+  @override
+  String get brokerFlowIdleAwaitingAssignment => 'Idle - Awaiting Assignment';
+
+  @override
+  String get brokerFlowVehicleIdle => 'Idle';
+
+  @override
+  String get brokerFlowOnTrip => 'On Trip';
+
+  @override
+  String get brokerFlowMaintenance => 'Maintenance';
+
+  @override
+  String get brokerFlowRecentlyCompleted => 'Recently completed';
+
+  @override
+  String brokerFlowSinceAgo(Object value) {
+    return '$value ago';
+  }
+
+  @override
+  String get brokerFlowReassigning => 'Reassigning...';
+
+  @override
+  String get brokerActiveJobsNotAssigned => 'Not Assigned';
+
+  @override
+  String get brokerActiveJobsBreakdownReported => 'Breakdown Reported';
+
+  @override
+  String get brokerActiveJobsIssueReported => 'Issue Reported';
+
+  @override
+  String get brokerActiveJobsRouteDistancePending => 'Route distance pending';
+
+  @override
+  String brokerActiveJobsRouteKm(Object distance) {
+    return '$distance km route';
+  }
+
+  @override
+  String get brokerActiveJobsStepEnRoute => 'En Route';
+
+  @override
+  String get brokerActiveJobsStepPickedUp => 'Picked Up';
+
+  @override
+  String get brokerActiveJobsStepInTransit => 'In Transit';
+
+  @override
+  String get brokerActiveJobsIssueDamagedGoods => 'Damaged Goods';
+
+  @override
+  String get brokerActiveJobsIssuePaymentDelay => 'Payment Delay';
+
+  @override
+  String get brokerActiveJobsIssueCancellationFee => 'Cancellation Fee';
+
+  @override
+  String get brokerActiveJobsIssueRouteDispute => 'Route Dispute';
+
+  @override
+  String get brokerActiveJobsIssueLateDelivery => 'Late Delivery';
+
+  @override
+  String get brokerActiveJobsIssueFuelSurcharge => 'Fuel Surcharge';
+
+  @override
+  String get brokerActiveJobsIssueWrongItems => 'Wrong Items';
+
+  @override
+  String get brokerActiveJobsIssueWeightDiscrepancy => 'Weight Discrepancy';
+
+  @override
+  String get brokerPickupLocationNotAvailable =>
+      'Pickup location not available';
+
+  @override
+  String get brokerDropLocationNotAvailable => 'Drop location not available';
+
+  @override
+  String get brokerTruckHistoryNoTripsMatchSearch =>
+      'No trips match your search';
+
+  @override
+  String get brokerTruckHistoryDriverPending => 'Driver pending';
+
+  @override
+  String get brokerTruckHistoryDistancePending => 'Distance pending';
+
+  @override
+  String get brokerTruckHistoryEarningsPending => 'Earnings pending';
+
+  @override
+  String brokerTrackingAssignedTo(Object plate) {
+    return 'Assigned to $plate';
+  }
+
+  @override
+  String get brokerTrackingTimedOutNegotiation => 'Timed-out negotiation';
+
+  @override
+  String get brokerTrackingOpenToContinueNegotiation =>
+      'Open to continue negotiation.';
+
+  @override
+  String get brokerTrackingNoDriversYet => 'No drivers yet';
+
+  @override
+  String brokerTrackingNoDriversMatch(Object query) {
+    return 'No drivers match \"$query\"';
+  }
+
+  @override
+  String get brokerTrackingCreateDriverFromPlus =>
+      'Create a driver from the + button to start tracking.';
+
+  @override
+  String get brokerTrackingTryDifferentQuery =>
+      'Try a different name, phone or vehicle number.';
+
+  @override
+  String get brokerTrackingNoActiveTripIncidentData =>
+      'No active trip incident data for this driver.';
+
+  @override
+  String get brokerTrackingNoIncidentsYet => 'No incidents reported yet.';
+
+  @override
+  String get brokerTrackingIncident => 'Incident';
+
+  @override
+  String get brokerTrackingDestinationNotAvailable =>
+      'Destination not available';
+
+  @override
+  String get addTruckAddedSuccessfully => 'Truck added successfully.';
+
+  @override
+  String get addTruckUpdatedSuccessfully => 'Truck updated successfully.';
+
+  @override
+  String get addTruckEditTruck => 'Edit Truck';
+
+  @override
+  String get addTruckAddTruck => 'Add Truck';
+
+  @override
+  String get addTruckErrRegistrationLooksInvalid =>
+      'Registration looks invalid, e.g. MH-12-AB-1234.';
+
+  @override
+  String get brokerHomeTheDriver => 'The driver';
+
+  @override
+  String get brokerNotificationsMarkAllRead => 'Mark all read';
+
+  @override
+  String get brokerNotificationsTabOps => 'Ops';
+
+  @override
+  String get brokerNotificationsTabSystem => 'System';
+
+  @override
+  String get brokerNotificationsTabMoney => 'Money';
+
+  @override
+  String get brokerVehiclesRowType => 'Type';
+
+  @override
+  String get brokerVehiclesRowInsurance => 'Insurance';
+
+  @override
+  String get brokerEarningsAcrossAllSettledTrips => 'Across all settled trips';
+
+  @override
+  String get brokerEarningsAcrossAllSettledTripsVsLastMonth =>
+      'Across all settled trips • vs last month';
+
+  @override
+  String get brokerEarningsFlatVsLastMonth =>
+      'Flat vs last month — steady performance.';
+
+  @override
+  String brokerEarningsUpVsLastMonth(Object change) {
+    return 'Up $change% vs last month — keep the momentum.';
+  }
+
+  @override
+  String brokerEarningsDownVsLastMonth(Object change) {
+    return 'Down $change% vs last month.';
+  }
+
+  @override
+  String get brokerEarningsSettlementPending => 'Settlement pending';
+
+  @override
+  String get brokerReqDetailAutoSelectedDriver => 'Auto-selected driver';
+
+  @override
+  String get brokerReqDetailAutoSelectedTruck => 'Auto-selected truck';
+
+  @override
+  String brokerTruckLocationDriverLabel(Object name) {
+    return 'Driver: $name';
+  }
+
+  @override
+  String get brokerDriverRequestsAccepted => 'Request accepted.';
+
+  @override
+  String get brokerDriverRequestsDeclined => 'Request declined.';
+
+  @override
+  String get brokerDriverRequestsTimedOut => 'Timed out';
+
+  @override
+  String get driverDetailNotOnTrip => 'Not on trip';
+
+  @override
+  String get driverDetailAwaitingLiveLocation => 'Awaiting live location';
+
+  @override
+  String get brokerTruckAssignAssigning => 'Assigning...';
+
+  @override
+  String get driverTripToday => 'Today';
+
+  @override
+  String get driverEarningsRecent => 'Recent';
+
+  @override
+  String get driverRiderAllTripsTitle => 'All Trips';
+
+  @override
+  String get driverRiderAllTripsSubtitle =>
+      'Latest activity and completed deliveries';
+
+  @override
+  String get driverRiderRecentlyCompleted => 'Recently completed deliveries';
+
+  @override
+  String get driverRiderPendingDeliveries =>
+      'Pending deliveries and settlements';
+
+  @override
+  String get driverRiderViewAll => 'View all';
+
+  @override
+  String get driverRiderNoDeliveriesDoneYet =>
+      'No deliveries done yet, start working';
+
+  @override
+  String get driverRiderNoLatestTripYet => 'No latest trip yet';
+
+  @override
+  String get driverRiderToday => 'Today';
+
+  @override
+  String get driverRiderYesterday => 'Yesterday';
+
+  @override
+  String driverRiderTripCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count trips',
+      one: '1 trip',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get driverRiderToLabel => 'To:';
+
+  @override
+  String get driverRiderStatusLabel => 'Status:';
+
+  @override
+  String get driverRiderFromLocationUnavailable => 'From location unavailable';
+
+  @override
+  String get driverRiderToLocationUnavailable => 'To location unavailable';
+
+  @override
+  String get driverRiderLocatingPickup => 'Locating pickup…';
+
+  @override
+  String get driverRiderLocatingDropoff => 'Locating drop-off…';
+
+  @override
+  String get driverRiderViewDetails => 'View Details';
+
+  @override
+  String get driverHomeOffline => 'Offline';
+
+  @override
+  String get driverHomeOnline => 'Online';
+
+  @override
+  String get driverHomeToggleOffline => 'Toggle offline';
+
+  @override
+  String get driverHomeToggleOnline => 'Toggle online';
+
+  @override
+  String get driverHomeCantGoOffline =>
+      'Can\'t go offline while you have an active trip';
+
+  @override
+  String get driverHomeCannotGoOfflineSnack =>
+      'You cannot go offline while a trip is active.';
+
+  @override
+  String get driverHomeActiveTripLocksOnline =>
+      'Active trip in progress. Online mode stays locked until the trip is completed.';
+
+  @override
+  String get driverHomeMoreRequests => 'More requests';
+
+  @override
+  String get driverHomeDeliveryId => 'Delivery ID';
+
+  @override
+  String get driverHomeBrokerHandoffActive => 'Broker handoff active';
+
+  @override
+  String get driverHomeClientCountered =>
+      'Client countered. Open the request to respond.';
+
+  @override
+  String get driverHomeWaitingForClientResponse =>
+      'Waiting for the client response';
+
+  @override
+  String get driverHomeClientAccepted =>
+      'Client accepted. Open the request to confirm.';
+
+  @override
+  String get driverHomeWaitingForClientConfirmation =>
+      'Waiting for client confirmation';
+
+  @override
+  String get driverHomeNegotiationUnavailable => 'Negotiation unavailable';
+
+  @override
+  String get driverHomeClientRequest => 'Client request';
+
+  @override
+  String get driverHomeBrokerAssignedNotice =>
+      'Broker-assigned - accept or decline, no negotiation.';
+
+  @override
+  String driverHomeLocationFallback(Object label) {
+    return '$label location';
+  }
+
+  @override
+  String get driverOrderClientAcceptedRequest => 'Client accepted the request';
+
+  @override
+  String get driverOrderClientAcceptedBody =>
+      'The client accepted your offer. Please confirm to finalize the booking or reject to decline it.';
+
+  @override
+  String get driverOrderBookingSyncing => 'Booking is still syncing.';
+
+  @override
+  String get driverOrderOpeningTripWhenReady =>
+      'We are opening the active trip view as soon as the trip is ready.';
+
+  @override
+  String get driverOrderCheckingApis =>
+      'We check the request, booking, and trip APIs every 5 seconds.';
+
+  @override
+  String get driverOrderCheckNow => 'Check now';
+
+  @override
+  String get driverOrderBookingFinalized => 'Booking finalized';
+
+  @override
+  String get driverOrderOpeningActiveTrip => 'Opening the active trip view.';
+
+  @override
+  String get driverOrderYourOffer => 'Your offer';
+
+  @override
+  String driverOrderBaseAmount(Object amount) {
+    return 'Base $amount';
+  }
+
+  @override
+  String get driverOrderClientAcceptedYourRequest =>
+      'Client accepted your request';
+
+  @override
+  String get driverOrderConfirmOrDeclinePrompt =>
+      'Confirm or decline from the prompt that appeared above.';
+
+  @override
+  String get driverOrderAcceptedWaitingClient =>
+      'Accepted - waiting for the client to confirm.';
+
+  @override
+  String get driverOrderRealtimeUpdates => 'We update this in real time.';
+
+  @override
+  String get driverOrderFareChangeSent =>
+      'Fare change sent. Waiting for client response...';
+
+  @override
+  String get driverOrderUnlockAfterClientAccepts =>
+      'We will unlock the tracking button once the client accepts the offer.';
+
+  @override
+  String get driverOrderFareChangesUsedUp =>
+      'You have used your fare changes - accept or decline instead.';
+
+  @override
+  String get driverOrderBrokerTakeover => 'Broker takeover';
+
+  @override
+  String get driverOrderLocked => 'Locked';
+
+  @override
+  String get driverOrderAnyMomentNow => 'Any moment now';
+
+  @override
+  String get driverOrderHandedOverToBroker => 'Handed over to broker';
+
+  @override
+  String get driverOrderFinalizingTrip => 'Finalizing the trip';
+
+  @override
+  String get driverOrderSetYourFareChange => 'Set your fare change';
+
+  @override
+  String get driverOrderNegotiatingWithClient => 'Negotiating with the client';
+
+  @override
+  String get driverOrderHandedOver => 'Handed over';
+
+  @override
+  String get driverOrderHandoff => 'Handoff';
+
+  @override
+  String get driverOrderBrokerAssignedTrip => 'Broker-assigned trip';
+
+  @override
+  String get driverOrderAlreadyAgreedWithBroker =>
+      'Already agreed with the broker - accept or decline, no fare changes.';
+
+  @override
+  String get driverOrderFixedPrice => 'Fixed price';
+
+  @override
+  String get driverOrderAgreedAmount => 'AGREED AMOUNT';
+
+  @override
+  String get driverOrderAssignedTripBody =>
+      'This trip was assigned by the broker at the agreed amount. You can decline it if you are not available.';
+
+  @override
+  String get driverOrderBrokerControlsRequest =>
+      'Broker controls this request now - waiting for new leads.';
+
+  @override
+  String get driverOrderBaseOffer => 'BASE OFFER';
+
+  @override
+  String get driverOrderBrokerHandling => 'Broker handling';
+
+  @override
+  String get driverOrderClientResponded => 'Client responded';
+
+  @override
+  String get driverOrderFareWindow => 'Fare window';
+
+  @override
+  String get driverOrderAwaitingResponse => 'Awaiting response';
+
+  @override
+  String get deliveryDetailsTripStartedHeadingToPickup =>
+      'Trip started. Heading to pickup.';
+
+  @override
+  String get deliveryDetailsPickupMarkedStartDelivery =>
+      'Pickup marked. Start delivery next.';
+
+  @override
+  String get deliveryDetailsNowInTransit => 'Delivery is now in transit.';
+
+  @override
+  String get deliveryDetailsMarkedAsDelivered =>
+      'Delivery marked as delivered.';
+
+  @override
+  String deliveryDetailsCompleteLoadingStopsFirst(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Complete $count loading stops first',
+      one: 'Complete 1 loading stop first',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deliveryDetailsCompleteUnloadingStopsFirst(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Complete $count unloading stops first',
+      one: 'Complete 1 unloading stop first',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deliveryDetailsOnRoute => 'On route';
+
+  @override
+  String get deliveryDetailsActiveBadge => 'Active';
+
+  @override
+  String get deliveryDetailsUseActionToAdvance =>
+      'Use the action below to advance the trip.';
+
+  @override
+  String get deliveryDetailsCurrentStatus => 'Current status';
+
+  @override
+  String get deliveryDetailsSyncingTrip => 'Syncing trip...';
+
+  @override
+  String get deliveryDetailsDecliningEllipsis => 'Declining...';
+
+  @override
+  String get deliveryDetailsTripFallbackLabel => 'Trip';
+
+  @override
+  String get deliveryDetailsEmergencyAssistance => 'Emergency Assistance';
+
+  @override
+  String get deliveryDetailsNavigateToPickup => 'Navigate to pickup';
+
+  @override
+  String get deliveryDetailsAskCustomerForCode =>
+      'Ask the customer to share their 4-digit code';
+
+  @override
+  String get deliveryDetailsDelayCharge => 'Delivery delay charge';
+
+  @override
+  String get deliveryDetailsSla => 'Delivery SLA';
+
+  @override
+  String deliveryDetailsDelayChargeBody(Object amount, Object hours) {
+    return '$amount for ${hours}h over the expected delivery time.';
+  }
+
+  @override
+  String deliveryDetailsExpectedWithin(Object hours) {
+    return 'Expected delivery within ~${hours}h.';
+  }
+
+  @override
+  String get deliveryDetailsBookingChat => 'Booking chat';
+
+  @override
+  String get deliveryDetailsMechanicStatus => 'Mechanic Status';
+
+  @override
+  String get deliveryDetailsLiveIncidentUpdates =>
+      'Live incident updates for this trip.';
+
+  @override
+  String get deliveryDetailsIncident => 'Incident';
+
+  @override
+  String deliveryDetailsMechanicLine(Object name) {
+    return 'Mechanic: $name';
+  }
+
+  @override
+  String get deliveryDetailsPendingAssignment => 'Pending assignment';
+
+  @override
+  String deliveryDetailsPhoneLine(Object phone) {
+    return 'Phone: $phone';
+  }
+
+  @override
+  String deliveryDetailsStatusLine(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get deliveryDetailsRequestedLabel => 'requested';
+
+  @override
+  String get driverKycVerifiedSnack =>
+      'You\'re verified - full access unlocked.';
+
+  @override
+  String get driverKycSubmittedForReviewSnack => 'KYC submitted for review.';
+
+  @override
+  String get driverKycConfirmAccuracyDeclaration =>
+      'I confirm that all the information provided is accurate.';
+
+  @override
+  String get driverKycVerifyIdentity => 'Verify Your Identity';
+
+  @override
+  String get driverKycFinish => 'Finish';
+
+  @override
+  String get driverKycResubmitForReview => 'Resubmit for Review';
+
+  @override
+  String get driverKycDriverKycTitle => 'Driver KYC';
+
+  @override
+  String get chatCurrentUserSenderName => 'You';
+
+  @override
+  String clientNotificationsTimeMinutesAgo(Object minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String clientNotificationsTimeHoursAgo(Object hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String clientNotificationsTimeDaysAgo(Object days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get negotiationYourFare => 'Your fare';
+
+  @override
+  String get negotiationFareChangesExhausted =>
+      'You have used your fare changes — accept or decline instead.';
+
+  @override
+  String get negotiationWaitingDriverAcceptedTitle =>
+      'Driver accepted the request';
+
+  @override
+  String get negotiationWaitingDriverTurnToConfirmTitle =>
+      'Driver accepted - your turn to confirm';
+
+  @override
+  String get negotiationWaitingDriverConfirmationTitle =>
+      'Waiting for driver confirmation';
+
+  @override
+  String get negotiationWaitingFareChangeReceivedTitle =>
+      'Fare change received';
+
+  @override
+  String get negotiationWaitingDriverResponseTypeTitle =>
+      'Waiting for driver response';
+
+  @override
+  String get negotiationWaitingDriverAcceptedBody =>
+      'The driver accepted your request. You can confirm the booking and continue to payment.';
+
+  @override
+  String get negotiationWaitingDriverCommittedBody =>
+      'The driver already committed. Confirm or decline to finish the handshake.';
+
+  @override
+  String get negotiationWaitingDriverYourConfirmBody =>
+      'You already confirmed this offer. We are waiting for the driver to confirm now.';
+
+  @override
+  String get negotiationWaitingDriverChangedFareBody =>
+      'The driver changed the fare. Review it here and respond instantly.';
+
+  @override
+  String get negotiationWaitingDriverTimedOutBody =>
+      'The driver did not respond in time. The broker can step in now.';
+
+  @override
+  String get negotiationWaitingDriverLiveBody =>
+      'Your request is live. We will update this popup as soon as the truck responds.';
+
+  @override
+  String negotiationBookingReference(Object bookingNumber) {
+    return 'Booking #$bookingNumber';
+  }
+
+  @override
+  String get negotiationLiveUpdatesAppearHere =>
+      'Live updates will appear here.';
+
+  @override
+  String negotiationCurrentAmount(Object amount) {
+    return 'Current amount: $amount';
+  }
+
+  @override
+  String negotiationHistoryCount(Object count) {
+    return 'Negotiation history ($count)';
+  }
+
+  @override
+  String negotiationHistoryEntryOffered(Object amount, Object displayBy) {
+    return '$displayBy offered ₹$amount';
+  }
+
+  @override
+  String get negotiationWaitingLiveFareChange =>
+      'Waiting for a live fare change...';
+
+  @override
+  String get negotiationPickPayment =>
+      'Pick how this freight booking should be settled. Advance uses the latest admin-configured amount.';
+
+  @override
+  String get negotiationRazorpayCheckoutNote =>
+      'Razorpay checkout will show the available payment methods before you pay.';
+
+  @override
+  String get negotiationConfirmPaymentStage => 'Confirm payment stage';
+
+  @override
+  String get negotiationContinueToSecureCheckout =>
+      'Continue to secure checkout';
+
+  @override
+  String get negotiationWaitingNextDriverUpdate =>
+      'Waiting for the next driver update...';
+
+  @override
+  String get negotiationUseSliderHint =>
+      'Use the slider to set the amount you want to continue with.';
+
+  @override
+  String get negotiationDragToSetPrice => 'Drag to set your price';
+
+  @override
+  String get brokerSettlementsGrossAmount => 'Gross amount';
+
+  @override
+  String get brokerSettlementsPlatformFee => 'Platform fee';
+
+  @override
+  String get brokerSettlementsRoutePending => 'Route pending';
+
+  @override
+  String get brokerTrackLiveStepEnRoute => 'En Route';
+
+  @override
+  String get brokerTrackLiveStepPickedUp => 'Picked Up';
+
+  @override
+  String get brokerTrackLiveStepInTransit => 'In Transit';
+
+  @override
+  String get addDriverSharedSeparately => 'Shared separately';
+
+  @override
+  String get addDriverAadhaarMustBe12Digits => 'Aadhaar must be 12 digits';
+
+  @override
+  String get addDriverUseAValidDate => 'Use a valid date';
+
+  @override
+  String get addDriverLicenseExpiryCannotBeInThePast =>
+      'License expiry cannot be in the past.';
+
+  @override
+  String get addDriverTapToUpdateTheDriverPhoto =>
+      'Tap to update the driver photo';
+
+  @override
+  String get addDriverTapTheCameraToAddADriverPhoto =>
+      'Tap the camera to add a driver photo';
+
+  @override
+  String get addVehicleTruckAddedSuccessfully => 'Truck added successfully.';
+
+  @override
+  String get addVehicleTruckUpdatedSuccessfully =>
+      'Truck updated successfully.';
+
+  @override
+  String get addVehicleUseYyyyMmdd => 'Use YYYY-MM-DD';
+
+  @override
+  String get brokerKycInDetails => 'In details';
+
+  @override
+  String get brokerKycIncludedInDetails => 'Included in details';
+
+  @override
+  String get brokerKycSubmittedUrl => 'Submitted URL';
+
+  @override
+  String get brokerKycNoActiveSessionFound => 'No active session found.';
+
+  @override
+  String get brokerKycPleaseConfirmAllInformationIsAccurate =>
+      'Please confirm that all information is accurate.';
+
+  @override
+  String get brokerKycYouAreVerified =>
+      'You\'re verified - full access unlocked.';
+
+  @override
+  String get brokerKycSubmittedForReview => 'KYC submitted for review.';
+
+  @override
+  String get driverTrackingSignInAgainBeforeEnablingLocation =>
+      'Please sign in again before enabling location sharing.';
+
+  @override
+  String get driverTrackingEnableLocationServices =>
+      'Enable location services on the device to share live tracking.';
+
+  @override
+  String get driverTrackingLocationPermissionRequired =>
+      'Location permission is required for live driver tracking.';
+
+  @override
+  String get driverTrackingLocationPermissionDeniedForever =>
+      'Location permission is permanently denied. Open app settings to enable it.';
+
+  @override
+  String get driverTrackingUnableToStartLiveTracking =>
+      'Unable to start live tracking on this device.';
+
+  @override
+  String get driverTrackingSignInAgainBeforeRefreshingLocation =>
+      'Please sign in again before refreshing location.';
+
+  @override
+  String get negotiationWindowAnyMomentNow =>
+      'Any moment now - waiting for the server handoff.';
+
+  @override
+  String negotiationWindowRemaining(Object countdown, Object label) {
+    return '$label $countdown remaining';
+  }
 }

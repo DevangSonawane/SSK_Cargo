@@ -405,7 +405,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         Expanded(
                           child: Text(
                             tempPassword.isEmpty
-                                ? 'Shared separately'
+                                ? AppLocalizations.of(context)!
+                                      .addDriverSharedSeparately
                                 : tempPassword,
                             style: const TextStyle(
                               color: AppColors.textPrimary,
@@ -788,7 +789,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               return null;
                             }
                             if (digits.length != 12) {
-                              return 'Aadhaar must be 12 digits';
+                              return AppLocalizations.of(context)!
+                                  .addDriverAadhaarMustBe12Digits;
                             }
                             return null;
                           },
@@ -820,7 +822,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             }
                             final parsed = DateTime.tryParse(text);
                             if (parsed == null) {
-                              return 'Use a valid date';
+                              return AppLocalizations.of(context)!
+                                  .addDriverUseAValidDate;
                             }
                             final today = DateTime.now();
                             final dayStart = DateTime(
@@ -829,7 +832,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               today.day,
                             );
                             if (parsed.isBefore(dayStart)) {
-                              return 'License expiry cannot be in the past.';
+                              return AppLocalizations.of(context)!
+                                  .addDriverLicenseExpiryCannotBeInThePast;
                             }
                             return null;
                           },
@@ -1088,8 +1092,8 @@ class _DriverAvatarHero extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   isEditing && driverName != null
-                      ? 'Tap to update the driver photo'
-                      : 'Tap the camera to add a driver photo',
+                      ? l10n.addDriverTapToUpdateTheDriverPhoto
+                      : l10n.addDriverTapTheCameraToAddADriverPhoto,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 12.5,

@@ -73,9 +73,11 @@ class _BrokerDriverRequestsScreenState
     )) {
       return;
     }
+    if (!mounted) return;
     return _runAction(
       request: request,
-      successMessage: 'Request accepted.',
+      successMessage: AppLocalizations.of(context)!
+          .brokerDriverRequestsAccepted,
       action: (api, token) {
         return api.acceptDriverRequestAsDriver(
           accessToken: token,
@@ -88,7 +90,8 @@ class _BrokerDriverRequestsScreenState
   Future<void> _declineRequest(BrokerDriverRequest request) {
     return _runAction(
       request: request,
-      successMessage: 'Request declined.',
+      successMessage: AppLocalizations.of(context)!
+          .brokerDriverRequestsDeclined,
       action: (api, token) {
         return api.rejectDriverRequest(accessToken: token, id: request.id);
       },
@@ -343,7 +346,10 @@ class _BrokerRequestTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      request.driverTimedOut ? 'Timed out' : 'Live',
+                      request.driverTimedOut
+                          ? AppLocalizations.of(context)!
+                                .brokerDriverRequestsTimedOut
+                          : AppLocalizations.of(context)!.live,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: request.driverTimedOut
                             ? AppColors.warningText

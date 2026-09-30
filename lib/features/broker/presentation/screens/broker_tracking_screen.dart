@@ -353,7 +353,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         children: [
                           Text(
                             negotiationNotifications[index].title.isEmpty
-                                ? 'Timed-out negotiation'
+                                ? AppLocalizations.of(context)!
+                                      .brokerTrackingTimedOutNegotiation
                                 : negotiationNotifications[index].title,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
@@ -364,7 +365,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           const SizedBox(height: 6),
                           Text(
                             negotiationNotifications[index].message.isEmpty
-                                ? 'Open to continue negotiation.'
+                                ? AppLocalizations.of(context)!
+                                      .brokerTrackingOpenToContinueNegotiation
                                 : negotiationNotifications[index].message,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.accentBlue),
@@ -487,6 +489,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                 driversAsync.when(
                   data: (drivers) {
                     final mergedDrivers = _brokerDriverRoster(
+                      AppLocalizations.of(context)!,
                       drivers,
                       trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
                     );
@@ -524,8 +527,10 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           children: [
                             Text(
                               query.isEmpty
-                                  ? 'No drivers yet'
-                                  : 'No drivers match "$query"',
+                                  ? AppLocalizations.of(context)!
+                                        .brokerTrackingNoDriversYet
+                                  : AppLocalizations.of(context)!
+                                        .brokerTrackingNoDriversMatch(query),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w800,
@@ -535,8 +540,10 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             const SizedBox(height: 6),
                             Text(
                               query.isEmpty
-                                  ? 'Create a driver from the + button to start tracking.'
-                                  : 'Try a different name, phone or vehicle number.',
+                                  ? AppLocalizations.of(context)!
+                                        .brokerTrackingCreateDriverFromPlus
+                                  : AppLocalizations.of(context)!
+                                        .brokerTrackingTryDifferentQuery,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
@@ -605,6 +612,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
 /// (the truck kept the old name, so the row reappeared and "remove" looked
 /// like it did nothing) and showed stale names the web app doesn't have.
 List<BrokerDriver> _brokerDriverRoster(
+  AppLocalizations l10n,
   List<BrokerDriver> drivers,
   List<BrokerVehicle> trucks,
 ) {
@@ -628,7 +636,7 @@ List<BrokerDriver> _brokerDriverRoster(
           status: driver.status,
           currentLocation: driver.currentLocation.isNotEmpty
               ? driver.currentLocation
-              : 'Assigned to ${truck.plateNumber}',
+              : l10n.brokerTrackingAssignedTo(truck.plateNumber),
           currentLatitude: driver.currentLatitude,
           currentLongitude: driver.currentLongitude,
           assignedVehicle: truck.plateNumber,
@@ -1989,7 +1997,10 @@ class _BrokerDriverTripSheetState
                                 )
                               : const Icon(AppIcons.swap_horiz_rounded),
                           label: Text(
-                            _reassigning ? 'Reassigning...' : 'Reassign driver',
+                            _reassigning
+                                ? AppLocalizations.of(context)!
+                                      .brokerFlowReassigning
+                                : AppLocalizations.of(context)!.reassignDriver,
                           ),
                         ),
                       ),
@@ -2014,8 +2025,10 @@ class _BrokerDriverTripSheetState
                         ),
                         child: Text(
                           data.tripId.isEmpty
-                              ? 'No active trip incident data for this driver.'
-                              : 'No incidents reported yet.',
+                              ? AppLocalizations.of(context)!
+                                    .brokerTrackingNoActiveTripIncidentData
+                              : AppLocalizations.of(context)!
+                                    .brokerTrackingNoIncidentsYet,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
@@ -2666,7 +2679,9 @@ class _TripIncidentCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  incident.title.isEmpty ? 'Incident' : incident.title,
+                  incident.title.isEmpty
+                      ? AppLocalizations.of(context)!.brokerTrackingIncident
+                      : incident.title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -2880,11 +2895,11 @@ TrackingDemoShipment _shipmentFromTripData({
     fromLocation: pickup.isEmpty ? driver.currentLocation : pickup,
     toLocation: drop.isEmpty
         ? (driver.assignedVehicle.isEmpty
-              ? 'Destination not available'
+              ? l10n.brokerTrackingDestinationNotAvailable
               : driver.assignedVehicle)
         : drop,
     status: status.isEmpty
-        ? (driver.hasCompletedTrip ? 'Completed' : 'In transit')
+        ? (driver.hasCompletedTrip ? l10n.completed : l10n.inTransit)
         : status,
     customerName:
         _tripString(tripData, const [

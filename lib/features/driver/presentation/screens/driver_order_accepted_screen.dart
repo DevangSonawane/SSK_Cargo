@@ -223,13 +223,13 @@ class _DriverOrderAcceptedScreenState
     driverTimedOut: _serverTimedOut,
   );
 
-  String get _countdownLabel {
+  String _countdownLabel(AppLocalizations l10n) {
     if (_serverTimedOut) {
-      return 'Broker takeover';
+      return l10n.driverOrderBrokerTakeover;
     }
 
     if (_counterLocked || _waitingOnClient || _awaitingDriverConfirmation) {
-      return 'Locked';
+      return l10n.driverOrderLocked;
     }
 
     final remaining = _negotiationRemaining;
@@ -237,7 +237,7 @@ class _DriverOrderAcceptedScreenState
       return '2:00';
     }
     if (remaining <= Duration.zero) {
-      return 'Any moment now';
+      return l10n.driverOrderAnyMomentNow;
     }
     return formatCountdown(remaining);
   }
@@ -389,6 +389,7 @@ class _DriverOrderAcceptedScreenState
     _clientConfirmationDialogEntry?.remove();
     _clientConfirmationDialogEntry = OverlayEntry(
       builder: (overlayContext) {
+        final l10n = AppLocalizations.of(overlayContext)!;
         return Material(
           color: Colors.black.withValues(alpha: 0.42),
           child: SafeArea(
@@ -420,7 +421,7 @@ class _DriverOrderAcceptedScreenState
                               onPressed: _dismissClientConfirmationDialog,
                               icon: const Icon(AppIcons.close_rounded),
                               color: AppColors.textTertiary,
-                              tooltip: 'Close',
+                              tooltip: l10n.close,
                             ),
                           ],
                         ),
@@ -439,7 +440,7 @@ class _DriverOrderAcceptedScreenState
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'Client accepted the request',
+                          l10n.driverOrderClientAcceptedRequest,
                           textAlign: TextAlign.center,
                           style: Theme.of(overlayContext).textTheme.titleLarge
                               ?.copyWith(
@@ -449,7 +450,7 @@ class _DriverOrderAcceptedScreenState
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'The client accepted your offer. Please confirm to finalize the booking or reject to decline it.',
+                          l10n.driverOrderClientAcceptedBody,
                           textAlign: TextAlign.center,
                           style: Theme.of(overlayContext).textTheme.bodyMedium
                               ?.copyWith(
@@ -489,9 +490,11 @@ class _DriverOrderAcceptedScreenState
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Reject',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                child: Text(
+                                  l10n.reject,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ),
@@ -532,9 +535,9 @@ class _DriverOrderAcceptedScreenState
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text(
-                                        'Accept',
-                                        style: TextStyle(
+                                    : Text(
+                                        l10n.accept,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w800,
                                         ),
                                       ),
@@ -1233,6 +1236,7 @@ class _DriverOrderAcceptedScreenState
   }
 
   Widget _buildHandoffPanel() {
+    final l10n = AppLocalizations.of(context)!;
     if (_handoffTripId?.trim().isNotEmpty ?? true) {
       return Container(
         width: double.infinity,
@@ -1256,8 +1260,8 @@ class _DriverOrderAcceptedScreenState
             const SizedBox(height: 14),
             Text(
               _handoffBookingReady
-                  ? 'Booking confirmed'
-                  : 'Booking is still syncing.',
+                  ? l10n.bookingConfirmed
+                  : l10n.driverOrderBookingSyncing,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textPrimary,
@@ -1267,8 +1271,8 @@ class _DriverOrderAcceptedScreenState
             const SizedBox(height: 6),
             Text(
               _handoffBookingReady
-                  ? 'We are opening the active trip view as soon as the trip is ready.'
-                  : 'We check the request, booking, and trip APIs every 5 seconds.',
+                  ? l10n.driverOrderOpeningTripWhenReady
+                  : l10n.driverOrderCheckingApis,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -1289,9 +1293,9 @@ class _DriverOrderAcceptedScreenState
                       borderRadius: BorderRadius.circular(AppRadius.button),
                     ),
                   ),
-                  child: const Text(
-                    'Check now',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  child: Text(
+                    l10n.driverOrderCheckNow,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -1302,8 +1306,8 @@ class _DriverOrderAcceptedScreenState
     }
     return _buildStatusPanel(
       icon: AppIcons.play_circle_fill_rounded,
-      title: 'Booking finalized',
-      subtitle: 'Opening the active trip view.',
+      title: l10n.driverOrderBookingFinalized,
+      subtitle: l10n.driverOrderOpeningActiveTrip,
     );
   }
 
@@ -1316,6 +1320,7 @@ class _DriverOrderAcceptedScreenState
     required double maxOffer,
     required double selectedAmount,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final request = _request;
     return Container(
       width: double.infinity,
@@ -1336,14 +1341,16 @@ class _DriverOrderAcceptedScreenState
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'Your offer',
+                  l10n.driverOrderYourOffer,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 Text(
-                  'Base ${formatDriverCurrency(baseAmount)}',
+                  l10n.driverOrderBaseAmount(
+                    formatDriverCurrency(baseAmount),
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textTertiary,
                     fontWeight: FontWeight.w700,
@@ -1415,28 +1422,26 @@ class _DriverOrderAcceptedScreenState
           ] else if (_awaitingDriverConfirmation) ...[
             _buildStatusPanel(
               icon: AppIcons.handshake_rounded,
-              title: 'Client accepted your request',
-              subtitle:
-                  'Confirm or decline from the prompt that appeared above.',
+              title: l10n.driverOrderClientAcceptedYourRequest,
+              subtitle: l10n.driverOrderConfirmOrDeclinePrompt,
             ),
           ] else if (_waitingOnClient) ...[
             _buildStatusPanel(
               showSpinner: true,
               icon: AppIcons.hourglass_top_rounded,
-              title: 'Accepted - waiting for the client to confirm.',
-              subtitle: 'We update this in real time.',
+              title: l10n.driverOrderAcceptedWaitingClient,
+              subtitle: l10n.driverOrderRealtimeUpdates,
             ),
           ] else if (_counterLocked) ...[
             _buildStatusPanel(
               showSpinner: true,
               icon: AppIcons.send_rounded,
-              title: 'Fare change sent. Waiting for client response...',
-              subtitle:
-                  'We will unlock the tracking button once the client accepts the offer.',
+              title: l10n.driverOrderFareChangeSent,
+              subtitle: l10n.driverOrderUnlockAfterClientAccepts,
             ),
           ] else if (counterLimitReached) ...[
             Text(
-              'You have used your fare changes - accept or decline instead.',
+              l10n.driverOrderFareChangesUsedUp,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -1467,9 +1472,9 @@ class _DriverOrderAcceptedScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Decline',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                    child: Text(
+                      l10n.decline,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -1494,9 +1499,9 @@ class _DriverOrderAcceptedScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Accept',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                    child: Text(
+                      l10n.accept,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -1527,7 +1532,7 @@ class _DriverOrderAcceptedScreenState
                   ),
                 ),
                 child: Text(
-                  _submitting ? 'Saving...' : 'Change Fare',
+                  _submitting ? l10n.saving : l10n.changeFare,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800),
@@ -1542,6 +1547,7 @@ class _DriverOrderAcceptedScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final request = _request;
     final baseAmount = request.amount > 0 ? request.amount : 1000.0;
     final minOffer = math.max(1.0, baseAmount * 0.7);
@@ -1568,23 +1574,23 @@ class _DriverOrderAcceptedScreenState
     final heroShowCountdown = showCounterControls && !serverTimedOut;
     final String heroTitle;
     if (serverTimedOut) {
-      heroTitle = 'Handed over to broker';
+      heroTitle = l10n.driverOrderHandedOverToBroker;
     } else if (_handoffInProgress) {
-      heroTitle = 'Finalizing the trip';
+      heroTitle = l10n.driverOrderFinalizingTrip;
     } else if (showCounterControls) {
-      heroTitle = 'Set your fare change';
+      heroTitle = l10n.driverOrderSetYourFareChange;
     } else {
-      heroTitle = 'Negotiating with the client';
+      heroTitle = l10n.driverOrderNegotiatingWithClient;
     }
     final String heroChipLabel;
     if (serverTimedOut) {
-      heroChipLabel = 'Handed over';
+      heroChipLabel = l10n.driverOrderHandedOver;
     } else if (_handoffInProgress) {
-      heroChipLabel = 'Handoff';
+      heroChipLabel = l10n.driverOrderHandoff;
     } else if (showCounterControls) {
-      heroChipLabel = _countdownLabel;
+      heroChipLabel = _countdownLabel(l10n);
     } else {
-      heroChipLabel = 'Locked';
+      heroChipLabel = l10n.driverOrderLocked;
     }
     final double? heroProgressValue = heroShowCountdown && remaining != null
         ? (remaining.inMilliseconds / const Duration(minutes: 2).inMilliseconds)
@@ -1608,12 +1614,11 @@ class _DriverOrderAcceptedScreenState
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              const _StatusHero(
+              _StatusHero(
                 icon: AppIcons.assignment_turned_in_rounded,
-                title: 'Broker-assigned trip',
-                subtitle:
-                    'Already agreed with the broker - accept or decline, no fare changes.',
-                chipLabel: 'Fixed price',
+                title: l10n.driverOrderBrokerAssignedTrip,
+                subtitle: l10n.driverOrderAlreadyAgreedWithBroker,
+                chipLabel: l10n.driverOrderFixedPrice,
               ),
               const SizedBox(height: 14),
               MapRouteCard(
@@ -1624,7 +1629,7 @@ class _DriverOrderAcceptedScreenState
               const SizedBox(height: 14),
               _RequestRouteCard(
                 refText: request.displayRef,
-                amountLabel: 'AGREED AMOUNT',
+                amountLabel: l10n.driverOrderAgreedAmount,
                 amountText: formatDriverCurrency(baseAmount),
                 pickup: request.pickup.isEmpty ? '-' : request.pickup,
                 drop: request.drop.isEmpty ? '-' : request.drop,
@@ -1649,7 +1654,7 @@ class _DriverOrderAcceptedScreenState
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'This trip was assigned by the broker at the agreed amount. You can decline it if you are not available.',
+                        l10n.driverOrderAssignedTripBody,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                           height: 1.4,
@@ -1682,9 +1687,9 @@ class _DriverOrderAcceptedScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Decline',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                      child: Text(
+                        l10n.decline,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -1718,9 +1723,11 @@ class _DriverOrderAcceptedScreenState
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Accept',
-                              style: TextStyle(fontWeight: FontWeight.w800),
+                          : Text(
+                              l10n.accept,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                     ),
                   ),
@@ -1760,10 +1767,10 @@ class _DriverOrderAcceptedScreenState
                     : AppIcons.handshake_rounded,
                 title: heroTitle,
                 subtitle: serverTimedOut
-                    ? 'Broker controls this request now - waiting for new leads.'
+                    ? l10n.driverOrderBrokerControlsRequest
                     : null,
                 chipLabel: heroShowCountdown ? null : heroChipLabel,
-                clockLabel: heroShowCountdown ? _countdownLabel : null,
+                clockLabel: heroShowCountdown ? _countdownLabel(l10n) : null,
                 clockFraction: heroProgressValue,
               ),
               const SizedBox(height: 14),
@@ -1775,7 +1782,7 @@ class _DriverOrderAcceptedScreenState
               const SizedBox(height: 14),
               _RequestRouteCard(
                 refText: request.displayRef,
-                amountLabel: 'BASE OFFER',
+                amountLabel: l10n.driverOrderBaseOffer,
                 amountText: formatDriverCurrency(baseAmount),
                 pickup: request.pickup.isEmpty ? '-' : request.pickup,
                 drop: request.drop.isEmpty ? '-' : request.drop,
@@ -1783,19 +1790,22 @@ class _DriverOrderAcceptedScreenState
                   if (serverTimedOut)
                     _MetaChip(
                       icon: AppIcons.support_agent_rounded,
-                      text: 'Broker handling',
+                      text: l10n.driverOrderBrokerHandling,
                     )
                   else if (_clientDecisionReady)
                     _MetaChip(
                       icon: AppIcons.handshake_rounded,
-                      text: 'Client responded',
+                      text: l10n.driverOrderClientResponded,
                     )
                   else if (showCounterControls)
-                    _MetaChip(icon: AppIcons.bolt_rounded, text: 'Fare window')
+                    _MetaChip(
+                      icon: AppIcons.bolt_rounded,
+                      text: l10n.driverOrderFareWindow,
+                    )
                   else
                     _MetaChip(
                       icon: AppIcons.timer_outlined,
-                      text: 'Awaiting response',
+                      text: l10n.driverOrderAwaitingResponse,
                     ),
                 ],
               ),

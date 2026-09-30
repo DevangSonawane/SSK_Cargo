@@ -11356,6 +11356,2070 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.'**
   String get driverKycSubmittedDescription;
+
+  /// No description provided for @vehicleOption3Wheeler.
+  ///
+  /// In en, this message translates to:
+  /// **'3 Wheeler'**
+  String get vehicleOption3Wheeler;
+
+  /// No description provided for @vehicleOptionTataAce.
+  ///
+  /// In en, this message translates to:
+  /// **'Tata Ace'**
+  String get vehicleOptionTataAce;
+
+  /// No description provided for @vehicleOptionPickup8ft.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup 8ft'**
+  String get vehicleOptionPickup8ft;
+
+  /// No description provided for @vehicleOptionPickup10ft.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup 10ft'**
+  String get vehicleOptionPickup10ft;
+
+  /// No description provided for @vehicleOption14ftTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'14ft Truck'**
+  String get vehicleOption14ftTruck;
+
+  /// No description provided for @vehicleOption17ftTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'17ft Truck'**
+  String get vehicleOption17ftTruck;
+
+  /// No description provided for @vehicleOption19ftTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'19ft Truck'**
+  String get vehicleOption19ftTruck;
+
+  /// No description provided for @vehicleOption22ftTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'22ft Truck'**
+  String get vehicleOption22ftTruck;
+
+  /// No description provided for @vehiclePriceShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get vehiclePriceShared;
+
+  /// No description provided for @vehiclePriceOnRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'On request'**
+  String get vehiclePriceOnRequest;
+
+  /// No description provided for @vehiclePriceWithToll.
+  ///
+  /// In en, this message translates to:
+  /// **'{baseFare} + toll {toll}'**
+  String vehiclePriceWithToll(Object baseFare, Object toll);
+
+  /// No description provided for @pickupOtpVerifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup verified'**
+  String get pickupOtpVerifiedTitle;
+
+  /// No description provided for @pickupOtpCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup code'**
+  String get pickupOtpCodeTitle;
+
+  /// No description provided for @pickupOtpVerifiedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup verified with your code'**
+  String get pickupOtpVerifiedMessage;
+
+  /// No description provided for @pickupOtpShareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this code with your driver when they arrive to confirm pickup'**
+  String get pickupOtpShareMessage;
+
+  /// No description provided for @trackingTimelineBookingCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking created'**
+  String get trackingTimelineBookingCreated;
+
+  /// No description provided for @trackingTimelineVehicleAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle assigned'**
+  String get trackingTimelineVehicleAssigned;
+
+  /// No description provided for @trackingTimelineDriverAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver assigned'**
+  String get trackingTimelineDriverAssigned;
+
+  /// No description provided for @trackingTimelineCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed successfully'**
+  String get trackingTimelineCompletedSuccessfully;
+
+  /// No description provided for @trackingTimelineWaitingForAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for assignment'**
+  String get trackingTimelineWaitingForAssignment;
+
+  /// No description provided for @trackingTimelineBookingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking was cancelled'**
+  String get trackingTimelineBookingCancelled;
+
+  /// No description provided for @locationArcPickUpFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up from'**
+  String get locationArcPickUpFrom;
+
+  /// No description provided for @packageCardTrackingId.
+  ///
+  /// In en, this message translates to:
+  /// **'#Tracking ID: {trackingId}'**
+  String packageCardTrackingId(Object trackingId);
+
+  /// No description provided for @tripTypeChooseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose trip type'**
+  String get tripTypeChooseTitle;
+
+  /// No description provided for @tripTypeFullTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Full truck'**
+  String get tripTypeFullTruck;
+
+  /// No description provided for @tripTypePartTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Part truck'**
+  String get tripTypePartTruck;
+
+  /// No description provided for @tripTypeFullTruckHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Dedicated truck for one shipment'**
+  String get tripTypeFullTruckHelper;
+
+  /// No description provided for @tripTypePartTruckHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Share capacity and optimize cost'**
+  String get tripTypePartTruckHelper;
+
+  /// No description provided for @locationFlowSavedAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved address'**
+  String get locationFlowSavedAddress;
+
+  /// No description provided for @locationFlowSetPickupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set pickup location'**
+  String get locationFlowSetPickupLocation;
+
+  /// No description provided for @locationFlowSetDropLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set drop-off location'**
+  String get locationFlowSetDropLocation;
+
+  /// No description provided for @locationFlowFindingAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding address...'**
+  String get locationFlowFindingAddress;
+
+  /// No description provided for @locationFlowUseThisPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this pickup'**
+  String get locationFlowUseThisPickup;
+
+  /// No description provided for @locationFlowUseThisDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this drop-off'**
+  String get locationFlowUseThisDrop;
+
+  /// No description provided for @clientBookingAvailableTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Available truck'**
+  String get clientBookingAvailableTruck;
+
+  /// No description provided for @clientBookingLocationValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'These pickup/drop locations are not valid for this trip'**
+  String get clientBookingLocationValidationFailed;
+
+  /// No description provided for @clientBookingStepLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get clientBookingStepLocation;
+
+  /// No description provided for @clientBookingStepWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get clientBookingStepWeight;
+
+  /// No description provided for @clientBookingStepPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get clientBookingStepPayment;
+
+  /// No description provided for @clientBookingStepWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get clientBookingStepWaiting;
+
+  /// No description provided for @clientBookingFindingBrokers.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding brokers'**
+  String get clientBookingFindingBrokers;
+
+  /// No description provided for @clientBookingScanningBrokerOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning for broker offers on this route.'**
+  String get clientBookingScanningBrokerOffers;
+
+  /// No description provided for @clientBookingNegotiateWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiate with {broker}'**
+  String clientBookingNegotiateWith(Object broker);
+
+  /// No description provided for @clientBookingChooseTrucksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Trucks'**
+  String get clientBookingChooseTrucksTitle;
+
+  /// No description provided for @clientBookingPickBrokerForRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a broker for this route'**
+  String get clientBookingPickBrokerForRoute;
+
+  /// No description provided for @clientBookingLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating...'**
+  String get clientBookingLocating;
+
+  /// No description provided for @clientBookingMaterialWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Material weight'**
+  String get clientBookingMaterialWeight;
+
+  /// No description provided for @clientBookingBookLaterAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Book later: {time}'**
+  String clientBookingBookLaterAt(Object time);
+
+  /// No description provided for @clientBookingFreeHaltingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Free halting: {hours}h, then {rate}/hr.'**
+  String clientBookingFreeHaltingNote(Object hours, Object rate);
+
+  /// No description provided for @clientBookingFetchingAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching advance'**
+  String get clientBookingFetchingAdvance;
+
+  /// No description provided for @clientBookingAdvanceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance unavailable'**
+  String get clientBookingAdvanceUnavailable;
+
+  /// No description provided for @clientBookingAdvanceAmountNow.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} now'**
+  String clientBookingAdvanceAmountNow(Object amount);
+
+  /// No description provided for @clientBookingPayAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Advance'**
+  String get clientBookingPayAdvance;
+
+  /// No description provided for @clientBookingPaySecurely.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Securely'**
+  String get clientBookingPaySecurely;
+
+  /// No description provided for @clientBookingCheckoutMapNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Map stays live while you finish checkout.'**
+  String get clientBookingCheckoutMapNote;
+
+  /// No description provided for @clientDeliveryBookingFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking'**
+  String get clientDeliveryBookingFallback;
+
+  /// No description provided for @clientDeliveryTruckFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck'**
+  String get clientDeliveryTruckFallback;
+
+  /// No description provided for @clientPublicTimelineBookingCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking created'**
+  String get clientPublicTimelineBookingCreated;
+
+  /// No description provided for @clientPublicTimelineVehicleAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle assigned'**
+  String get clientPublicTimelineVehicleAssigned;
+
+  /// No description provided for @clientPublicTimelineDropLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off location'**
+  String get clientPublicTimelineDropLocation;
+
+  /// No description provided for @clientPublicTimelineCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed successfully'**
+  String get clientPublicTimelineCompletedSuccessfully;
+
+  /// No description provided for @clientSavedAddressUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Address updated.'**
+  String get clientSavedAddressUpdated;
+
+  /// No description provided for @clientSavedAddressSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Address saved.'**
+  String get clientSavedAddressSaved;
+
+  /// No description provided for @clientSavedLocationServicesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are turned off.'**
+  String get clientSavedLocationServicesOff;
+
+  /// No description provided for @clientSavedLocationPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required.'**
+  String get clientSavedLocationPermissionRequired;
+
+  /// No description provided for @clientSavedLoadErrorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to saved addresses and try editing it again.'**
+  String get clientSavedLoadErrorSubtitle;
+
+  /// No description provided for @clientSavedTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get clientSavedTypeLabel;
+
+  /// No description provided for @clientSavedNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get clientSavedNameLabel;
+
+  /// No description provided for @clientSavedAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get clientSavedAddressLabel;
+
+  /// No description provided for @clientSavedCityValue.
+  ///
+  /// In en, this message translates to:
+  /// **'City: {city}'**
+  String clientSavedCityValue(Object city);
+
+  /// No description provided for @clientSavedFloorUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Floor / Unit'**
+  String get clientSavedFloorUnitLabel;
+
+  /// No description provided for @clientSavedTapMapForExactSpot.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to choose an exact spot'**
+  String get clientSavedTapMapForExactSpot;
+
+  /// No description provided for @clientSavedDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get clientSavedDefaultBadge;
+
+  /// No description provided for @trackingPodFilesPosted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} file(s) posted by driver'**
+  String trackingPodFilesPosted(Object count);
+
+  /// No description provided for @trackingDriverPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver pending'**
+  String get trackingDriverPending;
+
+  /// No description provided for @trackingTruckNotAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck not assigned'**
+  String get trackingTruckNotAssigned;
+
+  /// No description provided for @trackingCrewHandoff.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} -> {to}'**
+  String trackingCrewHandoff(Object from, Object to);
+
+  /// No description provided for @trackingDriverChangedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver changed ({count})'**
+  String trackingDriverChangedCount(Object count);
+
+  /// No description provided for @trackingCancelWhyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us why — it helps us do better.'**
+  String get trackingCancelWhyHint;
+
+  /// No description provided for @trackingKeepBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep booking'**
+  String get trackingKeepBooking;
+
+  /// No description provided for @trackingBookingActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking actions'**
+  String get trackingBookingActions;
+
+  /// No description provided for @trackingBookingChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking chat'**
+  String get trackingBookingChat;
+
+  /// No description provided for @trackingChatSocketHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Thread updates over REST + Socket.IO'**
+  String get trackingChatSocketHint;
+
+  /// No description provided for @trackingChatNoMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet.'**
+  String get trackingChatNoMessages;
+
+  /// No description provided for @trackingChatEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get trackingChatEmptyMessage;
+
+  /// No description provided for @trackingChatRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get trackingChatRead;
+
+  /// No description provided for @trackingChatTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing...'**
+  String get trackingChatTyping;
+
+  /// No description provided for @trackingChangeDriverFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Change driver fare'**
+  String get trackingChangeDriverFare;
+
+  /// No description provided for @trackingCurrentOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Current offer: {amount}'**
+  String trackingCurrentOffer(Object amount);
+
+  /// No description provided for @trackingYourFareChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Your fare change: {amount}'**
+  String trackingYourFareChange(Object amount);
+
+  /// No description provided for @trackingNegotiationOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiation & offers'**
+  String get trackingNegotiationOffers;
+
+  /// No description provided for @trackingNegotiationOffersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver requests and broker offers from the client flow.'**
+  String get trackingNegotiationOffersSubtitle;
+
+  /// No description provided for @trackingNegotiationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load negotiation data.'**
+  String get trackingNegotiationLoadFailed;
+
+  /// No description provided for @trackingBrokerOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker offer'**
+  String get trackingBrokerOffer;
+
+  /// No description provided for @trackingBrokerOfferReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker offer received'**
+  String get trackingBrokerOfferReceived;
+
+  /// No description provided for @trackingYourTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn'**
+  String get trackingYourTurn;
+
+  /// No description provided for @trackingWaitingBrokerConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for broker confirmation'**
+  String get trackingWaitingBrokerConfirmation;
+
+  /// No description provided for @trackingWaitingBrokerResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for broker response'**
+  String get trackingWaitingBrokerResponse;
+
+  /// No description provided for @trackingWaitingDriverConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for driver confirmation'**
+  String get trackingWaitingDriverConfirmation;
+
+  /// No description provided for @trackingWaitingDriverResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for driver response'**
+  String get trackingWaitingDriverResponse;
+
+  /// No description provided for @trackingConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get trackingConfirmed;
+
+  /// No description provided for @trackingDirectTruckRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct truck request'**
+  String get trackingDirectTruckRequest;
+
+  /// No description provided for @trackingNegotiationHistoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiation history ({count})'**
+  String trackingNegotiationHistoryCount(Object count);
+
+  /// No description provided for @brokerFlowDropOffUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off location unavailable'**
+  String get brokerFlowDropOffUnavailable;
+
+  /// No description provided for @brokerFlowTripWithStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip {status}'**
+  String brokerFlowTripWithStatus(Object status);
+
+  /// No description provided for @brokerFlowActiveOnTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Active on trip'**
+  String get brokerFlowActiveOnTrip;
+
+  /// No description provided for @brokerFlowActiveOnBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Active on Booking {bookingRef}'**
+  String brokerFlowActiveOnBooking(Object bookingRef);
+
+  /// No description provided for @brokerFlowIdleAwaitingAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Idle - Awaiting Assignment'**
+  String get brokerFlowIdleAwaitingAssignment;
+
+  /// No description provided for @brokerFlowVehicleIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Idle'**
+  String get brokerFlowVehicleIdle;
+
+  /// No description provided for @brokerFlowOnTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'On Trip'**
+  String get brokerFlowOnTrip;
+
+  /// No description provided for @brokerFlowMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get brokerFlowMaintenance;
+
+  /// No description provided for @brokerFlowRecentlyCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently completed'**
+  String get brokerFlowRecentlyCompleted;
+
+  /// No description provided for @brokerFlowSinceAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} ago'**
+  String brokerFlowSinceAgo(Object value);
+
+  /// No description provided for @brokerFlowReassigning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reassigning...'**
+  String get brokerFlowReassigning;
+
+  /// No description provided for @brokerActiveJobsNotAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Assigned'**
+  String get brokerActiveJobsNotAssigned;
+
+  /// No description provided for @brokerActiveJobsBreakdownReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown Reported'**
+  String get brokerActiveJobsBreakdownReported;
+
+  /// No description provided for @brokerActiveJobsIssueReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue Reported'**
+  String get brokerActiveJobsIssueReported;
+
+  /// No description provided for @brokerActiveJobsRouteDistancePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Route distance pending'**
+  String get brokerActiveJobsRouteDistancePending;
+
+  /// No description provided for @brokerActiveJobsRouteKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km route'**
+  String brokerActiveJobsRouteKm(Object distance);
+
+  /// No description provided for @brokerActiveJobsStepEnRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'En Route'**
+  String get brokerActiveJobsStepEnRoute;
+
+  /// No description provided for @brokerActiveJobsStepPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked Up'**
+  String get brokerActiveJobsStepPickedUp;
+
+  /// No description provided for @brokerActiveJobsStepInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'In Transit'**
+  String get brokerActiveJobsStepInTransit;
+
+  /// No description provided for @brokerActiveJobsIssueDamagedGoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Damaged Goods'**
+  String get brokerActiveJobsIssueDamagedGoods;
+
+  /// No description provided for @brokerActiveJobsIssuePaymentDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Delay'**
+  String get brokerActiveJobsIssuePaymentDelay;
+
+  /// No description provided for @brokerActiveJobsIssueCancellationFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation Fee'**
+  String get brokerActiveJobsIssueCancellationFee;
+
+  /// No description provided for @brokerActiveJobsIssueRouteDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Route Dispute'**
+  String get brokerActiveJobsIssueRouteDispute;
+
+  /// No description provided for @brokerActiveJobsIssueLateDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Late Delivery'**
+  String get brokerActiveJobsIssueLateDelivery;
+
+  /// No description provided for @brokerActiveJobsIssueFuelSurcharge.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel Surcharge'**
+  String get brokerActiveJobsIssueFuelSurcharge;
+
+  /// No description provided for @brokerActiveJobsIssueWrongItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong Items'**
+  String get brokerActiveJobsIssueWrongItems;
+
+  /// No description provided for @brokerActiveJobsIssueWeightDiscrepancy.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight Discrepancy'**
+  String get brokerActiveJobsIssueWeightDiscrepancy;
+
+  /// No description provided for @brokerPickupLocationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup location not available'**
+  String get brokerPickupLocationNotAvailable;
+
+  /// No description provided for @brokerDropLocationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop location not available'**
+  String get brokerDropLocationNotAvailable;
+
+  /// No description provided for @brokerTruckHistoryNoTripsMatchSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No trips match your search'**
+  String get brokerTruckHistoryNoTripsMatchSearch;
+
+  /// No description provided for @brokerTruckHistoryDriverPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver pending'**
+  String get brokerTruckHistoryDriverPending;
+
+  /// No description provided for @brokerTruckHistoryDistancePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance pending'**
+  String get brokerTruckHistoryDistancePending;
+
+  /// No description provided for @brokerTruckHistoryEarningsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings pending'**
+  String get brokerTruckHistoryEarningsPending;
+
+  /// No description provided for @brokerTrackingAssignedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to {plate}'**
+  String brokerTrackingAssignedTo(Object plate);
+
+  /// No description provided for @brokerTrackingTimedOutNegotiation.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed-out negotiation'**
+  String get brokerTrackingTimedOutNegotiation;
+
+  /// No description provided for @brokerTrackingOpenToContinueNegotiation.
+  ///
+  /// In en, this message translates to:
+  /// **'Open to continue negotiation.'**
+  String get brokerTrackingOpenToContinueNegotiation;
+
+  /// No description provided for @brokerTrackingNoDriversYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No drivers yet'**
+  String get brokerTrackingNoDriversYet;
+
+  /// No description provided for @brokerTrackingNoDriversMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No drivers match \"{query}\"'**
+  String brokerTrackingNoDriversMatch(Object query);
+
+  /// No description provided for @brokerTrackingCreateDriverFromPlus.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a driver from the + button to start tracking.'**
+  String get brokerTrackingCreateDriverFromPlus;
+
+  /// No description provided for @brokerTrackingTryDifferentQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different name, phone or vehicle number.'**
+  String get brokerTrackingTryDifferentQuery;
+
+  /// No description provided for @brokerTrackingNoActiveTripIncidentData.
+  ///
+  /// In en, this message translates to:
+  /// **'No active trip incident data for this driver.'**
+  String get brokerTrackingNoActiveTripIncidentData;
+
+  /// No description provided for @brokerTrackingNoIncidentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No incidents reported yet.'**
+  String get brokerTrackingNoIncidentsYet;
+
+  /// No description provided for @brokerTrackingIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident'**
+  String get brokerTrackingIncident;
+
+  /// No description provided for @brokerTrackingDestinationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination not available'**
+  String get brokerTrackingDestinationNotAvailable;
+
+  /// No description provided for @addTruckAddedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck added successfully.'**
+  String get addTruckAddedSuccessfully;
+
+  /// No description provided for @addTruckUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck updated successfully.'**
+  String get addTruckUpdatedSuccessfully;
+
+  /// No description provided for @addTruckEditTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Truck'**
+  String get addTruckEditTruck;
+
+  /// No description provided for @addTruckAddTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Truck'**
+  String get addTruckAddTruck;
+
+  /// No description provided for @addTruckErrRegistrationLooksInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration looks invalid, e.g. MH-12-AB-1234.'**
+  String get addTruckErrRegistrationLooksInvalid;
+
+  /// No description provided for @brokerHomeTheDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver'**
+  String get brokerHomeTheDriver;
+
+  /// No description provided for @brokerNotificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get brokerNotificationsMarkAllRead;
+
+  /// No description provided for @brokerNotificationsTabOps.
+  ///
+  /// In en, this message translates to:
+  /// **'Ops'**
+  String get brokerNotificationsTabOps;
+
+  /// No description provided for @brokerNotificationsTabSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get brokerNotificationsTabSystem;
+
+  /// No description provided for @brokerNotificationsTabMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Money'**
+  String get brokerNotificationsTabMoney;
+
+  /// No description provided for @brokerVehiclesRowType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get brokerVehiclesRowType;
+
+  /// No description provided for @brokerVehiclesRowInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get brokerVehiclesRowInsurance;
+
+  /// No description provided for @brokerEarningsAcrossAllSettledTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Across all settled trips'**
+  String get brokerEarningsAcrossAllSettledTrips;
+
+  /// No description provided for @brokerEarningsAcrossAllSettledTripsVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Across all settled trips • vs last month'**
+  String get brokerEarningsAcrossAllSettledTripsVsLastMonth;
+
+  /// No description provided for @brokerEarningsFlatVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat vs last month — steady performance.'**
+  String get brokerEarningsFlatVsLastMonth;
+
+  /// No description provided for @brokerEarningsUpVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Up {change}% vs last month — keep the momentum.'**
+  String brokerEarningsUpVsLastMonth(Object change);
+
+  /// No description provided for @brokerEarningsDownVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {change}% vs last month.'**
+  String brokerEarningsDownVsLastMonth(Object change);
+
+  /// No description provided for @brokerEarningsSettlementPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement pending'**
+  String get brokerEarningsSettlementPending;
+
+  /// No description provided for @brokerReqDetailAutoSelectedDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-selected driver'**
+  String get brokerReqDetailAutoSelectedDriver;
+
+  /// No description provided for @brokerReqDetailAutoSelectedTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-selected truck'**
+  String get brokerReqDetailAutoSelectedTruck;
+
+  /// No description provided for @brokerTruckLocationDriverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver: {name}'**
+  String brokerTruckLocationDriverLabel(Object name);
+
+  /// No description provided for @brokerDriverRequestsAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Request accepted.'**
+  String get brokerDriverRequestsAccepted;
+
+  /// No description provided for @brokerDriverRequestsDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Request declined.'**
+  String get brokerDriverRequestsDeclined;
+
+  /// No description provided for @brokerDriverRequestsTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed out'**
+  String get brokerDriverRequestsTimedOut;
+
+  /// No description provided for @driverDetailNotOnTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on trip'**
+  String get driverDetailNotOnTrip;
+
+  /// No description provided for @driverDetailAwaitingLiveLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting live location'**
+  String get driverDetailAwaitingLiveLocation;
+
+  /// No description provided for @brokerTruckAssignAssigning.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigning...'**
+  String get brokerTruckAssignAssigning;
+
+  /// No description provided for @driverTripToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get driverTripToday;
+
+  /// No description provided for @driverEarningsRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get driverEarningsRecent;
+
+  /// No description provided for @driverRiderAllTripsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All Trips'**
+  String get driverRiderAllTripsTitle;
+
+  /// No description provided for @driverRiderAllTripsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest activity and completed deliveries'**
+  String get driverRiderAllTripsSubtitle;
+
+  /// No description provided for @driverRiderRecentlyCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently completed deliveries'**
+  String get driverRiderRecentlyCompleted;
+
+  /// No description provided for @driverRiderPendingDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending deliveries and settlements'**
+  String get driverRiderPendingDeliveries;
+
+  /// No description provided for @driverRiderViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get driverRiderViewAll;
+
+  /// No description provided for @driverRiderNoDeliveriesDoneYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No deliveries done yet, start working'**
+  String get driverRiderNoDeliveriesDoneYet;
+
+  /// No description provided for @driverRiderNoLatestTripYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No latest trip yet'**
+  String get driverRiderNoLatestTripYet;
+
+  /// No description provided for @driverRiderToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get driverRiderToday;
+
+  /// No description provided for @driverRiderYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get driverRiderYesterday;
+
+  /// No description provided for @driverRiderTripCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 trip} other{{count} trips}}'**
+  String driverRiderTripCount(num count);
+
+  /// No description provided for @driverRiderToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'To:'**
+  String get driverRiderToLabel;
+
+  /// No description provided for @driverRiderStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status:'**
+  String get driverRiderStatusLabel;
+
+  /// No description provided for @driverRiderFromLocationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'From location unavailable'**
+  String get driverRiderFromLocationUnavailable;
+
+  /// No description provided for @driverRiderToLocationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'To location unavailable'**
+  String get driverRiderToLocationUnavailable;
+
+  /// No description provided for @driverRiderLocatingPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating pickup…'**
+  String get driverRiderLocatingPickup;
+
+  /// No description provided for @driverRiderLocatingDropoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating drop-off…'**
+  String get driverRiderLocatingDropoff;
+
+  /// No description provided for @driverRiderViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get driverRiderViewDetails;
+
+  /// No description provided for @driverHomeOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get driverHomeOffline;
+
+  /// No description provided for @driverHomeOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get driverHomeOnline;
+
+  /// No description provided for @driverHomeToggleOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle offline'**
+  String get driverHomeToggleOffline;
+
+  /// No description provided for @driverHomeToggleOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle online'**
+  String get driverHomeToggleOnline;
+
+  /// No description provided for @driverHomeCantGoOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t go offline while you have an active trip'**
+  String get driverHomeCantGoOffline;
+
+  /// No description provided for @driverHomeCannotGoOfflineSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot go offline while a trip is active.'**
+  String get driverHomeCannotGoOfflineSnack;
+
+  /// No description provided for @driverHomeActiveTripLocksOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Active trip in progress. Online mode stays locked until the trip is completed.'**
+  String get driverHomeActiveTripLocksOnline;
+
+  /// No description provided for @driverHomeMoreRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'More requests'**
+  String get driverHomeMoreRequests;
+
+  /// No description provided for @driverHomeDeliveryId.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery ID'**
+  String get driverHomeDeliveryId;
+
+  /// No description provided for @driverHomeBrokerHandoffActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker handoff active'**
+  String get driverHomeBrokerHandoffActive;
+
+  /// No description provided for @driverHomeClientCountered.
+  ///
+  /// In en, this message translates to:
+  /// **'Client countered. Open the request to respond.'**
+  String get driverHomeClientCountered;
+
+  /// No description provided for @driverHomeWaitingForClientResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the client response'**
+  String get driverHomeWaitingForClientResponse;
+
+  /// No description provided for @driverHomeClientAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Client accepted. Open the request to confirm.'**
+  String get driverHomeClientAccepted;
+
+  /// No description provided for @driverHomeWaitingForClientConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for client confirmation'**
+  String get driverHomeWaitingForClientConfirmation;
+
+  /// No description provided for @driverHomeNegotiationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiation unavailable'**
+  String get driverHomeNegotiationUnavailable;
+
+  /// No description provided for @driverHomeClientRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Client request'**
+  String get driverHomeClientRequest;
+
+  /// No description provided for @driverHomeBrokerAssignedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker-assigned - accept or decline, no negotiation.'**
+  String get driverHomeBrokerAssignedNotice;
+
+  /// No description provided for @driverHomeLocationFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} location'**
+  String driverHomeLocationFallback(Object label);
+
+  /// No description provided for @driverOrderClientAcceptedRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Client accepted the request'**
+  String get driverOrderClientAcceptedRequest;
+
+  /// No description provided for @driverOrderClientAcceptedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The client accepted your offer. Please confirm to finalize the booking or reject to decline it.'**
+  String get driverOrderClientAcceptedBody;
+
+  /// No description provided for @driverOrderBookingSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking is still syncing.'**
+  String get driverOrderBookingSyncing;
+
+  /// No description provided for @driverOrderOpeningTripWhenReady.
+  ///
+  /// In en, this message translates to:
+  /// **'We are opening the active trip view as soon as the trip is ready.'**
+  String get driverOrderOpeningTripWhenReady;
+
+  /// No description provided for @driverOrderCheckingApis.
+  ///
+  /// In en, this message translates to:
+  /// **'We check the request, booking, and trip APIs every 5 seconds.'**
+  String get driverOrderCheckingApis;
+
+  /// No description provided for @driverOrderCheckNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get driverOrderCheckNow;
+
+  /// No description provided for @driverOrderBookingFinalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking finalized'**
+  String get driverOrderBookingFinalized;
+
+  /// No description provided for @driverOrderOpeningActiveTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the active trip view.'**
+  String get driverOrderOpeningActiveTrip;
+
+  /// No description provided for @driverOrderYourOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your offer'**
+  String get driverOrderYourOffer;
+
+  /// No description provided for @driverOrderBaseAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Base {amount}'**
+  String driverOrderBaseAmount(Object amount);
+
+  /// No description provided for @driverOrderClientAcceptedYourRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Client accepted your request'**
+  String get driverOrderClientAcceptedYourRequest;
+
+  /// No description provided for @driverOrderConfirmOrDeclinePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm or decline from the prompt that appeared above.'**
+  String get driverOrderConfirmOrDeclinePrompt;
+
+  /// No description provided for @driverOrderAcceptedWaitingClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted - waiting for the client to confirm.'**
+  String get driverOrderAcceptedWaitingClient;
+
+  /// No description provided for @driverOrderRealtimeUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'We update this in real time.'**
+  String get driverOrderRealtimeUpdates;
+
+  /// No description provided for @driverOrderFareChangeSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare change sent. Waiting for client response...'**
+  String get driverOrderFareChangeSent;
+
+  /// No description provided for @driverOrderUnlockAfterClientAccepts.
+  ///
+  /// In en, this message translates to:
+  /// **'We will unlock the tracking button once the client accepts the offer.'**
+  String get driverOrderUnlockAfterClientAccepts;
+
+  /// No description provided for @driverOrderFareChangesUsedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your fare changes - accept or decline instead.'**
+  String get driverOrderFareChangesUsedUp;
+
+  /// No description provided for @driverOrderBrokerTakeover.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker takeover'**
+  String get driverOrderBrokerTakeover;
+
+  /// No description provided for @driverOrderLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get driverOrderLocked;
+
+  /// No description provided for @driverOrderAnyMomentNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Any moment now'**
+  String get driverOrderAnyMomentNow;
+
+  /// No description provided for @driverOrderHandedOverToBroker.
+  ///
+  /// In en, this message translates to:
+  /// **'Handed over to broker'**
+  String get driverOrderHandedOverToBroker;
+
+  /// No description provided for @driverOrderFinalizingTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalizing the trip'**
+  String get driverOrderFinalizingTrip;
+
+  /// No description provided for @driverOrderSetYourFareChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your fare change'**
+  String get driverOrderSetYourFareChange;
+
+  /// No description provided for @driverOrderNegotiatingWithClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiating with the client'**
+  String get driverOrderNegotiatingWithClient;
+
+  /// No description provided for @driverOrderHandedOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Handed over'**
+  String get driverOrderHandedOver;
+
+  /// No description provided for @driverOrderHandoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Handoff'**
+  String get driverOrderHandoff;
+
+  /// No description provided for @driverOrderBrokerAssignedTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker-assigned trip'**
+  String get driverOrderBrokerAssignedTrip;
+
+  /// No description provided for @driverOrderAlreadyAgreedWithBroker.
+  ///
+  /// In en, this message translates to:
+  /// **'Already agreed with the broker - accept or decline, no fare changes.'**
+  String get driverOrderAlreadyAgreedWithBroker;
+
+  /// No description provided for @driverOrderFixedPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed price'**
+  String get driverOrderFixedPrice;
+
+  /// No description provided for @driverOrderAgreedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'AGREED AMOUNT'**
+  String get driverOrderAgreedAmount;
+
+  /// No description provided for @driverOrderAssignedTripBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This trip was assigned by the broker at the agreed amount. You can decline it if you are not available.'**
+  String get driverOrderAssignedTripBody;
+
+  /// No description provided for @driverOrderBrokerControlsRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker controls this request now - waiting for new leads.'**
+  String get driverOrderBrokerControlsRequest;
+
+  /// No description provided for @driverOrderBaseOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'BASE OFFER'**
+  String get driverOrderBaseOffer;
+
+  /// No description provided for @driverOrderBrokerHandling.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker handling'**
+  String get driverOrderBrokerHandling;
+
+  /// No description provided for @driverOrderClientResponded.
+  ///
+  /// In en, this message translates to:
+  /// **'Client responded'**
+  String get driverOrderClientResponded;
+
+  /// No description provided for @driverOrderFareWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare window'**
+  String get driverOrderFareWindow;
+
+  /// No description provided for @driverOrderAwaitingResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting response'**
+  String get driverOrderAwaitingResponse;
+
+  /// No description provided for @deliveryDetailsTripStartedHeadingToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip started. Heading to pickup.'**
+  String get deliveryDetailsTripStartedHeadingToPickup;
+
+  /// No description provided for @deliveryDetailsPickupMarkedStartDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup marked. Start delivery next.'**
+  String get deliveryDetailsPickupMarkedStartDelivery;
+
+  /// No description provided for @deliveryDetailsNowInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery is now in transit.'**
+  String get deliveryDetailsNowInTransit;
+
+  /// No description provided for @deliveryDetailsMarkedAsDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery marked as delivered.'**
+  String get deliveryDetailsMarkedAsDelivered;
+
+  /// No description provided for @deliveryDetailsCompleteLoadingStopsFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Complete 1 loading stop first} other{Complete {count} loading stops first}}'**
+  String deliveryDetailsCompleteLoadingStopsFirst(num count);
+
+  /// No description provided for @deliveryDetailsCompleteUnloadingStopsFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Complete 1 unloading stop first} other{Complete {count} unloading stops first}}'**
+  String deliveryDetailsCompleteUnloadingStopsFirst(num count);
+
+  /// No description provided for @deliveryDetailsOnRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'On route'**
+  String get deliveryDetailsOnRoute;
+
+  /// No description provided for @deliveryDetailsActiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get deliveryDetailsActiveBadge;
+
+  /// No description provided for @deliveryDetailsUseActionToAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the action below to advance the trip.'**
+  String get deliveryDetailsUseActionToAdvance;
+
+  /// No description provided for @deliveryDetailsCurrentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Current status'**
+  String get deliveryDetailsCurrentStatus;
+
+  /// No description provided for @deliveryDetailsSyncingTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing trip...'**
+  String get deliveryDetailsSyncingTrip;
+
+  /// No description provided for @deliveryDetailsDecliningEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Declining...'**
+  String get deliveryDetailsDecliningEllipsis;
+
+  /// No description provided for @deliveryDetailsTripFallbackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip'**
+  String get deliveryDetailsTripFallbackLabel;
+
+  /// No description provided for @deliveryDetailsEmergencyAssistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Assistance'**
+  String get deliveryDetailsEmergencyAssistance;
+
+  /// No description provided for @deliveryDetailsNavigateToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate to pickup'**
+  String get deliveryDetailsNavigateToPickup;
+
+  /// No description provided for @deliveryDetailsAskCustomerForCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the customer to share their 4-digit code'**
+  String get deliveryDetailsAskCustomerForCode;
+
+  /// No description provided for @deliveryDetailsDelayCharge.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery delay charge'**
+  String get deliveryDetailsDelayCharge;
+
+  /// No description provided for @deliveryDetailsSla.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery SLA'**
+  String get deliveryDetailsSla;
+
+  /// No description provided for @deliveryDetailsDelayChargeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} for {hours}h over the expected delivery time.'**
+  String deliveryDetailsDelayChargeBody(Object amount, Object hours);
+
+  /// No description provided for @deliveryDetailsExpectedWithin.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected delivery within ~{hours}h.'**
+  String deliveryDetailsExpectedWithin(Object hours);
+
+  /// No description provided for @deliveryDetailsBookingChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking chat'**
+  String get deliveryDetailsBookingChat;
+
+  /// No description provided for @deliveryDetailsMechanicStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Mechanic Status'**
+  String get deliveryDetailsMechanicStatus;
+
+  /// No description provided for @deliveryDetailsLiveIncidentUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Live incident updates for this trip.'**
+  String get deliveryDetailsLiveIncidentUpdates;
+
+  /// No description provided for @deliveryDetailsIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident'**
+  String get deliveryDetailsIncident;
+
+  /// No description provided for @deliveryDetailsMechanicLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mechanic: {name}'**
+  String deliveryDetailsMechanicLine(Object name);
+
+  /// No description provided for @deliveryDetailsPendingAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending assignment'**
+  String get deliveryDetailsPendingAssignment;
+
+  /// No description provided for @deliveryDetailsPhoneLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone: {phone}'**
+  String deliveryDetailsPhoneLine(Object phone);
+
+  /// No description provided for @deliveryDetailsStatusLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String deliveryDetailsStatusLine(Object status);
+
+  /// No description provided for @deliveryDetailsRequestedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'requested'**
+  String get deliveryDetailsRequestedLabel;
+
+  /// No description provided for @driverKycVerifiedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified - full access unlocked.'**
+  String get driverKycVerifiedSnack;
+
+  /// No description provided for @driverKycSubmittedForReviewSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC submitted for review.'**
+  String get driverKycSubmittedForReviewSnack;
+
+  /// No description provided for @driverKycConfirmAccuracyDeclaration.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm that all the information provided is accurate.'**
+  String get driverKycConfirmAccuracyDeclaration;
+
+  /// No description provided for @driverKycVerifyIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Your Identity'**
+  String get driverKycVerifyIdentity;
+
+  /// No description provided for @driverKycFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get driverKycFinish;
+
+  /// No description provided for @driverKycResubmitForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Resubmit for Review'**
+  String get driverKycResubmitForReview;
+
+  /// No description provided for @driverKycDriverKycTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver KYC'**
+  String get driverKycDriverKycTitle;
+
+  /// No description provided for @chatCurrentUserSenderName.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get chatCurrentUserSenderName;
+
+  /// No description provided for @clientNotificationsTimeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String clientNotificationsTimeMinutesAgo(Object minutes);
+
+  /// No description provided for @clientNotificationsTimeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String clientNotificationsTimeHoursAgo(Object hours);
+
+  /// No description provided for @clientNotificationsTimeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String clientNotificationsTimeDaysAgo(Object days);
+
+  /// No description provided for @negotiationYourFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Your fare'**
+  String get negotiationYourFare;
+
+  /// No description provided for @negotiationFareChangesExhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your fare changes — accept or decline instead.'**
+  String get negotiationFareChangesExhausted;
+
+  /// No description provided for @negotiationWaitingDriverAcceptedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver accepted the request'**
+  String get negotiationWaitingDriverAcceptedTitle;
+
+  /// No description provided for @negotiationWaitingDriverTurnToConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver accepted - your turn to confirm'**
+  String get negotiationWaitingDriverTurnToConfirmTitle;
+
+  /// No description provided for @negotiationWaitingDriverConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for driver confirmation'**
+  String get negotiationWaitingDriverConfirmationTitle;
+
+  /// No description provided for @negotiationWaitingFareChangeReceivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare change received'**
+  String get negotiationWaitingFareChangeReceivedTitle;
+
+  /// No description provided for @negotiationWaitingDriverResponseTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for driver response'**
+  String get negotiationWaitingDriverResponseTypeTitle;
+
+  /// No description provided for @negotiationWaitingDriverAcceptedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver accepted your request. You can confirm the booking and continue to payment.'**
+  String get negotiationWaitingDriverAcceptedBody;
+
+  /// No description provided for @negotiationWaitingDriverCommittedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver already committed. Confirm or decline to finish the handshake.'**
+  String get negotiationWaitingDriverCommittedBody;
+
+  /// No description provided for @negotiationWaitingDriverYourConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You already confirmed this offer. We are waiting for the driver to confirm now.'**
+  String get negotiationWaitingDriverYourConfirmBody;
+
+  /// No description provided for @negotiationWaitingDriverChangedFareBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver changed the fare. Review it here and respond instantly.'**
+  String get negotiationWaitingDriverChangedFareBody;
+
+  /// No description provided for @negotiationWaitingDriverTimedOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver did not respond in time. The broker can step in now.'**
+  String get negotiationWaitingDriverTimedOutBody;
+
+  /// No description provided for @negotiationWaitingDriverLiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is live. We will update this popup as soon as the truck responds.'**
+  String get negotiationWaitingDriverLiveBody;
+
+  /// No description provided for @negotiationBookingReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking #{bookingNumber}'**
+  String negotiationBookingReference(Object bookingNumber);
+
+  /// No description provided for @negotiationLiveUpdatesAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Live updates will appear here.'**
+  String get negotiationLiveUpdatesAppearHere;
+
+  /// No description provided for @negotiationCurrentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Current amount: {amount}'**
+  String negotiationCurrentAmount(Object amount);
+
+  /// No description provided for @negotiationHistoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiation history ({count})'**
+  String negotiationHistoryCount(Object count);
+
+  /// No description provided for @negotiationHistoryEntryOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayBy} offered ₹{amount}'**
+  String negotiationHistoryEntryOffered(Object amount, Object displayBy);
+
+  /// No description provided for @negotiationWaitingLiveFareChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a live fare change...'**
+  String get negotiationWaitingLiveFareChange;
+
+  /// No description provided for @negotiationPickPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick how this freight booking should be settled. Advance uses the latest admin-configured amount.'**
+  String get negotiationPickPayment;
+
+  /// No description provided for @negotiationRazorpayCheckoutNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Razorpay checkout will show the available payment methods before you pay.'**
+  String get negotiationRazorpayCheckoutNote;
+
+  /// No description provided for @negotiationConfirmPaymentStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm payment stage'**
+  String get negotiationConfirmPaymentStage;
+
+  /// No description provided for @negotiationContinueToSecureCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to secure checkout'**
+  String get negotiationContinueToSecureCheckout;
+
+  /// No description provided for @negotiationWaitingNextDriverUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the next driver update...'**
+  String get negotiationWaitingNextDriverUpdate;
+
+  /// No description provided for @negotiationUseSliderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the slider to set the amount you want to continue with.'**
+  String get negotiationUseSliderHint;
+
+  /// No description provided for @negotiationDragToSetPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to set your price'**
+  String get negotiationDragToSetPrice;
+
+  /// No description provided for @brokerSettlementsGrossAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross amount'**
+  String get brokerSettlementsGrossAmount;
+
+  /// No description provided for @brokerSettlementsPlatformFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform fee'**
+  String get brokerSettlementsPlatformFee;
+
+  /// No description provided for @brokerSettlementsRoutePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Route pending'**
+  String get brokerSettlementsRoutePending;
+
+  /// No description provided for @brokerTrackLiveStepEnRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'En Route'**
+  String get brokerTrackLiveStepEnRoute;
+
+  /// No description provided for @brokerTrackLiveStepPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked Up'**
+  String get brokerTrackLiveStepPickedUp;
+
+  /// No description provided for @brokerTrackLiveStepInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'In Transit'**
+  String get brokerTrackLiveStepInTransit;
+
+  /// No description provided for @addDriverSharedSeparately.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared separately'**
+  String get addDriverSharedSeparately;
+
+  /// No description provided for @addDriverAadhaarMustBe12Digits.
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar must be 12 digits'**
+  String get addDriverAadhaarMustBe12Digits;
+
+  /// No description provided for @addDriverUseAValidDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a valid date'**
+  String get addDriverUseAValidDate;
+
+  /// No description provided for @addDriverLicenseExpiryCannotBeInThePast.
+  ///
+  /// In en, this message translates to:
+  /// **'License expiry cannot be in the past.'**
+  String get addDriverLicenseExpiryCannotBeInThePast;
+
+  /// No description provided for @addDriverTapToUpdateTheDriverPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to update the driver photo'**
+  String get addDriverTapToUpdateTheDriverPhoto;
+
+  /// No description provided for @addDriverTapTheCameraToAddADriverPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the camera to add a driver photo'**
+  String get addDriverTapTheCameraToAddADriverPhoto;
+
+  /// No description provided for @addVehicleTruckAddedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck added successfully.'**
+  String get addVehicleTruckAddedSuccessfully;
+
+  /// No description provided for @addVehicleTruckUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck updated successfully.'**
+  String get addVehicleTruckUpdatedSuccessfully;
+
+  /// No description provided for @addVehicleUseYyyyMmdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Use YYYY-MM-DD'**
+  String get addVehicleUseYyyyMmdd;
+
+  /// No description provided for @brokerKycInDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'In details'**
+  String get brokerKycInDetails;
+
+  /// No description provided for @brokerKycIncludedInDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Included in details'**
+  String get brokerKycIncludedInDetails;
+
+  /// No description provided for @brokerKycSubmittedUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted URL'**
+  String get brokerKycSubmittedUrl;
+
+  /// No description provided for @brokerKycNoActiveSessionFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No active session found.'**
+  String get brokerKycNoActiveSessionFound;
+
+  /// No description provided for @brokerKycPleaseConfirmAllInformationIsAccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm that all information is accurate.'**
+  String get brokerKycPleaseConfirmAllInformationIsAccurate;
+
+  /// No description provided for @brokerKycYouAreVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified - full access unlocked.'**
+  String get brokerKycYouAreVerified;
+
+  /// No description provided for @brokerKycSubmittedForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC submitted for review.'**
+  String get brokerKycSubmittedForReview;
+
+  /// No description provided for @driverTrackingSignInAgainBeforeEnablingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again before enabling location sharing.'**
+  String get driverTrackingSignInAgainBeforeEnablingLocation;
+
+  /// No description provided for @driverTrackingEnableLocationServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location services on the device to share live tracking.'**
+  String get driverTrackingEnableLocationServices;
+
+  /// No description provided for @driverTrackingLocationPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required for live driver tracking.'**
+  String get driverTrackingLocationPermissionRequired;
+
+  /// No description provided for @driverTrackingLocationPermissionDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is permanently denied. Open app settings to enable it.'**
+  String get driverTrackingLocationPermissionDeniedForever;
+
+  /// No description provided for @driverTrackingUnableToStartLiveTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to start live tracking on this device.'**
+  String get driverTrackingUnableToStartLiveTracking;
+
+  /// No description provided for @driverTrackingSignInAgainBeforeRefreshingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again before refreshing location.'**
+  String get driverTrackingSignInAgainBeforeRefreshingLocation;
+
+  /// No description provided for @negotiationWindowAnyMomentNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Any moment now - waiting for the server handoff.'**
+  String get negotiationWindowAnyMomentNow;
+
+  /// No description provided for @negotiationWindowRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {countdown} remaining'**
+  String negotiationWindowRemaining(Object countdown, Object label);
 }
 
 class _AppLocalizationsDelegate

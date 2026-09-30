@@ -695,18 +695,18 @@ _MethodCardTheme _methodTheme(String methodType) {
   }
 }
 
-String _methodTypeLabel(String methodType) {
+String _methodTypeLabel(AppLocalizations l10n, String methodType) {
   switch (methodType) {
     case 'card':
-      return 'Card';
+      return l10n.clientPaymentTypeCard;
     case 'netbanking':
-      return 'Bank';
+      return l10n.clientPaymentTypeBank;
     case 'wallet':
-      return 'Wallet';
+      return l10n.clientPaymentTypeWallet;
     case 'upi':
       return 'UPI';
     default:
-      return 'Method';
+      return l10n.clientPaymentTypeMethod;
   }
 }
 

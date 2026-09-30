@@ -108,7 +108,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
                       final group = groupEntry.value;
                       return [
                         _DayGroupHeader(
-                          label: _tripDayLabel(group.key),
+                          label: _tripDayLabel(l10n, group.key),
                           count: group.value.length,
                         ),
                         const SizedBox(height: 10),
@@ -176,7 +176,7 @@ class _AllTripsHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'All Trips',
+                  AppLocalizations.of(context)!.driverRiderAllTripsTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -184,7 +184,8 @@ class _AllTripsHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Latest activity and completed deliveries',
+                  AppLocalizations.of(context)!
+                      .driverRiderAllTripsSubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -418,8 +419,10 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                             Expanded(
                               child: Text(
                                 showCompleted
-                                    ? 'Recently completed deliveries'
-                                    : 'Pending deliveries and settlements',
+                                    ? AppLocalizations.of(context)!
+                                          .driverRiderRecentlyCompleted
+                                    : AppLocalizations.of(context)!
+                                          .driverRiderPendingDeliveries,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: AppColors.textSecondary,
@@ -438,18 +441,19 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                                   vertical: 4,
                                 ),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'View all',
-                                    style: TextStyle(
+                                    AppLocalizations.of(context)!
+                                        .driverRiderViewAll,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
                                     ),
                                   ),
-                                  SizedBox(width: 2),
-                                  Icon(
+                                  const SizedBox(width: 2),
+                                  const Icon(
                                     AppIcons.chevron_right_rounded,
                                     size: 18,
                                   ),
@@ -488,8 +492,10 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                                   children: [
                                     _InlineEmptyMessage(
                                       message: showCompleted
-                                          ? 'No deliveries done yet, start working'
-                                          : 'No latest trip yet',
+                                          ? AppLocalizations.of(context)!
+                                                .driverRiderNoDeliveriesDoneYet
+                                          : AppLocalizations.of(context)!
+                                                .driverRiderNoLatestTripYet,
                                     ),
                                   ],
                                 )
@@ -669,29 +675,29 @@ class _SegmentBarPlaceholder extends StatelessWidget {
   }
 }
 
-String _formatDisplayDate(String value) {
+String _formatDisplayDate(AppLocalizations l10n, String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) {
     return value;
   }
 
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = [
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   final hour = parsed.hour % 12 == 0 ? 12 : parsed.hour % 12;
   final minute = parsed.minute.toString().padLeft(2, '0');
-  final period = parsed.hour >= 12 ? 'PM' : 'AM';
+  final period = parsed.hour >= 12 ? l10n.timePeriodPm : l10n.timePeriodAm;
   return '${months[parsed.month - 1]} ${parsed.day}, $hour:$minute $period';
 }
 
@@ -706,7 +712,7 @@ String _tripDayKey(String value) {
   return '${local.year}-$month-$day';
 }
 
-String _tripDayLabel(String value) {
+String _tripDayLabel(AppLocalizations l10n, String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) {
     return value;
@@ -717,12 +723,12 @@ String _tripDayLabel(String value) {
   final day = DateTime(local.year, local.month, local.day);
   final diff = today.difference(day).inDays;
   if (diff == 0) {
-    return 'Today';
+    return l10n.driverRiderToday;
   }
   if (diff == 1) {
-    return 'Yesterday';
+    return l10n.driverRiderYesterday;
   }
-  return _formatDisplayDate(local.toIso8601String()).split(',').first;
+  return _formatDisplayDate(l10n, local.toIso8601String()).split(',').first;
 }
 
 List<MapEntry<String, List<DriverTripSummary>>> _groupTripsByDay(
@@ -859,7 +865,7 @@ class _DayGroupHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            '$count ${count == 1 ? 'trip' : 'trips'}',
+            AppLocalizations.of(context)!.driverRiderTripCount(count),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
@@ -881,7 +887,8 @@ class _TripHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route = _splitRoute(settlement.route);
+    final l10n = AppLocalizations.of(context)!;
+    final route = _splitRoute(l10n, settlement.route);
     final bookingId = settlement.bookingId.isNotEmpty
         ? settlement.bookingId
         : settlement.bookingNumber;
@@ -1028,7 +1035,7 @@ class _TripHistoryCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'From:',
+                          l10n.fromLabel,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Colors.black38,
@@ -1050,7 +1057,7 @@ class _TripHistoryCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'To:',
+                          l10n.driverRiderToLabel,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Colors.black38,
@@ -1099,7 +1106,7 @@ class _TripHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Status:',
+                    l10n.driverRiderStatusLabel,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.textHeading,
                       fontWeight: FontWeight.w600,
@@ -1158,10 +1165,13 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-({String from, String to}) _splitRoute(String route) {
+({String from, String to}) _splitRoute(AppLocalizations l10n, String route) {
   final normalized = route.trim();
   if (normalized.isEmpty) {
-    return (from: 'From location unavailable', to: 'To location unavailable');
+    return (
+      from: l10n.driverRiderFromLocationUnavailable,
+      to: l10n.driverRiderToLocationUnavailable,
+    );
   }
 
   const separators = [' → ', ' -> ', ' to ', ' - '];
@@ -1175,7 +1185,7 @@ class _StatusPill extends StatelessWidget {
     }
   }
 
-  return (from: normalized, to: 'To location unavailable');
+  return (from: normalized, to: l10n.driverRiderToLocationUnavailable);
 }
 
 class _EmptyCard extends StatelessWidget {
@@ -1261,7 +1271,8 @@ class _ActiveTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusLabel = tripStatusLabel(shipment.status);
+    final l10n = AppLocalizations.of(context)!;
+    final statusLabel = tripStatusLabel(l10n, shipment.status);
     final isDelivered = shipment.status.trim().toLowerCase() == 'delivered';
 
     return Material(
@@ -1420,7 +1431,7 @@ class _ActiveTripCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'From:',
+                          l10n.fromLabel,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Colors.black38,
@@ -1433,11 +1444,11 @@ class _ActiveTripCard extends StatelessWidget {
                           label: shipment.fromLocation,
                           latitude: shipment.pickupLat,
                           longitude: shipment.pickupLng,
-                          resolvingText: 'Locating pickup…',
+                          resolvingText: l10n.driverRiderLocatingPickup,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'To:',
+                          l10n.driverRiderToLabel,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Colors.black38,
@@ -1450,7 +1461,7 @@ class _ActiveTripCard extends StatelessWidget {
                           label: shipment.toLocation,
                           latitude: shipment.dropLat,
                           longitude: shipment.dropLng,
-                          resolvingText: 'Locating drop-off…',
+                          resolvingText: l10n.driverRiderLocatingDropoff,
                         ),
                       ],
                     ),
@@ -1492,7 +1503,9 @@ class _ActiveTripCard extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          isDelivered ? 'Delivered' : 'In progress',
+                          isDelivered
+                              ? l10n.tripSummaryDelivered
+                              : l10n.tripSummaryInProgress,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge
@@ -1526,7 +1539,7 @@ class _ActiveTripCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'View Details',
+                                  l10n.driverRiderViewDetails,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: detailsFontSize,

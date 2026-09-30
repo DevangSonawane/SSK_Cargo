@@ -148,8 +148,11 @@ class _TruckLocationContent extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       snapshot.truck.assignedDriverName.isEmpty
-                          ? 'Unassigned'
-                          : 'Driver: ${snapshot.truck.assignedDriverName}',
+                          ? AppLocalizations.of(context)!.unassigned
+                          : AppLocalizations.of(context)!
+                                .brokerTruckLocationDriverLabel(
+                                  snapshot.truck.assignedDriverName,
+                                ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w700,

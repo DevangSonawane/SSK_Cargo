@@ -253,6 +253,7 @@ class _IntermediateStopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -300,7 +301,7 @@ class _IntermediateStopTile extends StatelessWidget {
           IconButton(
             onPressed: onRemove,
             icon: const Icon(AppIcons.close_rounded, size: 18),
-            tooltip: 'Remove stop',
+            tooltip: l10n.clientBookingRemoveStopTooltip,
             color: context.colors.textSecondary,
           ),
         ],
@@ -513,12 +514,17 @@ String labelForTruckCategory(String category, [String fallback = '']) {
 /// (same as web: the response already carries the correct per-type minimum
 /// fare, no separate pricing call needed). Null/zero `basePrice` (e.g.
 /// `part`) shows a non-numeric placeholder so no fake fare is displayed.
-List<VehicleOption> vehicleOptionsFromTypes(List<VehicleType> types) {
+List<VehicleOption> vehicleOptionsFromTypes(
+  List<VehicleType> types, [
+  AppLocalizations? l10n,
+]) {
   return types
       .map((t) {
         final price = (t.basePrice != null && t.basePrice! > 0)
             ? _formatRupees(t.basePrice!)
-            : (t.id.trim().toLowerCase() == 'part' ? 'Shared' : 'On request');
+            : (t.id.trim().toLowerCase() == 'part'
+                  ? (l10n?.vehiclePriceShared ?? 'Shared')
+                  : (l10n?.vehiclePriceOnRequest ?? 'On request'));
         return VehicleOption(
           id: t.id,
           label: t.name.isNotEmpty ? t.name : labelForTruckCategory(t.id),
@@ -605,15 +611,47 @@ String localizedVehicleOptionLabel(
   AppLocalizations l10n,
   VehicleOption option,
 ) {
-  switch (option.id) {
+  switch (option.id.trim().toLowerCase()) {
     case 'small':
       return l10n.vehicleSmallTruck;
+    case '3_wheeler':
+    case '3-wheeler':
+    case '3 wheeler':
+      return l10n.vehicleOption3Wheeler;
     case 'medium':
       return l10n.vehicleMediumTruck;
     case 'large':
+    case 'big':
       return l10n.vehicleBigTruck;
     case 'part':
+    case 'pooling':
+    case 'truck pooling':
+    case 'part load':
       return l10n.vehicleTruckPooling;
+    case 'tata_ace':
+    case 'tata-ace':
+    case 'tata ace':
+      return l10n.vehicleOptionTataAce;
+    case 'pickup_8ft':
+    case 'pickup-8ft':
+    case 'pickup 8ft':
+      return l10n.vehicleOptionPickup8ft;
+    case 'pickup_10ft':
+    case 'pickup-10ft':
+    case 'pickup 10ft':
+      return l10n.vehicleOptionPickup10ft;
+    case '14ft':
+    case '14 ft':
+      return l10n.vehicleOption14ftTruck;
+    case '17ft':
+    case '17 ft':
+      return l10n.vehicleOption17ftTruck;
+    case '19ft':
+    case '19 ft':
+      return l10n.vehicleOption19ftTruck;
+    case '22ft':
+    case '22 ft':
+      return l10n.vehicleOption22ftTruck;
     default:
       return option.label;
   }
@@ -624,26 +662,27 @@ List<VehicleOption> resolveVehicleOptions({
   ClientPricingConfig? pricing,
   required bool isLoading,
   List<VehicleType>? vehicleTypes,
+  AppLocalizations? l10n,
 }) {
   // Live taxonomy (web parity: built from GET /api/config/vehicle-types).
   // Takes precedence over the legacy hardcoded list + admin-pricing tiers —
   // the response already carries the correct per-type `basePrice`.
   if (vehicleTypes != null && vehicleTypes.isNotEmpty) {
     if (isLoading) {
-      return vehicleOptionsFromTypes(vehicleTypes)
+      return vehicleOptionsFromTypes(vehicleTypes, l10n)
           .map(
             (vehicle) => VehicleOption(
               id: vehicle.id,
               label: vehicle.label,
               capacity: vehicle.capacity,
-              price: 'Loading...',
+              price: l10n?.loading ?? 'Loading...',
               accentColor: vehicle.accentColor,
               assetPath: vehicle.assetPath,
             ),
           )
           .toList(growable: false);
     }
-    return vehicleOptionsFromTypes(vehicleTypes);
+    return vehicleOptionsFromTypes(vehicleTypes, l10n);
   }
 
   if (isLoading) {
@@ -653,7 +692,7 @@ List<VehicleOption> resolveVehicleOptions({
             id: vehicle.id,
             label: vehicle.label,
             capacity: vehicle.capacity,
-            price: 'Loading...',
+            price: l10n?.loading ?? 'Loading...',
             accentColor: vehicle.accentColor,
             assetPath: vehicle.assetPath,
           ),
@@ -676,6 +715,7 @@ List<VehicleOption> resolveVehicleOptions({
             tripType: tripType,
             pricing: pricing,
             fallback: vehicle.price,
+            l10n: l10n,
           ),
           accentColor: vehicle.accentColor,
           assetPath: vehicle.assetPath,
@@ -689,6 +729,7 @@ String _vehiclePriceLabel({
   required TripType tripType,
   required ClientPricingConfig pricing,
   required String fallback,
+  AppLocalizations? l10n,
 }) {
   if (tripType == TripType.intraCity) {
     final tier = _intraCityTierForVehicle(pricing, label);
@@ -696,7 +737,10 @@ String _vehiclePriceLabel({
     if (baseFare > 0) {
       final toll = tier?.tollFixedAmount ?? 0;
       if (toll > 0) {
-        return '${_formatRupees(baseFare)} + toll ${_formatRupees(toll)}';
+        final base = _formatRupees(baseFare);
+        final tollText = _formatRupees(toll);
+        return l10n?.vehiclePriceWithToll(base, tollText) ??
+            '$base + toll $tollText';
       }
       return _formatRupees(baseFare);
     }
@@ -1007,6 +1051,7 @@ class PickupOtpBanner extends StatelessWidget {
     }
 
     final isVerified = pickupOtpVerified;
+    final l10n = AppLocalizations.of(context)!;
     final backgroundColor = isVerified
         ? context.colors.brandFill
         : const Color(0xFFFFF6DB);
@@ -1016,10 +1061,12 @@ class PickupOtpBanner extends StatelessWidget {
     final accentColor = isVerified
         ? const Color(0xFF2FA56E)
         : const Color(0xFFB88900);
-    final title = isVerified ? 'Pickup verified' : 'Pickup code';
+    final title = isVerified
+        ? l10n.pickupOtpVerifiedTitle
+        : l10n.pickupOtpCodeTitle;
     final message = isVerified
-        ? 'Pickup verified with your code'
-        : 'Share this code with your driver when they arrive to confirm pickup';
+        ? l10n.pickupOtpVerifiedMessage
+        : l10n.pickupOtpShareMessage;
 
     return Container(
       width: double.infinity,
@@ -1059,7 +1106,7 @@ class PickupOtpBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    'Done',
+                    l10n.done,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: accentColor,
                       fontWeight: FontWeight.w800,
@@ -1097,7 +1144,10 @@ class PickupOtpBanner extends StatelessWidget {
   }
 }
 
-TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
+TrackingDemoShipment trackingShipmentFromBooking(
+  ClientBooking booking, [
+  AppLocalizations? l10n,
+]) {
   final status = booking.status.toLowerCase();
   final raw = booking.raw;
   debugPrint(
@@ -1113,10 +1163,10 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     packageName: booking.displayTitle,
     trackingId: booking.bookingRef.isEmpty ? booking.id : booking.bookingRef,
     fromLocation: booking.pickupLocation.isEmpty
-        ? 'Pickup location not provided'
+        ? (l10n?.pickupLocationNotProvided ?? 'Pickup location not provided')
         : booking.pickupLocation,
     toLocation: booking.dropoffLocation.isEmpty
-        ? 'Drop-off location not provided'
+        ? (l10n?.dropOffLocationNotProvided ?? 'Drop-off location not provided')
         : booking.dropoffLocation,
     status: booking.displayStatusLabel,
     customerName: booking.clientName,
@@ -1184,7 +1234,7 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
             const ['phone', 'phoneNumber', 'phone_number'],
           )
         : _readString(raw, const ['driverPhone', 'driver_phone']),
-    timeline: _timelineForStatus(status, booking),
+    timeline: _timelineForStatus(status, booking, l10n),
   );
 }
 
@@ -1328,59 +1378,86 @@ List<PodDeliveryMedia> _readPodDeliveryMedia(Map<String, dynamic> raw) {
 List<TrackingTimelineStep> _timelineForStatus(
   String status,
   ClientBooking booking,
+  AppLocalizations? l10n,
 ) {
   final origin = booking.pickupLocation.isEmpty
-      ? 'Pickup location not provided'
+      ? (l10n?.pickupLocationNotProvided ?? 'Pickup location not provided')
       : booking.pickupLocation;
   final destination = booking.dropoffLocation.isEmpty
-      ? 'Drop-off location not provided'
+      ? (l10n?.dropOffLocationNotProvided ?? 'Drop-off location not provided')
       : booking.dropoffLocation;
+
+  String text(String? localized, String fallback) => localized ?? fallback;
+
+  final created = text(l10n?.trackingTimelineBookingCreated, 'Booking created');
+  final assigned = text(l10n?.assigned, 'Assigned');
+  final inTransit = text(l10n?.inTransit, 'In transit');
+  final delivered = text(l10n?.delivered, 'Delivered');
+  final cancelled = text(l10n?.statusCancelled, 'Cancelled');
+  final pending = text(l10n?.statusPending, 'Pending');
+  final confirmed = text(l10n?.statusConfirmed, 'Confirmed');
+  final vehicleAssigned = text(
+    l10n?.trackingTimelineVehicleAssigned,
+    'Vehicle assigned',
+  );
+  final driverAssigned = text(
+    l10n?.trackingTimelineDriverAssigned,
+    'Driver assigned',
+  );
+  final completedSuccessfully = text(
+    l10n?.trackingTimelineCompletedSuccessfully,
+    'Completed successfully',
+  );
+  final waitingForAssignment = text(
+    l10n?.trackingTimelineWaitingForAssignment,
+    'Waiting for assignment',
+  );
+  final bookingWasCancelled = text(
+    l10n?.trackingTimelineBookingCancelled,
+    'Booking was cancelled',
+  );
+  final waitingForConfirmation = text(
+    l10n?.truckSearchWaitingConfirm,
+    'Waiting for confirmation',
+  );
 
   switch (status) {
     case 'completed':
     case 'delivered':
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
+          title: assigned,
+          subtitle: vehicleAssigned,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Assigned',
-          subtitle: 'Vehicle assigned',
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Completed successfully',
+          title: delivered,
+          subtitle: completedSuccessfully,
           completed: true,
         ),
       ];
     case 'assigned':
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
+          title: assigned,
+          subtitle: driverAssigned,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Assigned',
-          subtitle: 'Driver assigned',
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: false,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Pending',
+          title: delivered,
+          subtitle: pending,
           completed: false,
         ),
       ];
@@ -1388,94 +1465,78 @@ List<TrackingTimelineStep> _timelineForStatus(
     case 'picked_up':
     case 'in_transit':
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
+          title: assigned,
+          subtitle: driverAssigned,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Assigned',
-          subtitle: 'Driver assigned',
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Pending',
+          title: delivered,
+          subtitle: pending,
           completed: false,
         ),
       ];
     case 'confirmed':
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
+          title: confirmed,
+          subtitle: waitingForAssignment,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Confirmed',
-          subtitle: 'Waiting for assignment',
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: false,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Pending',
+          title: delivered,
+          subtitle: pending,
           completed: false,
         ),
       ];
     case 'cancelled':
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
+          title: cancelled,
+          subtitle: bookingWasCancelled,
           completed: true,
         ),
         TrackingTimelineStep(
-          title: 'Cancelled',
-          subtitle: 'Booking was cancelled',
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: false,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Cancelled',
+          title: delivered,
+          subtitle: cancelled,
           completed: false,
         ),
       ];
     case 'pending':
     default:
       return [
+        TrackingTimelineStep(title: created, subtitle: origin, completed: true),
         TrackingTimelineStep(
-          title: 'Booking created',
-          subtitle: origin,
-          completed: true,
-        ),
-        TrackingTimelineStep(
-          title: 'Pending',
-          subtitle: 'Waiting for confirmation',
+          title: pending,
+          subtitle: waitingForConfirmation,
           completed: false,
         ),
         TrackingTimelineStep(
-          title: 'In transit',
+          title: inTransit,
           subtitle: destination,
           completed: false,
         ),
         TrackingTimelineStep(
-          title: 'Delivered',
-          subtitle: 'Pending',
+          title: delivered,
+          subtitle: pending,
           completed: false,
         ),
       ];
@@ -1528,6 +1589,7 @@ class LocationArc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     return Align(
       alignment: Alignment.centerLeft,
@@ -1556,7 +1618,7 @@ class LocationArc extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pick up from',
+                    l10n.locationArcPickUpFrom,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
@@ -1810,6 +1872,7 @@ class PackageTrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -1862,7 +1925,7 @@ class PackageTrackingCard extends StatelessWidget {
                     ],
                     const SizedBox(height: 3),
                     Text(
-                      '#Tracking ID: ${shipment.trackingId}',
+                      l10n.packageCardTrackingId(shipment.trackingId),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textTertiary,
                         fontSize: 10,
@@ -1948,7 +2011,7 @@ class PackageTrackingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'From:',
+                      l10n.fromLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textTertiary,
                         fontSize: 10,
@@ -1968,7 +2031,7 @@ class PackageTrackingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Shipping to:',
+                      l10n.shippingToLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textTertiary,
                         fontSize: 10,
@@ -2015,7 +2078,7 @@ class PackageTrackingCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Status:',
+                l10n.brokerInvoicesStatus,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: context.colors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -2249,6 +2312,7 @@ class TripTypeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = _sheetBottomInset(context);
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -2274,7 +2338,7 @@ class TripTypeSheet extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Choose trip type',
+              l10n.tripTypeChooseTitle,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontSize: 16),
@@ -2282,15 +2346,15 @@ class TripTypeSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _TripTypeRow(
               imagePath: 'assets/trucks/inter-city.png',
-              label: TripType.interCity.displayLabel,
-              helperText: TripType.interCity.helperText,
+              label: localizedTripTypeLabel(l10n, TripType.interCity),
+              helperText: localizedTripTypeHelperText(l10n, TripType.interCity),
               onTap: () => Navigator.of(context).pop(TripType.interCity),
             ),
             const SizedBox(height: 10),
             _TripTypeRow(
               imagePath: 'assets/trucks/intra-city.png',
-              label: TripType.intraCity.displayLabel,
-              helperText: TripType.intraCity.helperText,
+              label: localizedTripTypeLabel(l10n, TripType.intraCity),
+              helperText: localizedTripTypeHelperText(l10n, TripType.intraCity),
               onTap: () => Navigator.of(context).pop(TripType.intraCity),
             ),
           ],

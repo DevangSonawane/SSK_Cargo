@@ -176,7 +176,7 @@ class _ClientNotificationsScreenState
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            _timeAgo(notification.createdAt),
+                            _timeAgo(AppLocalizations.of(context)!, notification.createdAt),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.textSecondary),
                           ),
@@ -264,7 +264,7 @@ class _ClientNotificationsScreenState
     final visible = _filter == _InboxFilter.all
         ? all
         : all.where((n) => !_isEffectivelyRead(n)).toList(growable: false);
-    final groups = _groupByDate(visible);
+    final groups = _groupByDate(AppLocalizations.of(context)!, visible);
 
     return Scaffold(
       backgroundColor: colors.canvas,
@@ -724,7 +724,7 @@ class _NotificationCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           notification.title.isEmpty
-                              ? 'Notification'
+                              ? AppLocalizations.of(context)!.brokerNotificationsGenericTitle
                               : notification.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -740,7 +740,7 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _timeAgo(notification.createdAt),
+                        _timeAgo(AppLocalizations.of(context)!, notification.createdAt),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                           fontSize: 11.5,
@@ -1064,13 +1064,17 @@ _NotifKind _kindFor(ClientNotification n) {
   return _NotifKind.system;
 }
 
-String _timeAgo(DateTime? dt) {
-  if (dt == null) return 'Just now';
+String _timeAgo(AppLocalizations l10n, DateTime? dt) {
+  if (dt == null) return l10n.brokerHomeJustNow;
   final diff = DateTime.now().difference(dt.toLocal());
-  if (diff.inMinutes < 1) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return diff.inDays == 1 ? 'Yesterday' : '${diff.inDays}d ago';
+  if (diff.inMinutes < 1) return l10n.brokerHomeJustNow;
+  if (diff.inMinutes < 60) return l10n.clientNotificationsTimeMinutesAgo(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.clientNotificationsTimeHoursAgo(diff.inHours);
+  if (diff.inDays < 7) {
+    return diff.inDays == 1
+        ? l10n.brokerNotificationsYesterday
+        : l10n.clientNotificationsTimeDaysAgo(diff.inDays);
+  }
   return '${dt.toLocal().day}/${dt.toLocal().month}/${dt.toLocal().year}';
 }
 
@@ -1080,7 +1084,7 @@ class _DateGroup {
   final List<ClientNotification> items;
 }
 
-List<_DateGroup> _groupByDate(List<ClientNotification> items) {
+List<_DateGroup> _groupByDate(AppLocalizations l10n, List<ClientNotification> items) {
   final today = <ClientNotification>[];
   final yesterday = <ClientNotification>[];
   final earlier = <ClientNotification>[];
@@ -1105,8 +1109,14 @@ List<_DateGroup> _groupByDate(List<ClientNotification> items) {
     }
   }
   final groups = <_DateGroup>[];
-  if (today.isNotEmpty) groups.add(_DateGroup('Today', today));
-  if (yesterday.isNotEmpty) groups.add(_DateGroup('Yesterday', yesterday));
-  if (earlier.isNotEmpty) groups.add(_DateGroup('Earlier', earlier));
+  if (today.isNotEmpty) {
+    groups.add(_DateGroup(l10n.brokerNotificationsToday, today));
+  }
+  if (yesterday.isNotEmpty) {
+    groups.add(_DateGroup(l10n.brokerNotificationsYesterday, yesterday));
+  }
+  if (earlier.isNotEmpty) {
+    groups.add(_DateGroup(l10n.brokerNotificationsEarlier, earlier));
+  }
   return groups;
 }

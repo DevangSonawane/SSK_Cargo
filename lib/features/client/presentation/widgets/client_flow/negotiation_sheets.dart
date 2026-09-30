@@ -162,7 +162,7 @@ class _BrokerOfferNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = 'Could not refresh the live broker offer.';
+        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshBrokerOfferFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -282,7 +282,7 @@ class _BrokerOfferNegotiationSheetState
     final offer = _offer;
     final brokerName = offer.brokerName.isNotEmpty
         ? offer.brokerName
-        : 'Broker';
+        : l10n.broker;
     final offerAmountText = offer.amount > 0
         ? _formatRupees(offer.amount)
         : _formatRupees(widget.askingPrice);
@@ -669,7 +669,7 @@ class _BrokerOfferNegotiationSheetState
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Your fare',
+                                  l10n.negotiationYourFare,
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: context.colors.textSecondary,
@@ -760,7 +760,7 @@ class _BrokerOfferNegotiationSheetState
                       ),
                     ] else
                       Text(
-                        'You have used your fare changes — accept or decline instead.',
+                        l10n.negotiationFareChangesExhausted,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.colors.textSecondary,
                           fontWeight: FontWeight.w700,
@@ -808,8 +808,8 @@ class _BrokerOfferNegotiationSheetState
                                         strokeWidth: 2.2,
                                       ),
                                     )
-                                  : const Text(
-                                      'Change Fare',
+                                  : Text(
+                                      l10n.changeFare,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -1094,7 +1094,7 @@ class _BrokerNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = 'Could not refresh the live request.';
+        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshRequestFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -1362,27 +1362,28 @@ class _BrokerNegotiationSheetState
   }
 
   Widget _buildWaitingView() {
+    final l10n = AppLocalizations.of(context)!;
     final request = _request;
     final title = request?.normalizedStatus == 'accepted'
-        ? 'Driver accepted the request'
+        ? l10n.negotiationWaitingDriverAcceptedTitle
         : request?.isClientTurnToConfirm == true
-        ? 'Driver accepted - your turn to confirm'
+        ? l10n.negotiationWaitingDriverTurnToConfirmTitle
         : request?.isWaitingForCounterpartyConfirmation == true
-        ? 'Waiting for driver confirmation'
+        ? l10n.negotiationWaitingDriverConfirmationTitle
         : request?.isCountered == true
-        ? 'Fare change received'
-        : 'Waiting for driver response';
+        ? l10n.negotiationWaitingFareChangeReceivedTitle
+        : l10n.negotiationWaitingDriverResponseTypeTitle;
     final body = request?.normalizedStatus == 'accepted'
-        ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
+        ? l10n.negotiationWaitingDriverAcceptedBody
         : request?.isClientTurnToConfirm == true
-        ? 'The driver already committed. Confirm or decline to finish the handshake.'
+        ? l10n.negotiationWaitingDriverCommittedBody
         : request?.isWaitingForCounterpartyConfirmation == true
-        ? 'You already confirmed this offer. We are waiting for the driver to confirm now.'
+        ? l10n.negotiationWaitingDriverYourConfirmBody
         : request?.isCountered == true
-        ? 'The driver changed the fare. Review it here and respond instantly.'
+        ? l10n.negotiationWaitingDriverChangedFareBody
         : request?.driverTimedOut == true
-        ? 'The driver did not respond in time. The broker can step in now.'
-        : 'Your request is live. We will update this popup as soon as the truck responds.';
+        ? l10n.negotiationWaitingDriverTimedOutBody
+        : l10n.negotiationWaitingDriverLiveBody;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1405,7 +1406,7 @@ class _BrokerNegotiationSheetState
         if (_bookingNumber != null && _bookingNumber!.isNotEmpty) ...[
           const SizedBox(height: 14),
           Text(
-            'Booking #${_bookingNumber!}',
+            l10n.negotiationBookingReference(_bookingNumber!),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: const Color(0xFF2FA56E),
               fontWeight: FontWeight.w800,
@@ -1438,11 +1439,11 @@ class _BrokerNegotiationSheetState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  request == null
-                      ? 'Live updates will appear here.'
-                      : request.isCountered
-                      ? 'Fare change: ${request.amountText}'
-                      : 'Current amount: ${request.amountText}',
+                   request == null
+                       ? l10n.negotiationLiveUpdatesAppearHere
+                       : request.isCountered
+                       ? l10n.fareChangeAmount(request.amountText)
+                       : l10n.negotiationCurrentAmount(request.amountText),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
                   ),
@@ -1470,7 +1471,7 @@ class _BrokerNegotiationSheetState
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            'Negotiation history (${request.offerHistory.length})',
+                            l10n.negotiationHistoryCount(request.offerHistory.length),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: context.colors.textSecondary),
                           ),
@@ -1483,7 +1484,10 @@ class _BrokerNegotiationSheetState
                       (entry) => Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                          l10n.negotiationHistoryEntryOffered(
+                            entry.displayBy,
+                            entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
+                          ),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -1506,7 +1510,7 @@ class _BrokerNegotiationSheetState
         if (request?.isActionableByClient == true) ...[
           const SizedBox(height: 16),
           _NegotiationActionButtons(
-            acceptLabel: request!.isClientTurnToConfirm ? 'Confirm' : 'Accept',
+            acceptLabel: request!.isClientTurnToConfirm ? l10n.negotiationConfirm : l10n.negotiationAccept,
             canCounter: request.isCountered,
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
@@ -1533,7 +1537,7 @@ class _BrokerNegotiationSheetState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Waiting for a live fare change...',
+                    l10n.negotiationWaitingLiveFareChange,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
@@ -1566,11 +1570,12 @@ class _BrokerNegotiationSheetState
   }
 
   Widget _buildPaymentView() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose payment',
+          l10n.clientBookingChoosePayment,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,
@@ -1578,7 +1583,7 @@ class _BrokerNegotiationSheetState
         ),
         const SizedBox(height: 6),
         Text(
-          'Pick how this freight booking should be settled. Advance uses the latest admin-configured amount.',
+          l10n.negotiationPickPayment,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: context.colors.textSecondary,
             height: 1.45,
@@ -1586,7 +1591,7 @@ class _BrokerNegotiationSheetState
         ),
         const SizedBox(height: 10),
         Text(
-          'Razorpay checkout will show the available payment methods before you pay.',
+          l10n.negotiationRazorpayCheckoutNote,
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
@@ -1618,8 +1623,8 @@ class _BrokerNegotiationSheetState
                 : Text(
                     _selectedPaymentMethod == PaymentMethod.toBeBilled ||
                             _selectedPaymentMethod == PaymentMethod.payLater
-                        ? 'Confirm payment stage'
-                        : 'Continue to secure checkout',
+                        ? l10n.negotiationConfirmPaymentStage
+                        : l10n.negotiationContinueToSecureCheckout,
                   ),
           ),
         ),
@@ -1834,7 +1839,7 @@ class _FindTruckNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = 'Could not refresh the live driver offer.';
+        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshDriverOfferFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -2150,7 +2155,7 @@ class _FindTruckNegotiationSheetState
                               if (request.isCountered) ...[
                                 const SizedBox(height: 3),
                                 Text(
-                                  'Fare change: $offerAmountText',
+                                  l10n.fareChangeAmount(offerAmountText),
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: const Color(0xFF2FA56E),
@@ -2191,7 +2196,7 @@ class _FindTruckNegotiationSheetState
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              'Negotiation history (${request.offerHistory.length})',
+                               l10n.negotiationHistoryCount(request.offerHistory.length),
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     color: context.colors.textSecondary,
@@ -2206,7 +2211,10 @@ class _FindTruckNegotiationSheetState
                         (entry) => Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                            l10n.negotiationHistoryEntryOffered(
+                              entry.displayBy,
+                              entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
+                            ),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: context.colors.textSecondary),
                           ),
@@ -2226,9 +2234,9 @@ class _FindTruckNegotiationSheetState
                   const SizedBox(height: 16),
                   if (canAct)
                     _NegotiationActionButtons(
-                      acceptLabel: request.isClientTurnToConfirm
-                          ? 'Confirm'
-                          : 'Accept',
+                    acceptLabel: request.isClientTurnToConfirm
+                        ? l10n.negotiationConfirm
+                        : l10n.negotiationAccept,
                       canCounter: request.isCountered,
                       isBusy: _busy,
                       onAccept: _acceptRequest,
@@ -2254,7 +2262,7 @@ class _FindTruckNegotiationSheetState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Waiting for the next driver update...',
+                              l10n.negotiationWaitingNextDriverUpdate,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: context.colors.textSecondary,
@@ -2312,7 +2320,7 @@ class _NegotiationSliderStep extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Use the slider to set the amount you want to continue with.',
+          l10n.negotiationUseSliderHint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: context.colors.textSecondary,
             height: 1.45,
@@ -2507,7 +2515,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Change fare',
+                              l10n.negotiationChangeFare,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 color: context.colors.textPrimary,
                                 fontWeight: FontWeight.w800,
@@ -2515,7 +2523,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Drag to set your price',
+                              l10n.negotiationDragToSetPrice,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: context.colors.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -2751,11 +2759,11 @@ class _NegotiationActionButtons extends StatelessWidget {
                     minimumSize: const Size.fromHeight(50),
                     shape: buttonShape,
                   ),
-                  child: Text(
-                    l10n.negotiationChangeFare,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                                    child: Text(
+                                      l10n.changeFare,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                 ),
               ),
             ],

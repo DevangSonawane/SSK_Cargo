@@ -77,7 +77,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
       ],
       ...bookings.map(
         (booking) => [
-          _bookingRef(booking),
+          _bookingRef(booking, l10n),
           _bookingDate(booking),
           booking.pickupLocation,
           booking.dropoffLocation,
@@ -376,7 +376,7 @@ class _MyBookingMobileCard extends StatelessWidget {
       booking.status,
       info: context.colors.infoEmphasis,
     );
-    final vehicleType = _truckTypeLabel(booking);
+    final vehicleType = _truckTypeLabel(booking, l10n);
     final amount = booking.amountText.trim().isEmpty ? '-' : booking.amountText;
 
     return InkWell(
@@ -603,10 +603,10 @@ class _RouteStopIcon extends StatelessWidget {
   }
 }
 
-String _bookingRef(ClientBooking booking) {
+String _bookingRef(ClientBooking booking, AppLocalizations l10n) {
   if (booking.bookingNumber.isNotEmpty) return booking.bookingNumber;
   if (booking.bookingRef.isNotEmpty) return booking.bookingRef;
-  return booking.id.isEmpty ? 'Booking' : booking.id;
+  return booking.id.isEmpty ? l10n.clientDeliveryBookingFallback : booking.id;
 }
 
 String _bookingDate(ClientBooking booking) {
@@ -620,7 +620,7 @@ String _locationLabel(String value, String fallback) {
   return trimmed.isEmpty ? fallback : trimmed;
 }
 
-String _truckTypeLabel(ClientBooking booking) {
+String _truckTypeLabel(ClientBooking booking, AppLocalizations l10n) {
   final raw = booking.raw;
   final truck = _asMap(raw['truck']);
   final vehicle = _asMap(raw['vehicle']);
@@ -690,7 +690,7 @@ String _truckTypeLabel(ClientBooking booking) {
       return text;
     }
   }
-  return 'Truck';
+  return l10n.clientDeliveryTruckFallback;
 }
 
 Map<String, dynamic> _asMap(Object? value) {

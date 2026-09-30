@@ -228,7 +228,7 @@ class _BrokerRequestDetailScreenState
       }
     }
 
-    return 'Auto-selected driver';
+    return AppLocalizations.of(context)!.brokerReqDetailAutoSelectedDriver;
   }
 
   String _selectedTruckName(List<BrokerVehicle> trucks) {
@@ -256,7 +256,7 @@ class _BrokerRequestDetailScreenState
       }
     }
 
-    return 'Auto-selected truck';
+    return AppLocalizations.of(context)!.brokerReqDetailAutoSelectedTruck;
   }
 
   String? _defaultDriverId(List<BrokerDriver> drivers) {
@@ -1028,7 +1028,7 @@ class _BrokerRequestDetailScreenState
         titleOf: (driver) => driver.name.isNotEmpty ? driver.name : driver.id,
         subtitleOf: (driver) => [
           if (driver.phone.isNotEmpty) driver.phone,
-          driverStatusLabel(driver.status),
+          driverStatusLabel(driver.status, AppLocalizations.of(context)!),
         ].join(' - '),
       ),
     );
@@ -1056,7 +1056,7 @@ class _BrokerRequestDetailScreenState
         },
         subtitleOf: (truck) => [
           if (truck.capacity.isNotEmpty) truck.capacity,
-          vehicleStatusLabel(truck.status),
+          vehicleStatusLabel(truck.status, AppLocalizations.of(context)!),
         ].join(' - '),
       ),
     );

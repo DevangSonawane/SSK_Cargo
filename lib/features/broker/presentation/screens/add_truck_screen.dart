@@ -187,8 +187,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
         SnackBar(
           content: Text(
             widget.existingTruck == null
-                ? 'Truck added successfully.'
-                : 'Truck updated successfully.',
+                ? AppLocalizations.of(context)!.addTruckAddedSuccessfully
+                : AppLocalizations.of(context)!.addTruckUpdatedSuccessfully,
           ),
         ),
       );
@@ -279,7 +279,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEditing ? 'Edit Truck' : 'Add Truck',
+                          isEditing
+                              ? AppLocalizations.of(context)!.addTruckEditTruck
+                              : AppLocalizations.of(context)!.addTruckAddTruck,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontSize: 20,
@@ -377,7 +379,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                               r'^[A-Z]{2}[-\s]?\d{1,2}[-\s]?[A-Z]{1,3}[-\s]?\d{1,4}$',
                               caseSensitive: false,
                             ).hasMatch(text)) {
-                          return 'Registration looks invalid, e.g. MH-12-AB-1234.';
+                          return AppLocalizations.of(context)!
+                              .addTruckErrRegistrationLooksInvalid;
                         }
                         return null;
                       },
@@ -508,7 +511,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Enter insurance expiry date';
+                          return AppLocalizations.of(context)!
+                              .addVehicleErrInsuranceExpiry;
                         }
                         if (DateTime.tryParse(value.trim()) == null) {
                           return 'Use YYYY-MM-DD';

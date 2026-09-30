@@ -1,3 +1,5 @@
+import 'package:ssk/l10n/app_localizations.dart';
+
 Duration? negotiationWindowRemaining({
   required DateTime? anchorAt,
   required bool driverTimedOut,
@@ -24,6 +26,7 @@ String formatCountdown(Duration remaining) {
 }
 
 String negotiationWindowStatusText({
+  required AppLocalizations l10n,
   required Duration? remaining,
   required bool serverTimedOut,
   required String activeLabel,
@@ -37,7 +40,10 @@ String negotiationWindowStatusText({
     return fallbackLabel;
   }
   if (remaining <= Duration.zero) {
-    return 'Any moment now - waiting for the server handoff.';
+    return l10n.negotiationWindowAnyMomentNow;
   }
-  return '$activeLabel ${formatCountdown(remaining)} remaining';
+  return l10n.negotiationWindowRemaining(
+    activeLabel,
+    formatCountdown(remaining),
+  );
 }

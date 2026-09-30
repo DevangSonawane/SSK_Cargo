@@ -465,7 +465,7 @@ class _DriverDeliveryDetailsScreenState
       }
 
       setState(() {
-        _shipment = _shipmentFromTrip(trip);
+        _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
         _tripRaw = trip;
         final incomingStatus = _normalizeTripStatus(
           _readString(trip, const ['status', 'rawStatus']),
@@ -637,7 +637,7 @@ class _DriverDeliveryDetailsScreenState
 
       setState(() {
         _tripRaw = trip;
-        _shipment = _shipmentFromTrip(trip);
+        _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
         _tripStatus = resolvedStatus;
         _loadingTrip = false;
         if (resolvedStatus == 'en_route_pickup') {
@@ -650,7 +650,7 @@ class _DriverDeliveryDetailsScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_statusChangeMessageFor(resolvedStatus)),
+          content: Text(_statusChangeMessageFor(AppLocalizations.of(context)!, resolvedStatus)),
           backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
@@ -730,7 +730,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       setState(() {
         _tripRaw = trip;
-        _shipment = _shipmentFromTrip(trip);
+        _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
         final updatedStatus = _normalizeTripStatus(
           _readString(trip, const ['status', 'rawStatus']),
         );
@@ -853,7 +853,7 @@ class _DriverDeliveryDetailsScreenState
 
       setState(() {
         _tripRaw = trip;
-        _shipment = _shipmentFromTrip(trip);
+        _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
         _tripStatus = resolvedStatus;
         _loadingTrip = false;
         _detailsPanelExpanded = true;
@@ -862,7 +862,7 @@ class _DriverDeliveryDetailsScreenState
 
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_statusChangeMessageFor(resolvedStatus)),
+          content: Text(_statusChangeMessageFor(AppLocalizations.of(context)!, resolvedStatus)),
           backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
@@ -952,18 +952,18 @@ class _DriverDeliveryDetailsScreenState
     }
   }
 
-  String _statusChangeMessageFor(String status) {
+  String _statusChangeMessageFor(AppLocalizations l10n, String status) {
     switch (status) {
       case 'en_route_pickup':
-        return 'Trip started. Heading to pickup.';
+        return l10n.deliveryDetailsTripStartedHeadingToPickup;
       case 'picked_up':
-        return 'Pickup marked. Start delivery next.';
+        return l10n.deliveryDetailsPickupMarkedStartDelivery;
       case 'in_transit':
-        return 'Delivery is now in transit.';
+        return l10n.deliveryDetailsNowInTransit;
       case 'delivered':
-        return 'Delivery marked as delivered.';
+        return l10n.deliveryDetailsMarkedAsDelivered;
       default:
-        return 'Trip status updated.';
+        return l10n.tripStatusUpdated;
     }
   }
 
@@ -1006,17 +1006,17 @@ class _DriverDeliveryDetailsScreenState
     return -1;
   }
 
-  String? _statusBlockedByStopsReason() {
+  String? _statusBlockedByStopsReason(AppLocalizations l10n) {
     if (_tripStatus == 'picked_up') {
       final count = _pendingStopCount('loading');
       if (count > 0) {
-        return 'Complete $count loading stop${count == 1 ? '' : 's'} first';
+        return l10n.deliveryDetailsCompleteLoadingStopsFirst(count);
       }
     }
     if (_tripStatus == 'in_transit') {
       final count = _pendingStopCount('unloading');
       if (count > 0) {
-        return 'Complete $count unloading stop${count == 1 ? '' : 's'} first';
+        return l10n.deliveryDetailsCompleteUnloadingStopsFirst(count);
       }
     }
     return null;
@@ -1035,7 +1035,7 @@ class _DriverDeliveryDetailsScreenState
         const Divider(height: 1, thickness: 1, color: AppColors.divider),
         const SizedBox(height: 14),
         Text(
-          'Loading & Unloading Stops',
+          AppLocalizations.of(context)!.loadingUnloadingStopsTitle,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
@@ -1083,13 +1083,18 @@ class _DriverDeliveryDetailsScreenState
   }
 
   Widget _buildTripPanel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isArrivalFlow = _arrivalFlowActive || _showArrivalSwipe;
-    final panelTitle = isArrivalFlow ? 'Arrived' : 'On route';
-    final panelBadge = isArrivalFlow ? 'Ready' : 'Active';
-    final stopBlockReason = _statusBlockedByStopsReason();
+    final panelTitle = isArrivalFlow
+        ? l10n.arrivedTitle
+        : l10n.deliveryDetailsOnRoute;
+    final panelBadge = isArrivalFlow
+        ? l10n.arrivedStatusReady
+        : l10n.deliveryDetailsActiveBadge;
+    final stopBlockReason = _statusBlockedByStopsReason(l10n);
     final panelSubtitle = isArrivalFlow
-        ? 'Confirm when you have reached the drop point.'
-        : stopBlockReason ?? 'Use the action below to advance the trip.';
+        ? l10n.deliveryDetailsConfirmDropReached
+        : stopBlockReason ?? l10n.deliveryDetailsUseActionToAdvance;
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 280),
@@ -1113,7 +1118,7 @@ class _DriverDeliveryDetailsScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Current status',
+                        l10n.deliveryDetailsCurrentStatus,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textTertiary,
                           fontWeight: FontWeight.w600,
@@ -1307,12 +1312,10 @@ class _DriverDeliveryDetailsScreenState
                               ),
                               child: Text(
                                 _loadingTrip
-                                    ? 'Loading...'
+                                    ? l10n.deliveryDetailsLoadingEllipsis
                                     : _tripId.isEmpty
-                                    ? 'Syncing trip...'
-                                    : _actionLabelForCurrentTrip(
-                                        AppLocalizations.of(context)!,
-                                      ),
+                                    ? l10n.deliveryDetailsSyncingTrip
+                                    : _actionLabelForCurrentTrip(l10n),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -1334,8 +1337,8 @@ class _DriverDeliveryDetailsScreenState
                                     : _confirmDeclineTrip,
                                 child: Text(
                                   _decliningTrip
-                                      ? 'Declining...'
-                                      : 'Decline trip',
+                                      ? l10n.deliveryDetailsDecliningEllipsis
+                                      : l10n.declineTrip,
                                   style: const TextStyle(
                                     color: AppColors.dangerText,
                                     fontWeight: FontWeight.w700,
@@ -1648,7 +1651,10 @@ class _DriverDeliveryDetailsScreenState
     return const <String, dynamic>{};
   }
 
-  TrackingDemoShipment? _shipmentFromTrip(Map<String, dynamic> trip) {
+  TrackingDemoShipment? _shipmentFromTrip(
+    AppLocalizations l10n,
+    Map<String, dynamic> trip,
+  ) {
     final pickup = _readMap(trip, const ['pickup', 'pickupLocation']);
     final drop = _readMap(trip, const ['drop', 'dropoffLocation']);
     final currentLocation = _readMap(trip, const [
@@ -1685,7 +1691,9 @@ class _DriverDeliveryDetailsScreenState
     }
 
     return TrackingDemoShipment(
-      packageName: bookingNumber.isNotEmpty ? bookingNumber : 'Trip',
+      packageName: bookingNumber.isNotEmpty
+          ? bookingNumber
+          : l10n.deliveryDetailsTripFallbackLabel,
       trackingId: bookingNumber.isNotEmpty ? bookingNumber : id,
       fromLocation: pickupLocation.isNotEmpty
           ? pickupLocation
@@ -1986,7 +1994,8 @@ class _DriverDeliveryDetailsScreenState
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Emergency Assistance',
+                          AppLocalizations.of(sheetContext)!
+                              .deliveryDetailsEmergencyAssistance,
                           style: Theme.of(sheetContext).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.textPrimary,
@@ -2009,11 +2018,14 @@ class _DriverDeliveryDetailsScreenState
                     iconColor: AppColors.brand,
                     icon: AppIcons.navigation_rounded,
                     title: _navHeadingToPickup
-                        ? 'Open pickup in Google Maps'
-                        : 'Open drop in Google Maps',
+                        ? AppLocalizations.of(sheetContext)!
+                              .deliveryDetailsOpenPickupInMaps
+                        : AppLocalizations.of(sheetContext)!
+                              .deliveryDetailsOpenDropInMaps,
                     subtitle: _navHeadingToPickup
                         ? (_navPickupAddress.isEmpty
-                              ? 'Navigate to pickup'
+                              ? AppLocalizations.of(sheetContext)!
+                                    .deliveryDetailsNavigateToPickup
                               : _navPickupAddress)
                         : (_dropLocation.isEmpty
                               ? AppLocalizations.of(context)!.navigateToDrop
@@ -2499,7 +2511,8 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Enter pickup code',
+                              AppLocalizations.of(context)!
+                                  .deliveryDetailsEnterPickupCode,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w900,
@@ -2507,7 +2520,8 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'Ask the customer to share their 4-digit code',
+                              AppLocalizations.of(context)!
+                                  .deliveryDetailsAskCustomerForCode,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w500,
@@ -2612,9 +2626,10 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Confirm pickup',
-                              style: TextStyle(
+                          : Text(
+                              AppLocalizations.of(context)!
+                                  .deliveryDetailsConfirmPickup,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 15,
@@ -2811,7 +2826,10 @@ class _DeliverySlaCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasCharge ? 'Delivery delay charge' : 'Delivery SLA',
+                  hasCharge
+                      ? AppLocalizations.of(context)!
+                            .deliveryDetailsDelayCharge
+                      : AppLocalizations.of(context)!.deliveryDetailsSla,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -2820,8 +2838,19 @@ class _DeliverySlaCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   hasCharge
-                      ? '₹${overageCharge.toStringAsFixed(overageCharge % 1 == 0 ? 0 : 2)} for ${overageHours.toStringAsFixed(overageHours % 1 == 0 ? 0 : 1)}h over the expected delivery time.'
-                      : 'Expected delivery within ~${expectedHours!.toStringAsFixed(expectedHours! % 1 == 0 ? 0 : 1)}h.',
+                      ? AppLocalizations.of(context)!
+                            .deliveryDetailsDelayChargeBody(
+                              '₹${overageCharge.toStringAsFixed(overageCharge % 1 == 0 ? 0 : 2)}',
+                              overageHours.toStringAsFixed(
+                                overageHours % 1 == 0 ? 0 : 1,
+                              ),
+                            )
+                      : AppLocalizations.of(context)!
+                            .deliveryDetailsExpectedWithin(
+                              expectedHours!.toStringAsFixed(
+                                expectedHours! % 1 == 0 ? 0 : 1,
+                              ),
+                            ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: hasCharge
                         ? AppColors.warningText
@@ -3157,10 +3186,10 @@ class _DriverBookingChatSheet extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Booking chat',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.deliveryDetailsBookingChat,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -3294,7 +3323,8 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Mechanic Status',
+                      AppLocalizations.of(context)!
+                          .deliveryDetailsMechanicStatus,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
@@ -3311,7 +3341,8 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Live incident updates for this trip.',
+                AppLocalizations.of(context)!
+                    .deliveryDetailsLiveIncidentUpdates,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -3396,7 +3427,9 @@ class _MechanicIncidentCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            reason.isEmpty ? 'Incident' : reason,
+            reason.isEmpty
+                ? AppLocalizations.of(context)!.deliveryDetailsIncident
+                : reason,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -3414,7 +3447,12 @@ class _MechanicIncidentCard extends StatelessWidget {
           if (mechanic.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              'Mechanic: ${mechanicName.isEmpty ? 'Pending assignment' : mechanicName}',
+              AppLocalizations.of(context)!.deliveryDetailsMechanicLine(
+                mechanicName.isEmpty
+                    ? AppLocalizations.of(context)!
+                          .deliveryDetailsPendingAssignment
+                    : mechanicName,
+              ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -3423,7 +3461,8 @@ class _MechanicIncidentCard extends StatelessWidget {
             if (mechanicPhone.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
-                'Phone: $mechanicPhone',
+                AppLocalizations.of(context)!
+                    .deliveryDetailsPhoneLine(mechanicPhone),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -3431,7 +3470,13 @@ class _MechanicIncidentCard extends StatelessWidget {
             ],
             const SizedBox(height: 2),
             Text(
-              'Status: ${mechanicStatus.isEmpty ? 'requested' : mechanicStatus}',
+              AppLocalizations.of(context)!
+                  .deliveryDetailsStatusLine(
+                    mechanicStatus.isEmpty
+                        ? AppLocalizations.of(context)!
+                              .deliveryDetailsRequestedLabel
+                        : mechanicStatus,
+                  ),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
