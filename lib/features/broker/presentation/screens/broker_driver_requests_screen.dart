@@ -104,7 +104,9 @@ class _BrokerDriverRequestsScreenState
     final amount = await showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (_) => _BrokerCounterSheet(request: request),
     );
 
@@ -735,14 +737,20 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
     final min = math.max(1.0, base * 0.75);
     final max = math.max(min + 1.0, base * 1.25);
     final clamped = _value.clamp(min, max).toDouble();
+    final media = MediaQuery.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
         left: 12,
         right: 12,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+        // viewPadding keeps buttons above system nav + floating BrokerBottomBar area,
+        // viewInsets keeps them above the keyboard.
+        bottom: media.viewInsets.bottom + media.viewPadding.bottom + 12,
       ),
-      child: Container(
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -860,6 +868,8 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
               ],
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

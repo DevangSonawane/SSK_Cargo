@@ -1012,91 +1012,17 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                         onPressed: _countering
                                             ? null
                                             : () async {
-                                                final controller =
-                                                    TextEditingController(
-                                                      text: request.amount
-                                                          .toStringAsFixed(0),
-                                                    );
-                                                final noteController =
-                                                    TextEditingController();
                                                 final counter = await showDialog<double?>(
                                                   context: context,
-                                                  builder: (dialogContext) {
-                                                    return AlertDialog(
-                                                      title: Text(
-                                                        AppLocalizations.of(context)!.brokerTrackingChangeFareRequest,
-                                                      ),
-                                                      content: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          TextField(
-                                                            controller:
-                                                                controller,
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            cursorColor:
-                                                                AppColors.brand,
-                                                            style: const TextStyle(
-                                                              color: AppColors
-                                                                  .textPrimary,
-                                                            ),
-                                                            decoration:
-                                                                InputDecoration(
-                                                                  labelText:
-                                                                      AppLocalizations.of(context)!.brokerTrackingAmount,
-                                                                ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          TextField(
-                                                            controller:
-                                                                noteController,
-                                                            cursorColor:
-                                                                AppColors.brand,
-                                                            style: const TextStyle(
-                                                              color: AppColors
-                                                                  .textPrimary,
-                                                            ),
-                                                            decoration:
-                                                                InputDecoration(
-                                                                  labelText:
-                                                                      AppLocalizations.of(context)!.brokerTrackingNote,
-                                                                ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.of(
-                                                                dialogContext,
-                                                              ).pop(),
-                                                          child: Text(
-                                                            AppLocalizations.of(context)!.brokerTrackingCancel,
-                                                          ),
-                                                        ),
-                                                        FilledButton(
-                                                          onPressed: () {
-                                                            final amount =
-                                                                double.tryParse(
-                                                                  controller
-                                                                      .text
-                                                                      .trim(),
-                                                                );
-                                                            Navigator.of(
-                                                              dialogContext,
-                                                            ).pop(amount);
-                                                          },
-                                                          child: Text(
-                                                            AppLocalizations.of(context)!.brokerTrackingSend,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
+                                                  useRootNavigator: true,
+                                                  barrierColor: Colors.black.withValues(
+                                                    alpha: 0.35,
+                                                  ),
+                                                  builder: (dialogContext) =>
+                                                      _CounterFareDialog(
+                                                    initialAmount: request.amount
+                                                        .toStringAsFixed(0),
+                                                  ),
                                                 );
                                                 if (counter == null) return;
                                                 setState(
@@ -1166,6 +1092,81 @@ class _BrokerAssignedInlineBadge extends StatelessWidget {
           fontWeight: FontWeight.w900,
         ),
       ),
+    );
+  }
+}
+
+class _CounterFareDialog extends StatefulWidget {
+  const _CounterFareDialog({required this.initialAmount});
+
+  final String initialAmount;
+
+  @override
+  State<_CounterFareDialog> createState() => _CounterFareDialogState();
+}
+
+class _CounterFareDialogState extends State<_CounterFareDialog> {
+  late final TextEditingController _amountController;
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController(text: widget.initialAmount);
+    _noteController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      title: Text(l10n.brokerTrackingChangeFareRequest),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              cursorColor: AppColors.brand,
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: l10n.brokerTrackingAmount,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _noteController,
+              cursorColor: AppColors.brand,
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: l10n.brokerTrackingNote,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.brokerTrackingCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final amount = double.tryParse(_amountController.text.trim());
+            Navigator.of(context).pop(amount);
+          },
+          child: Text(l10n.brokerTrackingSend),
+        ),
+      ],
     );
   }
 }

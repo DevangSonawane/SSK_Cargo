@@ -346,7 +346,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        // Bottom clearance for the floating DriverBottomBar (extendBody shell).
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

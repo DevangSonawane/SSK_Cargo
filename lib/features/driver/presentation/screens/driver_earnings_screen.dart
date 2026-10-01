@@ -36,7 +36,8 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            // Bottom clearance for the floating DriverBottomBar.
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
             children: [
               SizedBox(
                 height: MediaQuery.sizeOf(context).height * 0.55,
@@ -53,17 +54,51 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
         ),
         data: (dashboard) {
           final history = dashboard.history;
-          final total = history.fold<double>(
+          var total = history.fold<double>(
             0,
             (sum, item) => sum + item.netEarnings,
           );
-          final deliveredCount = history.length;
+          // Web parity: Total Earned sums delivered/completed trips. Fall back
+          // to the trip feed when settlements haven't posted yet.
+          if (total <= 0) {
+            total = dashboard.tripFeed
+                .where((trip) {
+                  final status = trip.status.trim().toLowerCase();
+                  return status == 'delivered' || status == 'completed';
+                })
+                .fold<double>(0, (sum, trip) => sum + trip.amount);
+          }
+          final deliveredCount = history.isNotEmpty
+              ? history.length
+              : dashboard.tripFeed
+                    .where((trip) {
+                      final status = trip.status.trim().toLowerCase();
+                      return status == 'delivered' || status == 'completed';
+                    })
+                    .length;
           final average = deliveredCount == 0 ? 0.0 : total / deliveredCount;
-          final thisMonth = _sumForMonth(history, DateTime.now());
-          final lastMonth = _sumForMonth(
-            history,
-            DateTime(DateTime.now().year, DateTime.now().month - 1),
-          );
+          final now = DateTime.now();
+          final lastMonthDate = DateTime(now.year, now.month - 1, 1);
+          // Web parity: month cards come from /api/analytics/broker; fall back
+          // to bucketing settlements client-side when the keys are absent.
+          var thisMonth =
+              dashboard.thisMonth ?? _sumForMonth(history, now);
+          var lastMonth =
+              dashboard.lastMonth ?? _sumForMonth(history, lastMonthDate);
+          // Driver tokens often get empty broker analytics — if the cards are
+          // still zero but delivered trips exist, bucket the trip feed instead
+          // so real earnings aren't hidden.
+          if (thisMonth <= 0) {
+            final feedSum = _sumTripFeedForMonth(dashboard.tripFeed, now);
+            if (feedSum > 0) thisMonth = feedSum;
+          }
+          if (lastMonth <= 0) {
+            final feedSum = _sumTripFeedForMonth(
+              dashboard.tripFeed,
+              lastMonthDate,
+            );
+            if (feedSum > 0) lastMonth = feedSum;
+          }
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -71,11 +106,12 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
             },
             color: AppColors.brand,
             backgroundColor: Colors.white,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            // Bottom clearance for the floating DriverBottomBar.
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
               children: [
                 _HeroBalanceCard(total: total, deliveredCount: deliveredCount),
                 const SizedBox(height: 16),
@@ -141,7 +177,7 @@ class _HeroBalanceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  formatDriverCurrency(total),
+                  formatDriverCurrencyCompact(total),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -253,7 +289,7 @@ class _EarningsStatsGrid extends StatelessWidget {
           child: _EarningsStatTile(
             icon: AppIcons.currency_rupee_rounded,
             label: l10n.driverEarningsThisMonth,
-            value: formatDriverCurrency(thisMonth),
+            value: formatDriverCurrencyCompact(thisMonth),
           ),
         ),
         const SizedBox(width: 10),
@@ -261,7 +297,7 @@ class _EarningsStatsGrid extends StatelessWidget {
           child: _EarningsStatTile(
             icon: AppIcons.account_balance_wallet_outlined,
             label: l10n.driverEarningsLastMonth,
-            value: formatDriverCurrency(lastMonth),
+            value: formatDriverCurrencyCompact(lastMonth),
           ),
         ),
         const SizedBox(width: 10),
@@ -339,7 +375,7 @@ class _AveragePerDeliveryText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      AppLocalizations.of(context)!.driverEarningsAvgPerDelivery(formatDriverCurrency(average)),
+      AppLocalizations.of(context)!.driverEarningsAvgPerDelivery(formatDriverCurrencyCompact(average)),
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: AppColors.textSecondary,
@@ -358,6 +394,21 @@ double _sumForMonth(List<BrokerSettlement> history, DateTime month) {
       return sum;
     }
     return sum + item.netEarnings;
+  });
+}
+
+double _sumTripFeedForMonth(
+  List<DriverTripSummary> trips,
+  DateTime month,
+) {
+  return trips.fold<double>(0, (sum, trip) {
+    final status = trip.status.trim().toLowerCase();
+    if (status != 'delivered' && status != 'completed') return sum;
+    final when = trip.activityTime;
+    if (when == null || when.year != month.year || when.month != month.month) {
+      return sum;
+    }
+    return sum + trip.amount;
   });
 }
 

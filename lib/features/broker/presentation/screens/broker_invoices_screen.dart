@@ -33,6 +33,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         final messenger = ScaffoldMessenger.of(context);
@@ -487,9 +488,18 @@ class _InvoiceActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final media = MediaQuery.of(context);
     return Padding(
-      padding: EdgeInsets.all(12),
-      child: Container(
+      padding: EdgeInsets.fromLTRB(
+        12,
+        12,
+        12,
+        media.viewInsets.bottom + media.viewPadding.bottom + 12,
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -562,6 +572,8 @@ class _InvoiceActionsSheet extends StatelessWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

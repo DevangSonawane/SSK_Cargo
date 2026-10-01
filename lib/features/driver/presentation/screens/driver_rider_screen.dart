@@ -296,7 +296,8 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            // Bottom clearance for the floating DriverBottomBar.
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
             children: [
               _EmptyCard(
                 icon: AppIcons.route_rounded,
@@ -410,7 +411,8 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    // Bottom clearance for the floating DriverBottomBar.
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

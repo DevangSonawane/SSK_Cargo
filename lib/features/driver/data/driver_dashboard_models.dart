@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/controllers/auth_controller.dart';
@@ -13,6 +15,8 @@ class DriverDashboardData {
     required this.history,
     required this.tripFeed,
     required this.assignedTruck,
+    this.thisMonth,
+    this.lastMonth,
   });
 
   final TrackingDemoShipment? activeTrip;
@@ -20,6 +24,12 @@ class DriverDashboardData {
   final List<BrokerSettlement> history;
   final List<DriverTripSummary> tripFeed;
   final Map<String, dynamic>? assignedTruck;
+
+  /// Month totals straight from /api/analytics/broker (web Earnings.jsx
+  /// parity). Null when the backend omits them — callers fall back to
+  /// bucketing `history` client-side.
+  final double? thisMonth;
+  final double? lastMonth;
 }
 
 final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
@@ -44,9 +54,21 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
 
     final activeTrip = _shipmentFromTripResponse(results[0]);
     final upcomingTrip = _shipmentFromTripResponse(results[1]);
-    final analytics = _analyticsFromResponse(results[2]);
+    final analyticsRaw = results[2];
+    final analytics = _analyticsFromResponse(analyticsRaw);
     final tripFeed = _tripFeedFromResponse(results[3]);
     final truck = _truckFromResponse(results[4]);
+
+    try {
+      // ignore: avoid_print
+      final data = analyticsRaw['data'];
+      final dataMap = data is Map<String, dynamic> ? data : analyticsRaw;
+      developer.log(
+        'dashboard: analyticsKeys=${dataMap.keys.toList()} '
+        'tripHistory=${analytics.length} trips=${tripFeed.length}',
+        name: 'SSK.Earnings',
+      );
+    } catch (_) {}
 
     return DriverDashboardData(
       activeTrip: activeTrip,
@@ -54,9 +76,35 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
       history: analytics,
       tripFeed: tripFeed,
       assignedTruck: truck,
+      thisMonth: _monthTotalFromAnalytics(analyticsRaw, const [
+        'thisMonth',
+        'this_month',
+      ]),
+      lastMonth: _monthTotalFromAnalytics(analyticsRaw, const [
+        'lastMonth',
+        'last_month',
+      ]),
     );
   },
 );
+
+double? _monthTotalFromAnalytics(
+  Map<String, dynamic> response,
+  List<String> keys,
+) {
+  final data = response['data'] is Map<String, dynamic>
+      ? response['data'] as Map<String, dynamic>
+      : response;
+  for (final source in [data, response]) {
+    for (final key in keys) {
+      final raw = source[key];
+      if (raw is num) return raw.toDouble();
+      final parsed = double.tryParse(raw?.toString().trim() ?? '');
+      if (parsed != null) return parsed;
+    }
+  }
+  return null;
+}
 
 TrackingDemoShipment? _shipmentFromTripResponse(Map<String, dynamic> response) {
   final data = response['data'];
@@ -185,6 +233,9 @@ BrokerSettlement _driverSettlementFromAnalytics(Map<String, dynamic> json) {
       'updated_at',
       'createdAt',
       'created_at',
+      'date',
+      'tripDate',
+      'trip_date',
     ]),
   );
 }
@@ -204,7 +255,13 @@ List<DriverTripSummary> _tripFeedFromResponse(Map<String, dynamic> response) {
   final data = response['data'] is Map<String, dynamic>
       ? response['data'] as Map<String, dynamic>
       : response;
-  final trips = data['trips'] ?? const <dynamic>[];
+  final trips =
+      data['trips'] ??
+      data['items'] ??
+      data['rows'] ??
+      data['results'] ??
+      data['data'] ??
+      const <dynamic>[];
   if (trips is! List) {
     return const <DriverTripSummary>[];
   }
@@ -526,6 +583,9 @@ class DriverTripSummary {
       'canceled_at',
       'createdAt',
       'created_at',
+      'date',
+      'tripDate',
+      'trip_date',
     ]);
     return DriverTripSummary(
       id: _stringFrom(json, const ['id', 'tripId', 'trip_id']),
@@ -624,8 +684,20 @@ class DriverTripSummary {
         ]),
       ]),
       distanceKm: _readTripDistance(json),
-      status: _stringFrom(json, const ['status', 'rawStatus']).isNotEmpty
-          ? _stringFrom(json, const ['status', 'rawStatus'])
+      status: _stringFrom(json, const [
+        'status',
+        'rawStatus',
+        'trip_status',
+        'tripStatus',
+        'state',
+      ]).isNotEmpty
+          ? _stringFrom(json, const [
+              'status',
+              'rawStatus',
+              'trip_status',
+              'tripStatus',
+              'state',
+            ])
           : 'pending',
       bookingTime: _firstNonEmpty([
         deliveredAt,
@@ -637,7 +709,18 @@ class DriverTripSummary {
       amount: _doubleFrom(json, const [
         'earnings',
         'amountToCollect',
+        'amount_to_collect',
         'amount',
+        'fare',
+        'price',
+        'total',
+        'total_amount',
+        'totalAmount',
+        'driverEarnings',
+        'driver_earnings',
+        'net',
+        'netEarnings',
+        'net_earnings',
       ]),
       driverName: _stringFrom(json, const ['driverName', 'driver_name']),
       truckReg: _stringFrom(json, const ['truckReg', 'truck_reg']),

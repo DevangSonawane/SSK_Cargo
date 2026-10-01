@@ -246,8 +246,13 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   List<BookingRequest> _visibleRequests(List<BookingRequest> requests) {
     final query = _searchController.text.trim().toLowerCase();
 
+    // Web parity (JobRequests.jsx): Declined/Expired never render in the
+    // inbox. Cancelled/completed stay visible but never offer Assign.
+    const hiddenFromInbox = {'declined', 'rejected', 'expired'};
+
     final filtered = requests.where((request) {
       final status = _normalizeStatus(request.status);
+      if (hiddenFromInbox.contains(status)) return false;
       if (query.isEmpty) return true;
 
       final haystack = [
@@ -385,7 +390,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     required String truckId,
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || _busyRequestIds.contains(request.id)) {
+    if (session == null ||
+        _busyRequestIds.contains(request.id) ||
+        _pendingAssignments.containsKey(request.id)) {
       return false;
     }
 
@@ -399,6 +406,29 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
             driverId: driverId,
             truckId: truckId,
           );
+      // Optimistically mark as waiting so the Assign button hides immediately
+      // and re-taps can't spam the driver. Socket + seed will confirm it.
+      var driverName = '';
+      try {
+        final drivers = ref
+            .read(brokerDriversApiProvider(_driversQuery))
+            .valueOrNull;
+        if (drivers != null) {
+          for (final driver in drivers) {
+            if (driver.id == driverId) {
+              driverName = driver.name;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+      _pendingAssignments[request.id] = _PendingDriverOffer(
+        jobRequestId: request.id,
+        driverName: driverName,
+        status: 'pending',
+        driverTimedOut: false,
+      );
+      if (mounted) setState(() {});
       ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
       ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
       ref.invalidate(brokerDriversApiProvider(_driversQuery));
@@ -432,6 +462,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 
   Future<void> _showAssignmentSheet(BookingRequest request) {
+    // Already sent — don't reopen the sheet to spam the driver.
+    if (_busyRequestIds.contains(request.id) ||
+        _pendingAssignments.containsKey(request.id)) {
+      return Future.value();
+    }
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.35),
@@ -452,100 +487,18 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
   Future<double?> _showCounterAmountSheet(BookingRequest request) {
     final initialAmount = _amountFromText(request.value);
-    final controller = TextEditingController(
-      text: initialAmount > 0 ? initialAmount.toStringAsFixed(0) : '',
-    );
+    final initialText = initialAmount > 0
+        ? initialAmount.toStringAsFixed(0)
+        : '';
     return showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-          ),
-          child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.brokerHomeChangeFare,
-                    style: Theme.of(sheetContext).textTheme.titleLarge
-                        ?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    AppLocalizations.of(context)!.brokerHomeBookingProposeADifferentAmount(request.id),
-                    style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: controller,
-                    autofocus: true,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(
-                        AppIcons.currency_rupee_rounded,
-                        color: AppColors.brand,
-                      ),
-                      hintText: AppLocalizations.of(context)!.brokerHomeEnterAmount,
-                      filled: true,
-                      fillColor: AppColors.fillSubtle,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: AppColors.line),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          child: Text(AppLocalizations.of(context)!.brokerHomeCancel),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            final amount = _amountFromText(controller.text);
-                            Navigator.of(sheetContext).pop(amount);
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.brand,
-                          ),
-                          child: Text(
-                            AppLocalizations.of(context)!.brokerHomeChangeFare2,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    ).whenComplete(controller.dispose);
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (sheetContext) =>
+          _HomeCounterSheet(request: request, initialText: initialText),
+    );
   }
 
   double _amountFromText(String value) {
@@ -557,7 +510,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName.trim() ?? '';
     if (displayName.isEmpty) {
-      return 'Test';
+      return 'Broker';
     }
     return displayName.split(' ').first;
   }
@@ -660,7 +613,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                                   : constraints.maxWidth,
                               child: _BookingRequestCard(
                                 request: request,
-                                busy: _busyRequestIds.contains(request.id),
+                                busy:
+                                    _busyRequestIds.contains(request.id) ||
+                                    _pendingAssignments.containsKey(
+                                      request.id,
+                                    ),
                                 pendingOffer: _pendingAssignments[request.id],
                                 onOpenDriverRequests: () =>
                                     context.push('/broker/driver-requests'),
@@ -709,6 +666,135 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 }
 
+class _HomeCounterSheet extends StatefulWidget {
+  const _HomeCounterSheet({required this.request, required this.initialText});
+
+  final BookingRequest request;
+  final String initialText;
+
+  @override
+  State<_HomeCounterSheet> createState() => _HomeCounterSheetState();
+}
+
+class _HomeCounterSheetState extends State<_HomeCounterSheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _amountFromText(String value) {
+    final normalized = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(normalized) ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final media = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: media.viewInsets.bottom + media.viewPadding.bottom + 16,
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.brokerHomeChangeFare,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.brokerHomeBookingProposeADifferentAmount(
+                      widget.request.id,
+                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        AppIcons.currency_rupee_rounded,
+                        color: AppColors.brand,
+                      ),
+                      hintText: l10n.brokerHomeEnterAmount,
+                      filled: true,
+                      fillColor: AppColors.fillSubtle,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.line),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(l10n.brokerHomeCancel),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () {
+                            final amount = _amountFromText(_controller.text);
+                            Navigator.of(context).pop(amount);
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.brand,
+                          ),
+                          child: Text(
+                            l10n.brokerHomeChangeFare2,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BrokerHomeTopBar extends StatelessWidget {
   const _BrokerHomeTopBar({
     required this.greetingName,
@@ -728,19 +814,11 @@ class _BrokerHomeTopBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text.rich(
-            TextSpan(
-              text: l10n.brokerHomeHelloPrefix,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w900,
-              ),
-              children: [
-                TextSpan(
-                  text: l10n.brokerHomeHelloName(greetingName),
-                  style: const TextStyle(color: AppColors.textPrimary),
-                ),
-              ],
+          child: Text(
+            l10n.brokerHomeHelloName(greetingName),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ),
@@ -1014,11 +1092,20 @@ class _BookingRequestCard extends StatelessWidget {
           'client',
           '',
         }.contains(request.pendingConfirmationBy.trim().toLowerCase());
-    final showAssignAction = const {
-      'accepted',
-      'confirmed',
-      'assigned',
+    // Web parity (JobRequests.jsx): Assign is offered only for Accepted.
+    // Terminal states (cancelled/completed/declined/expired) never show it —
+    // those trips live in History / Active Jobs, not the inbox.
+    final isTerminal = const {
+      'declined',
+      'rejected',
+      'expired',
+      'cancelled',
+      'canceled',
+      'completed',
+      'delivered',
+      'closed',
     }.contains(status);
+    final showAssignAction = !isTerminal && status == 'accepted';
 
     return InkWell(
       onTap: onTap,

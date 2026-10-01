@@ -43,7 +43,9 @@ class BrokerShell extends ConsumerWidget {
         location != '/broker/earnings' &&
         !location.startsWith('/broker/history/');
     final currentTab = navigationShell.currentIndex;
-    final brokerName = displayName?.split(' ').first ?? 'Aman';
+    final brokerName = (displayName == null || displayName.trim().isEmpty)
+        ? l10n.broker
+        : displayName.trim().split(' ').first;
     final headerTitle = switch (currentTab) {
       0 => l10n.goodMorningName(brokerName),
       1 => l10n.activeJobs,

@@ -48,10 +48,11 @@ final brokerActiveJobsCountProvider = FutureProvider.autoDispose<int>((
       .watch(apiClientProvider)
       .getBookings(
         accessToken: session.tokens.accessToken,
-        status: 'confirmed,en_route_pickup,picked_up,in_transit',
+        status: 'assigned,accepted,confirmed,en_route_pickup,picked_up,in_transit',
         page: 1,
         limit: 1,
-      );
+      )
+      .catchError((_) => <String, dynamic>{});
 
   final data = _asMap(response['data']);
   return _readInt(response, const ['total', 'count']) ??

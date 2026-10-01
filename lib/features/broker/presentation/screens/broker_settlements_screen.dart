@@ -112,16 +112,21 @@ class _BrokerSettlementsScreenState
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         final l10n = AppLocalizations.of(sheetContext)!;
+        final media = MediaQuery.of(sheetContext);
         return Padding(
           padding: EdgeInsets.only(
             left: 14,
             right: 14,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 14,
+            bottom: media.viewInsets.bottom + media.viewPadding.bottom + 14,
           ),
-          child: Container(
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
@@ -257,6 +262,8 @@ class _BrokerSettlementsScreenState
                   ),
                 ),
               ],
+            ),
+              ),
             ),
           ),
         );

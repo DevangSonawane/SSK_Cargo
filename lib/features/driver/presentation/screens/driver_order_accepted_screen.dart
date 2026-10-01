@@ -1425,6 +1425,64 @@ class _DriverOrderAcceptedScreenState
               title: l10n.driverOrderClientAcceptedYourRequest,
               subtitle: l10n.driverOrderConfirmOrDeclinePrompt,
             ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .rejectDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                          ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.dangerText,
+                      side: const BorderSide(color: AppColors.dangerBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.decline,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .acceptDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                            resolveTripOnSuccess: true,
+                          ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.accept,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ] else if (_waitingOnClient) ...[
             _buildStatusPanel(
               showSpinner: true,
@@ -1538,6 +1596,64 @@ class _DriverOrderAcceptedScreenState
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: actionLocked
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .rejectDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                          ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.dangerText,
+                      side: const BorderSide(color: AppColors.dangerBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.decline,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: actionLocked
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .acceptDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                            resolveTripOnSuccess: true,
+                          ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.accept,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

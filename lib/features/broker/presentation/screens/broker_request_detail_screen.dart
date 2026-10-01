@@ -676,7 +676,7 @@ class _BrokerRequestDetailScreenState
     required List<BrokerDriver> drivers,
     required List<BrokerVehicle> trucks,
   }) async {
-    if (!_canTakeAction) return;
+    if (!_canTakeAction || _submitting) return;
     if (!await ensureKycVerifiedForAccept(
       context: context,
       ref: ref,

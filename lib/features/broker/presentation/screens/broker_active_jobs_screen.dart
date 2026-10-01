@@ -25,15 +25,17 @@ final _brokerActiveJobsProvider =
 
       final api = ref.watch(apiClientProvider);
       final token = session.tokens.accessToken;
-      final responses = await Future.wait([
-        _fetchAllActiveBookings(api, accessToken: token),
-        _fetchAllActiveTrips(api, accessToken: token),
-        _fetchAllActiveJobRequestMaps(api, accessToken: token),
-      ]);
-
-      final bookings = responses[0];
-      final trips = responses[1];
-      final requests = responses[2];
+      // Bookings are required; trips + job-requests only enrich cards, so
+      // fetch them best-effort — one failing must not blank the whole list.
+      final bookings = await _fetchAllActiveBookings(api, accessToken: token);
+      List<Map<String, dynamic>> trips = const [];
+      List<Map<String, dynamic>> requests = const [];
+      try {
+        trips = await _fetchAllActiveTrips(api, accessToken: token);
+      } catch (_) {}
+      try {
+        requests = await _fetchAllActiveJobRequestMaps(api, accessToken: token);
+      } catch (_) {}
       final tripByBooking = <String, Map<String, dynamic>>{};
       for (final trip in trips) {
         final map = _asStringMap(trip);
@@ -91,16 +93,46 @@ final _brokerActiveJobsProvider =
 Future<List<Map<String, dynamic>>> _fetchAllActiveBookings(
   SskApiClient api, {
   required String accessToken,
-}) {
-  return _fetchPagedActiveMaps(
-    itemKeys: const ['bookings'],
-    fetchPage: (page, limit) => api.getBookings(
-      accessToken: accessToken,
-      status: 'confirmed,en_route_pickup,picked_up,in_transit',
-      page: page,
-      limit: limit,
-    ),
-  );
+}) async {
+  try {
+    return await _fetchPagedActiveMaps(
+      itemKeys: const ['bookings'],
+      fetchPage: (page, limit) => api.getBookings(
+        accessToken: accessToken,
+        // 'assigned' is the booking-only status set right after the driver
+        // accepts (before a trip row exists) — without it freshly assigned
+        // jobs never appear here. 'accepted' kept defensively.
+        status:
+            'assigned,accepted,confirmed,en_route_pickup,picked_up,in_transit',
+        page: page,
+        limit: limit,
+      ),
+    );
+  } on ApiException {
+    // Backend 500s on the status-filtered query — fall back to unfiltered
+    // (capped pages) and filter to active statuses client-side so the
+    // screen still renders instead of erroring out.
+    const activeStatuses = {
+      'assigned',
+      'accepted',
+      'confirmed',
+      'en_route_pickup',
+      'picked_up',
+      'in_transit',
+    };
+    final all = await _fetchPagedActiveMaps(
+      itemKeys: const ['bookings'],
+      maxPages: 5,
+      fetchPage: (page, limit) =>
+          api.getBookings(accessToken: accessToken, page: page, limit: limit),
+    );
+    return all.where((item) {
+      final status = _normalizeStatus(
+        _readString(item, const ['status', 'booking_status']),
+      );
+      return activeStatuses.contains(status);
+    }).toList();
+  }
 }
 
 Future<List<Map<String, dynamic>>> _fetchAllActiveTrips(
@@ -128,11 +160,12 @@ Future<List<Map<String, dynamic>>> _fetchAllActiveJobRequestMaps(
 Future<List<Map<String, dynamic>>> _fetchPagedActiveMaps({
   required List<String> itemKeys,
   required Future<Map<String, dynamic>> Function(int page, int limit) fetchPage,
+  int maxPages = _activeJobsFetchMaxPages,
 }) async {
   final items = <Map<String, dynamic>>[];
   final seenKeys = <String>{};
 
-  for (var page = 1; page <= _activeJobsFetchMaxPages; page++) {
+  for (var page = 1; page <= maxPages; page++) {
     final response = await fetchPage(page, _activeJobsFetchPageLimit);
     final pageItems = _extractList(response, itemKeys)
         .map(_asStringMap)
