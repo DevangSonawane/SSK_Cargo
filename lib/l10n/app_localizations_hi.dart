@@ -5833,6 +5833,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clientBookingCancelSearch => 'खोज रद्द करें';
 
   @override
+  String get clientBookingBrokerDeclinedTitle =>
+      'ब्रोकर ने आपकी रिक्वेस्ट अस्वीकार कर दी';
+
+  @override
+  String get clientBookingBrokerDeclinedBody =>
+      'यह ब्रोकर आपकी ट्रिप नहीं ले सकता। जारी रखने के लिए कोई अन्य ब्रोकर चुनें।';
+
+  @override
+  String clientBookingBrokerDeclinedToast(Object name) {
+    return '$name ने अस्वीकार किया — कोई अन्य ब्रोकर चुनें।';
+  }
+
+  @override
+  String get clientBookingChooseAnotherBroker => 'कोई अन्य ब्रोकर चुनें';
+
+  @override
   String get clientBookingEnterLoading => 'लोडिंग स्थान दर्ज करें';
 
   @override

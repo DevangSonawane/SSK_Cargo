@@ -2375,6 +2375,15 @@
   "clientBookingChooseTrucksSubtitle": "Select truck type and search radius",
   "clientBookingCancelling": "Cancelling...",
   "clientBookingCancelSearch": "Cancel search",
+  "clientBookingBrokerDeclinedTitle": "Broker declined your request",
+  "clientBookingBrokerDeclinedBody": "This broker can't take your trip. Choose another broker to keep going.",
+  "clientBookingBrokerDeclinedToast": "{name} declined — pick another broker.",
+  "@clientBookingBrokerDeclinedToast": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "clientBookingChooseAnotherBroker": "Choose another broker",
   "clientBookingEnterLoading": "Enter loading location",
   "clientBookingEnterUnloading": "Enter unloading location",
   "clientBookingConfirmToPay": "Confirm to pay",

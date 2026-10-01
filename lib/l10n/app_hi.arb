@@ -2375,6 +2375,15 @@
   "clientBookingChooseTrucksSubtitle": "ट्रक का प्रकार और खोज का दायरा चुनें",
   "clientBookingCancelling": "रद्द किया जा रहा है...",
   "clientBookingCancelSearch": "खोज रद्द करें",
+  "clientBookingBrokerDeclinedTitle": "ब्रोकर ने आपकी रिक्वेस्ट अस्वीकार कर दी",
+  "clientBookingBrokerDeclinedBody": "यह ब्रोकर आपकी ट्रिप नहीं ले सकता। जारी रखने के लिए कोई अन्य ब्रोकर चुनें।",
+  "clientBookingBrokerDeclinedToast": "{name} ने अस्वीकार किया — कोई अन्य ब्रोकर चुनें।",
+  "@clientBookingBrokerDeclinedToast": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "clientBookingChooseAnotherBroker": "कोई अन्य ब्रोकर चुनें",
   "clientBookingEnterLoading": "लोडिंग स्थान दर्ज करें",
   "clientBookingEnterUnloading": "अनलोडिंग स्थान दर्ज करें",
   "clientBookingConfirmToPay": "भुगतान की पुष्टि करें",

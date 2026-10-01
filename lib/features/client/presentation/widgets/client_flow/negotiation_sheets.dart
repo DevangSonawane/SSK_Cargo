@@ -156,6 +156,10 @@ class _BrokerOfferNegotiationSheetState
       });
       if (updated.isAccepted) {
         Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+      } else if (updated.isDeclined) {
+        // Broker declined while negotiating — back to the list; the parent
+        // shows the declined dialog and returns to broker selection.
+        Navigator.of(context).pop(_FindTruckNegotiationResult.dismissed);
       }
     } catch (_) {
       if (!mounted || silent) {
@@ -364,7 +368,14 @@ class _BrokerOfferNegotiationSheetState
               ],
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              // System nav (esp. Android 3-button bar) overlays edge-to-edge
+              // sheets — keep the action buttons above it.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                8 + MediaQuery.of(context).viewPadding.bottom,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2058,7 +2069,13 @@ class _FindTruckNegotiationSheetState
               ],
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              // Keep action buttons above the system nav bar (Android 3-button).
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                8 + MediaQuery.of(context).viewPadding.bottom,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2461,7 +2478,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
       child: Padding(
         padding: EdgeInsets.zero,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 390),
+          constraints: const BoxConstraints(maxWidth: 430),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: context.colors.surfaceElevated,
@@ -2474,13 +2491,20 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 30,
+                  blurRadius: 32,
                   offset: const Offset(0, -10),
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: SingleChildScrollView(
+              // System nav (esp. Android 3-button bar) overlays edge-to-edge
+              // sheets — keep the action buttons above it.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                8 + MediaQuery.of(context).viewPadding.bottom,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

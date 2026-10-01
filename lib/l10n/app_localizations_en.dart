@@ -5839,6 +5839,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientBookingCancelSearch => 'Cancel search';
 
   @override
+  String get clientBookingBrokerDeclinedTitle => 'Broker declined your request';
+
+  @override
+  String get clientBookingBrokerDeclinedBody =>
+      'This broker can\'t take your trip. Choose another broker to keep going.';
+
+  @override
+  String clientBookingBrokerDeclinedToast(Object name) {
+    return '$name declined — pick another broker.';
+  }
+
+  @override
+  String get clientBookingChooseAnotherBroker => 'Choose another broker';
+
+  @override
   String get clientBookingEnterLoading => 'Enter loading location';
 
   @override

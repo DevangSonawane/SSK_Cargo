@@ -192,6 +192,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   String? _brokerBookingStatus;
   String? _primaryBrokerOfferId;
   bool _brokerNegotiationOpen = false;
+  bool _brokerDeclinedDialogOpen = false;
   Timer? _brokerOffersPollTimer;
   StreamSubscription<Map<String, dynamic>>? _brokerOfferSubscription;
 
@@ -1122,7 +1123,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       _startFindTruckZoomOutLoop();
 
-      await _startFindTruckLiveUpdates(session.tokens.accessToken);
+      // Broker counters live in offers, never in driver-requests — the
+      // driver-request loop (and its "finding drivers" sheet) must stay out
+      // of broker mode. Cancel any stale subscription defensively.
+      await _findTruckRequestSubscription?.cancel();
+      _findTruckRequestSubscription = null;
+      _findTruckPollTimer?.cancel();
+      _findTruckPollTimer = null;
       await _startBrokerOfferUpdates(session.tokens.accessToken);
       await _loadBrokerOffers(silent: false);
     } catch (error) {
@@ -1252,6 +1259,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   bool get _isFindTruckSearchActive =>
       _bookingCreated && !_postNegotiationPayment;
+
+  bool get _isBrokerSearchMode =>
+      (_draft.searchMode ?? BookingSearchMode.truck) ==
+      BookingSearchMode.broker;
+
+  /// Every received broker offer is declined — the loader must not spin
+  /// forever with no feedback; the client has to pick another broker.
+  bool get _brokerOffersAllDeclined =>
+      _isBrokerSearchMode &&
+      _bookingCreated &&
+      !_postNegotiationPayment &&
+      _brokerOffers.isNotEmpty &&
+      _brokerOffers.every((offer) => offer.isDeclined);
 
   void _resetUnpaidPaymentBookingForRetry({
     BookingSearchMode? searchMode,
@@ -1406,6 +1426,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _loadFindTruckDriverRequests({required bool silent}) async {
+    // Driver-requests belong to truck mode only — broker mode negotiates
+    // through offers, so never open the "finding drivers" sheet here.
+    if (_isBrokerSearchMode) {
+      return;
+    }
     final session = ref.read(authSessionProvider).valueOrNull;
     final bookingId = _activeBookingId;
     if (session == null || bookingId == null || bookingId.isEmpty) {
@@ -1637,6 +1662,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
 
       final primary = pickPrimaryBrokerOffer(offers, _primaryBrokerOfferId);
+      final hadLiveOffers = _brokerOffers.any((offer) => !offer.isDeclined);
       setState(() {
         _brokerOffers = offers;
         if (bookingStatus.isNotEmpty) {
@@ -1646,6 +1672,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           _primaryBrokerOfferId = primary.id;
         }
       });
+
+      // Broker declined everything we had — a centered dialog (SnackBars
+      // render behind the map bottom sheet), then back to broker selection.
+      final allDeclined =
+          offers.isNotEmpty && offers.every((offer) => offer.isDeclined);
+      if (hadLiveOffers && allDeclined && mounted) {
+        String declinedName = '';
+        for (final offer in offers) {
+          if (offer.brokerName.trim().isNotEmpty) {
+            declinedName = offer.brokerName.trim();
+            break;
+          }
+        }
+        if (declinedName.isEmpty) {
+          final selectedId = _draft.selectedBrokerId.trim();
+          for (final broker in _eligibleBrokers) {
+            if (broker.id == selectedId && broker.name.trim().isNotEmpty) {
+              declinedName = broker.name.trim();
+              break;
+            }
+          }
+        }
+        unawaited(_showBrokerDeclinedDialog(declinedName));
+      }
 
       // Web parity: booking confirmed means a broker locked in — stop
       // watching and move to payment.
@@ -1691,6 +1741,60 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     setState(() {
       _step = _BookingFlowStep.payment;
     });
+  }
+
+  /// Centered decline notice (a SnackBar would render behind the map bottom
+  /// sheet). Choosing another broker cancels the dead search and returns to
+  /// the choose-trucks/brokers popup; dismissing leaves the inline declined
+  /// card with the same action.
+  Future<void> _showBrokerDeclinedDialog(String brokerName) async {
+    if (!mounted || _brokerDeclinedDialogOpen) {
+      return;
+    }
+    _brokerDeclinedDialogOpen = true;
+    try {
+      final l10n = AppLocalizations.of(context)!;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) => AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 28,
+            vertical: 24,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(
+            l10n.clientBookingBrokerDeclinedTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: Text(
+            brokerName.isEmpty
+                ? l10n.clientBookingBrokerDeclinedBody
+                : l10n.clientBookingBrokerDeclinedToast(brokerName),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.close),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                unawaited(_cancelFindTruckSearch());
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2FA56E),
+              ),
+              child: Text(l10n.clientBookingChooseAnotherBroker),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _brokerDeclinedDialogOpen = false;
+    }
   }
 
   Future<void> _openBrokerOfferNegotiation(ClientBrokerOffer offer) async {
@@ -3669,24 +3773,57 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    l10n.clientBookingFindingBrokers,
+                                    _brokerOffersAllDeclined
+                                        ? l10n
+                                              .clientBookingBrokerDeclinedTitle
+                                        : l10n.clientBookingFindingBrokers,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
                                         ?.copyWith(
-                                          color: context.colors.textPrimary,
+                                          color: _brokerOffersAllDeclined
+                                              ? const Color(0xFFB42318)
+                                              : context.colors.textPrimary,
                                           fontWeight: FontWeight.w900,
                                         ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    l10n.clientBookingScanningBrokerOffers,
+                                    _brokerOffersAllDeclined
+                                        ? l10n.clientBookingBrokerDeclinedBody
+                                        : l10n
+                                              .clientBookingScanningBrokerOffers,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: context.colors.textSecondary,
                                         ),
                                   ),
-                                  if (showNegotiate) ...[
+                                  if (_brokerOffersAllDeclined) ...[
+                                    const SizedBox(height: 12),
+                                    FilledButton(
+                                      onPressed: _cancellingFindTruckSearch
+                                          ? null
+                                          : _cancelFindTruckSearch,
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF2FA56E,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        l10n.clientBookingChooseAnotherBroker,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    if (showNegotiate) ...[
                                     const SizedBox(height: 12),
                                     OutlinedButton.icon(
                                       onPressed: () =>
@@ -3733,6 +3870,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                           : l10n.clientBookingCancelSearch,
                                     ),
                                   ),
+                                  ],
                                 ],
                               ),
                             ),

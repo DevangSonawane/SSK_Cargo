@@ -10721,6 +10721,30 @@ abstract class AppLocalizations {
   /// **'Cancel search'**
   String get clientBookingCancelSearch;
 
+  /// No description provided for @clientBookingBrokerDeclinedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker declined your request'**
+  String get clientBookingBrokerDeclinedTitle;
+
+  /// No description provided for @clientBookingBrokerDeclinedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This broker can\'t take your trip. Choose another broker to keep going.'**
+  String get clientBookingBrokerDeclinedBody;
+
+  /// No description provided for @clientBookingBrokerDeclinedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} declined — pick another broker.'**
+  String clientBookingBrokerDeclinedToast(Object name);
+
+  /// No description provided for @clientBookingChooseAnotherBroker.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another broker'**
+  String get clientBookingChooseAnotherBroker;
+
   /// No description provided for @clientBookingEnterLoading.
   ///
   /// In en, this message translates to:
