@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
+import '../../../part_load/part_load_driver_inbox_screen.dart';
+import '../../../part_load/part_load_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -24,6 +26,7 @@ class _BrokerDriverRequestsScreenState
     extends ConsumerState<BrokerDriverRequestsScreen> {
   static const _query = (page: 1, limit: 100);
   final Set<String> _actioningIds = <String>{};
+  int _tab = 0;
 
   Future<void> _refresh() async {
     ref.invalidate(brokerDriverRequestsProvider(_query));
@@ -131,6 +134,12 @@ class _BrokerDriverRequestsScreenState
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
+    // Part-Load: two tabs on the same Requests screen (web parity) —
+    // negotiations stay exactly as they were, shared loads get their own
+    // tab backed by the standalone inbox list (no negotiation fields).
+    // Custom strip (not TabBar) so both tabs carry web's count badges.
+    final directCount = requestsAsync.valueOrNull?.length ?? 0;
+    final sharedPending = ref.watch(partLoadPendingCountProvider);
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
@@ -138,7 +147,22 @@ class _BrokerDriverRequestsScreenState
         elevation: 0,
         title: Text(l10n.brokerDriverReqDriverRequests),
       ),
-      body: RefreshIndicator(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: _BrokerRequestTabs(
+              selected: _tab,
+              directCount: directCount,
+              sharedCount: sharedPending,
+              onChanged: (index) => setState(() => _tab = index),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: _tab == 0
+                ? RefreshIndicator(
         onRefresh: _refresh,
         child: requestsAsync.when(
           loading: () => ListView(
@@ -241,6 +265,150 @@ class _BrokerDriverRequestsScreenState
               ],
             );
           },
+        ),
+                )
+                // Second tab: shared-load requests (timed-out rows for broker).
+                : const PartLoadInboxList(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerRequestTabs extends StatelessWidget {
+  const _BrokerRequestTabs({
+    required this.selected,
+    required this.directCount,
+    required this.sharedCount,
+    required this.onChanged,
+  });
+
+  final int selected;
+  final int directCount;
+  final int sharedCount;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _BrokerTabButton(
+              label: 'Direct Requests',
+              count: directCount,
+              selected: selected == 0,
+              onTap: () => onChanged(0),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _BrokerTabButton(
+              label: 'Part-Load Requests',
+              icon: AppIcons.inventory_2_rounded,
+              count: sharedCount,
+              countTinted: true,
+              selected: selected == 1,
+              onTap: () => onChanged(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerTabButton extends StatelessWidget {
+  const _BrokerTabButton({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.countTinted = false,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final bool countTinted;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconData = icon;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: selected ? AppShadows.card : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (iconData != null) ...[
+              Icon(
+                iconData,
+                size: 13,
+                color: const Color(0xFF0F766E),
+              ),
+              const SizedBox(width: 4),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textTertiary,
+                    ),
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: countTinted
+                      ? AppColors.brandTint
+                      : AppColors.divider,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: countTinted
+                            ? AppColors.brand
+                            : AppColors.textSecondary,
+                      ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

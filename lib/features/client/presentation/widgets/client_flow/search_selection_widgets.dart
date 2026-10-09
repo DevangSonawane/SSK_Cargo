@@ -540,7 +540,9 @@ class _BrokerMetaPill extends StatelessWidget {
 }
 
 class _BrokerLoadingCard extends StatelessWidget {
-  const _BrokerLoadingCard();
+  const _BrokerLoadingCard({this.message});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +564,7 @@ class _BrokerLoadingCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              AppLocalizations.of(context)!.clientFindingBrokers,
+              message ?? AppLocalizations.of(context)!.clientFindingBrokers,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontWeight: FontWeight.w700,

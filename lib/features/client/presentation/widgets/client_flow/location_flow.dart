@@ -1557,9 +1557,13 @@ class _LocationSuggestionTile extends StatelessWidget {
 }
 
 extension TripTypeDisplayLabel on TripType {
+  // Home header labels: this switch is trip DISTANCE (it drives
+  // transport_type inter/intra for pricing), not the truck mode. It used to
+  // say 'Full truck'/'Part truck', which now collides with the real Part
+  // Truck (shared) booking mode — hence the truthful city labels.
   String get displayLabel => switch (this) {
-    TripType.interCity => 'Full truck',
-    TripType.intraCity => 'Part truck',
+    TripType.interCity => 'Inter-city',
+    TripType.intraCity => 'Intra-city',
   };
 
   String get helperText => switch (this) {

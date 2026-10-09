@@ -14,6 +14,8 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
+import '../../../part_load/part_load_driver_inbox_screen.dart';
+import '../../../part_load/part_load_providers.dart';
 import '../widgets/driver_currency.dart';
 import '../widgets/slide_to_action.dart';
 
@@ -26,6 +28,9 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _launchingActiveTrip = false;
+  // Part-Load: 0 = direct requests, 1 = shared-load requests (web parity:
+  // driver Requests.jsx renders these as two tabs, not one merged list).
+  int _requestTab = 0;
   bool _reconcilingActiveTrip = false;
   String _reconcilingTripId = '';
   final Set<String> _answeringRequestIds = <String>{};
@@ -456,6 +461,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 IconButton(
                   onPressed: () {
                     ref.read(driverRequestFeedProvider.notifier).refresh();
+                    ref.invalidate(partLoadInboxProvider);
                   },
                   icon: const Icon(AppIcons.refresh_rounded),
                   tooltip: l10n.refreshRequests,
@@ -475,8 +481,30 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 title: l10n.pleaseSignInAgain,
                 subtitle: l10n.activeSessionNeededForRequests,
               )
-            else
-              requestsAsync.when(
+            else ...[
+              _RequestTabs(
+                selected: _requestTab,
+                directCount: requestsAsync.valueOrNull
+                        ?.where((request) => request.isVisibleInNewTravel)
+                        .length ??
+                    0,
+                sharedCount: ref.watch(partLoadPendingCountProvider),
+                onChanged: (index) =>
+                    setState(() => _requestTab = index),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Respond within 2 minutes — after that your broker can act on your behalf.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              if (_requestTab == 1)
+                const PartLoadInboxList(embedded: true)
+              else
+                requestsAsync.when(
                 loading: () => _EmptyStateCard(
                   icon: AppIcons.hourglass_top_rounded,
                   title: l10n.loadingRequests,
@@ -567,6 +595,148 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   );
                 },
               ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Part-Load tab switch — mirrors web driver Requests.jsx: Direct Requests
+/// vs Part-Load Requests with pending-count badges, not one merged list.
+class _RequestTabs extends StatelessWidget {
+  const _RequestTabs({
+    required this.selected,
+    required this.directCount,
+    required this.sharedCount,
+    required this.onChanged,
+  });
+
+  final int selected;
+  final int directCount;
+  final int sharedCount;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _RequestTabButton(
+              label: 'Direct Requests',
+              icon: AppIcons.handshake_rounded,
+              count: directCount,
+              selected: selected == 0,
+              onTap: () => onChanged(0),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _RequestTabButton(
+              label: 'Part-Load Requests',
+              icon: AppIcons.inventory_2_rounded,
+              count: sharedCount,
+              countTinted: true,
+              selected: selected == 1,
+              onTap: () => onChanged(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestTabButton extends StatelessWidget {
+  const _RequestTabButton({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.countTinted = false,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final bool countTinted;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconData = icon;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: selected ? AppShadows.card : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (iconData != null) ...[
+              Icon(
+                iconData,
+                size: 13,
+                color: selected
+                    ? AppColors.brand
+                    : AppColors.textTertiary,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textTertiary,
+                    ),
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      countTinted ? AppColors.brandTint : AppColors.divider,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: countTinted
+                            ? AppColors.brand
+                            : AppColors.textSecondary,
+                      ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

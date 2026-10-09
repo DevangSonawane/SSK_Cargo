@@ -15,6 +15,7 @@ import TimePicker from "../components/TimePicker";
 import MapView from "../components/MapView";
 import ChooseBroker from "./ChooseBroker";
 import FindTruckSearch from "./FindTruckSearch";
+import PartLoadSearch from "./PartLoadSearch";
 import { useToast } from "../context/ToastContext";
 import { api, getToken } from "../services/api";
 import { bookingRef, haversineDistanceKm, formatDate } from "../utils";
@@ -305,6 +306,9 @@ export default function BookTruck() {
           pickupLat: booking.pickupLat,
           pickupLng: booking.pickupLng,
           drop: booking.drop,
+          dropLat: booking.dropLat,
+          dropLng: booking.dropLng,
+          weightTons: booking.weight,
           isScheduled: !!booking.isScheduled,
           scheduledDate: booking.date || null,
           searchMode: booking.searchMode || null,
@@ -842,7 +846,13 @@ export default function BookTruck() {
         payment_status: "pending",
         add_loading_location: loadingLocations,
         add_unloading_location: unloadingLocations,
-        search_mode: form.searchMode,
+        // "Find Truck" + Part Truck is what actually triggers part-load matching (see
+        // PartLoadSearch.jsx, rendered as Step 5 whenever the booking comes back with
+        // searchMode 'part_load') — the UI choice itself stays identical to every other
+        // category (Radar button labeled "Find Truck"), only the value sent to the backend
+        // differs for this one category, since broadcastBooking() deliberately no-ops for
+        // 'truck' + category 'part' (no truck is ever registered under it).
+        search_mode: form.truckType === "part" && form.searchMode === "truck" ? "part_load" : form.searchMode,
         ...(form.searchMode === "truck" ? { search_radius_km: form.searchRadiusKm } : {}),
         ...(form.searchMode === "broker" ? { broker_id: form.selectedBrokerId } : {}),
       }, token);
@@ -858,6 +868,11 @@ export default function BookTruck() {
         pickupLat: booking?.pickupLat ?? form.pickupLat,
         pickupLng: booking?.pickupLng ?? form.pickupLng,
         drop: form.drop,
+        dropLat: booking?.dropLat ?? form.dropLat,
+        dropLng: booking?.dropLng ?? form.dropLng,
+        // Part Truck only — weight_unit is always "tons" on this app (see the POST /api/bookings
+        // payload above), so form.weight is already the right unit for the nearby-on-trip search.
+        weightTons: form.weight,
         isScheduled: !!booking?.isScheduled,
         scheduledDate: booking?.date || (isScheduled ? form.scheduledDateTime : null),
         searchMode: booking?.searchMode || form.searchMode,
@@ -1163,6 +1178,19 @@ export default function BookTruck() {
           // shortly before scheduled_date (see scheduledBookingBroadcastSweep.js). No live
           // waiting/negotiate screen makes sense here since nothing will happen for a while.
           <ScheduledConfirmation booking={createdBooking} navigate={navigate} />
+        ) : step === 5 && createdBooking && createdBooking.searchMode === "part_load" ? (
+          <PartLoadSearch
+            bookingId={createdBooking.id}
+            bookingNumber={createdBooking.bookingNumber}
+            pickup={createdBooking.pickup}
+            pickupLat={createdBooking.pickupLat}
+            pickupLng={createdBooking.pickupLng}
+            drop={createdBooking.drop}
+            dropLat={createdBooking.dropLat}
+            dropLng={createdBooking.dropLng}
+            weightTons={createdBooking.weightTons}
+            onBack={() => setStep(4)}
+          />
         ) : step === 5 && createdBooking && createdBooking.searchMode === "truck" ? (
           <FindTruckSearch
             bookingId={createdBooking.id}
@@ -1202,23 +1230,43 @@ export default function BookTruck() {
                   two cities, not chosen here) */}
               {step === 1 && (
                 <div className="animate-page-enter">
-                  {/* Book Now / Book Later — when Later is picked, the backend defers the
-                      driver/broker broadcast until shortly before scheduledDateTime instead of
-                      firing it the moment this booking is created (see is_scheduled in
-                      handleConfirm above). */}
+                  {/* Three mutually-exclusive modes, not two independent toggles — Full Truck
+                      (the default — any size, picked on Step 3) vs Part Truck (shared capacity,
+                      no further size choice) vs Book Later (deliberately no sub-type: a
+                      scheduled booking is always a full truck, never part-load). Picking one
+                      always fully overrides whichever was active, including resetting
+                      truckType off 'part' when it's not the one chosen. */}
                   <div className="flex items-center gap-1 mb-4 bg-neutral-50 rounded-full p-1 w-fit">
                     <button
                       type="button"
-                      onClick={() => updateForm("bookingMode", "now")}
+                      onClick={() => {
+                        updateForm("bookingMode", "now");
+                        if (form.truckType === "part") updateForm("truckType", null);
+                      }}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                        form.bookingMode !== "later" ? "bg-primary text-white" : "text-neutral-500 hover:text-primary"
+                        form.bookingMode !== "later" && form.truckType !== "part" ? "bg-primary text-white" : "text-neutral-500 hover:text-primary"
                       }`}
                     >
-                      <Zap className="w-3.5 h-3.5" /> Book Now
+                      <Zap className="w-3.5 h-3.5" /> Full Truck
                     </button>
                     <button
                       type="button"
-                      onClick={() => updateForm("bookingMode", "later")}
+                      onClick={() => {
+                        updateForm("bookingMode", "now");
+                        updateForm("truckType", "part");
+                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                        form.bookingMode !== "later" && form.truckType === "part" ? "bg-primary text-white" : "text-neutral-500 hover:text-primary"
+                      }`}
+                    >
+                      <PackagePlus className="w-3.5 h-3.5" /> Part Truck
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateForm("bookingMode", "later");
+                        if (form.truckType === "part") updateForm("truckType", null);
+                      }}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                         form.bookingMode === "later" ? "bg-primary text-white" : "text-neutral-500 hover:text-primary"
                       }`}
@@ -1696,7 +1744,9 @@ export default function BookTruck() {
 
                   <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-widest mb-2">Truck Category</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
-                    {truckOptions.map((t) => (
+                    {/* Part Truck is now picked via its own button at the top of Step 1, not
+                        from this size grid — it isn't a "size" the way the rest of these are. */}
+                    {truckOptions.filter((t) => t.id !== "part").map((t) => (
                       <button
                         key={t.id}
                         type="button"
@@ -1800,7 +1850,10 @@ export default function BookTruck() {
                   {/* Find Truck (fan-out broadcast to every nearby driver) vs Search for Broker
                       (send to exactly one broker) — mutually exclusive: picking one clears the
                       other's own fields (radius / selected broker) so there's no stale leftover
-                      state from a mode the client isn't using anymore. */}
+                      state from a mode the client isn't using anymore. Same choice for every
+                      category including Part Truck — "Find Truck" is what triggers part-load
+                      matching for that category specifically (see handleConfirm, which maps it
+                      to search_mode 'part_load' on submit rather than 'truck'). */}
                   <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-widest mb-2">How should we find your truck?</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     <button

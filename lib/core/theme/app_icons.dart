@@ -109,6 +109,10 @@ abstract final class AppIcons {
   static const IconData insert_drive_file_rounded = LucideIcons.file;
   static const IconData inventory_2_outlined = LucideIcons.package;
   static const IconData inventory_2_rounded = LucideIcons.package;
+  // Exact web icons for the booking-mode pills (BookTruck.jsx: Zap,
+  // PackagePlus, CalendarClock from lucide-react).
+  static const IconData package_plus_rounded = LucideIcons.package_plus;
+  static const IconData calendar_clock_rounded = LucideIcons.calendar_clock;
   static const IconData key_rounded = LucideIcons.key_round;
   static const IconData keyboard_arrow_down_rounded = LucideIcons.chevron_down;
   static const IconData keyboard_arrow_up_rounded = LucideIcons.chevron_up;

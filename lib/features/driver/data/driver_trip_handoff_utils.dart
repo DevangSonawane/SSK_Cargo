@@ -39,6 +39,14 @@ bool responseMatchesAnyReference(
 Map<String, dynamic>? extractTripFromResponse(Map<String, dynamic> response) {
   final data = response['data'];
   if (data is Map<String, dynamic>) {
+    // Part-Load: trips[] list when present (first = legacy `trip`).
+    final trips = data['trips'];
+    if (trips is List) {
+      for (final item in trips) {
+        if (item is Map<String, dynamic>) return item;
+        if (item is Map) return item.cast<String, dynamic>();
+      }
+    }
     final trip = data['trip'];
     if (trip is Map<String, dynamic>) {
       return trip;

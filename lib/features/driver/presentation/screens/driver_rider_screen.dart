@@ -205,6 +205,8 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   int _historyTab = 0;
+  // Part-Load: which of the (up to 2) active trips is showing.
+  int _activeTripIndex = 0;
 
   @override
   void initState() {
@@ -335,11 +337,35 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           ),
         ),
         data: (dashboard) {
-          final currentTrip = _selectCurrentTrip(
-            dashboard.activeTrip,
-            dashboard.upcomingTrip,
-          );
+          // Part-Load: prefer the trips[] list (2 when sharing); fall back
+          // to the legacy single activeTrip for old backends. Same
+          // visibility gate as before — finished trips never show here.
+          final activeTrips = (dashboard.activeTrips.isNotEmpty
+                  ? dashboard.activeTrips
+                  : (dashboard.activeTrip != null
+                        ? [dashboard.activeTrip!]
+                        : const <TrackingDemoShipment>[]))
+              .where((t) => _isVisibleDriverTripStatus(t.status))
+              .toList(growable: false);
+          final safeIndex = activeTrips.isEmpty
+              ? 0
+              : _activeTripIndex.clamp(0, activeTrips.length - 1);
+          final currentTrip = activeTrips.isNotEmpty
+              ? activeTrips[safeIndex]
+              : _selectCurrentTrip(
+                  dashboard.activeTrip,
+                  dashboard.upcomingTrip,
+                );
           final tripFeed = dashboard.tripFeed;
+          // Delivered but not completed = POD upload / payment / client
+          // approval still pending. These vanish from Active delivery by
+          // design, and history is read-only — without a resume entry the
+          // driver is stuck (e.g. app closed mid-flow). The completion
+          // wizard derives its step from server state, so it's the safe
+          // resume target.
+          final needsAction = tripFeed
+              .where((t) => t.status.trim().toLowerCase() == 'delivered')
+              .toList(growable: false);
           final pendingHistory = tripFeed.where(_isPendingTrip).toList();
           final completedHistory = tripFeed.where(_isCompletedTrip).toList();
 
@@ -363,11 +389,49 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (needsAction.isNotEmpty) ...[
+                          _SectionHeader(
+                            title: 'Finish delivery',
+                            subtitle:
+                                'Upload POD photos and collect payment to complete.',
+                          ),
+                          const SizedBox(height: 12),
+                          for (var i = 0; i < needsAction.length; i++) ...[
+                            TripSummaryCard(
+                              trip: needsAction[i],
+                              onTap: () =>
+                                  _openCompletionFlow(context, needsAction[i]),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          const SizedBox(height: 6),
+                        ],
                         _SectionHeader(
                           title: l10n.activeDelivery,
                           subtitle: l10n.liveTripAppearsFirst,
                         ),
                         const SizedBox(height: 12),
+                        if (activeTrips.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: SegmentedButton<int>(
+                              segments: [
+                                for (var i = 0; i < activeTrips.length; i++)
+                                  ButtonSegment(
+                                    value: i,
+                                    label: Text(
+                                      activeTrips[i].trackingId.isNotEmpty
+                                          ? activeTrips[i].trackingId
+                                          : 'Trip ${i + 1}',
+                                    ),
+                                  ),
+                              ],
+                              selected: {safeIndex},
+                              onSelectionChanged: (s) => setState(
+                                () => _activeTripIndex = s.first,
+                              ),
+                            ),
+                          ),
                         if (currentTrip == null)
                           _EmptyCard(
                             icon: AppIcons.route_rounded,
@@ -548,6 +612,24 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
       ),
     );
   }
+}
+
+void _openCompletionFlow(BuildContext context, DriverTripSummary trip) {
+  // The completion wizard loads strictly by trip id. Without one, fall
+  // back to the read-only history details instead of a broken wizard.
+  final tripId = trip.id.trim();
+  if (tripId.isNotEmpty) {
+    context.go('/driver/complete/$tripId');
+    return;
+  }
+  final bookingId = trip.bookingId.isNotEmpty
+      ? trip.bookingId
+      : trip.bookingNumber;
+  if (bookingId.isEmpty) return;
+  context.push(
+    '/driver/deliveries/$bookingId',
+    extra: trip.toSettlement(),
+  );
 }
 
 TrackingDemoShipment? _selectCurrentTrip(

@@ -467,8 +467,11 @@ class _DriverDeliveryDetailsScreenState
       setState(() {
         _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
         _tripRaw = trip;
-        final incomingStatus = _normalizeTripStatus(
-          _readString(trip, const ['status', 'rawStatus']),
+        final incomingStatus = _effectiveTripStatus(
+          _normalizeTripStatus(
+            _readString(trip, const ['status', 'rawStatus']),
+          ),
+          trip,
         );
         if (_mayApplyTripStatus(_tripStatus, incomingStatus)) {
           _tripStatus = incomingStatus;
@@ -611,8 +614,11 @@ class _DriverDeliveryDetailsScreenState
           : response;
       if (!mounted) return;
 
-      final updatedStatus = _normalizeTripStatus(
-        _readString(trip, const ['status', 'rawStatus']),
+      final updatedStatus = _effectiveTripStatus(
+        _normalizeTripStatus(
+          _readString(trip, const ['status', 'rawStatus']),
+        ),
+        trip,
       );
       final resolvedStatus = updatedStatus.isNotEmpty
           ? updatedStatus
@@ -731,8 +737,11 @@ class _DriverDeliveryDetailsScreenState
       setState(() {
         _tripRaw = trip;
         _shipment = _shipmentFromTrip(AppLocalizations.of(context)!, trip);
-        final updatedStatus = _normalizeTripStatus(
-          _readString(trip, const ['status', 'rawStatus']),
+        final updatedStatus = _effectiveTripStatus(
+          _normalizeTripStatus(
+            _readString(trip, const ['status', 'rawStatus']),
+          ),
+          trip,
         );
         if (updatedStatus.isNotEmpty) {
           _tripStatus = updatedStatus;
@@ -827,8 +836,11 @@ class _DriverDeliveryDetailsScreenState
           : response;
       if (!mounted) return null;
 
-      final updatedStatus = _normalizeTripStatus(
-        _readString(trip, const ['status', 'rawStatus']),
+      final updatedStatus = _effectiveTripStatus(
+        _normalizeTripStatus(
+          _readString(trip, const ['status', 'rawStatus']),
+        ),
+        trip,
       );
       final resolvedStatus = updatedStatus.isNotEmpty
           ? updatedStatus
@@ -1479,63 +1491,25 @@ class _DriverDeliveryDetailsScreenState
     // Fire-and-forget: confirming arrival must not wait on a satellite fix.
     _publishLocationInBackground();
 
-    try {
-      developer.log(
-        'Sending delivered status update to backend. tripId=$_tripId',
-        name: 'driver.deliveryDetails',
-      );
-      final apiStopwatch = Stopwatch()..start();
-      await ref
-          .read(apiClientProvider)
-          .updateTripStatus(
-            accessToken: session.tokens.accessToken,
-            tripId: _tripId,
-            status: 'delivered',
-          );
-      apiStopwatch.stop();
-      developer.log(
-        'Backend returned delivered status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId',
-        name: 'driver.deliveryDetails',
-      );
-      if (!mounted) return;
-      ref.invalidate(driverDashboardProvider);
-      developer.log(
-        'Navigating to delivery completion flow. tripId=$_tripId totalElapsedMs=${stopwatch.elapsedMilliseconds}',
-        name: 'driver.deliveryDetails',
-      );
-      // Single-screen wizard (web `DeliveryCompletionFlow` parity): arrival,
-      // POD upload, payment and client-approval waiting all stay on one
-      // screen derived from server state — no route-hopping.
-      context.go('/driver/complete/$_tripId');
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message),
-          backgroundColor: AppColors.dangerIcon,
-        ),
-      );
-      developer.log(
-        'Confirm arrival failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
-        name: 'driver.deliveryDetails',
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-          backgroundColor: AppColors.dangerIcon,
-        ),
-      );
-      developer.log(
-        'Confirm arrival failed after ${stopwatch.elapsedMilliseconds}ms: $error',
-        name: 'driver.deliveryDetails',
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _confirmingArrival = false);
-      }
-    }
+    // Single arrival only: the completion wizard owns the one
+    // delivered-status confirmation (its arrived step). Marking it here too
+    // forced drivers to confirm arrival twice, and any backend lag between
+    // the two calls made the second tap mandatory instead of redundant.
+    developer.log(
+      'Opening delivery completion flow (arrival is confirmed once, inside the wizard). tripId=$_tripId',
+      name: 'driver.deliveryDetails',
+    );
+    if (!mounted) return;
+    ref.invalidate(driverDashboardProvider);
+    developer.log(
+      'Navigating to delivery completion flow. tripId=$_tripId totalElapsedMs=${stopwatch.elapsedMilliseconds}',
+      name: 'driver.deliveryDetails',
+    );
+    // Single-screen wizard (web `DeliveryCompletionFlow` parity): arrival,
+    // POD upload, payment and client-approval waiting all stay on one
+    // screen derived from server state — no route-hopping.
+    context.go('/driver/complete/$_tripId');
+    if (mounted) setState(() => _confirmingArrival = false);
   }
 
   String _readString(Map<String, dynamic>? json, List<String> keys) {
@@ -1769,7 +1743,45 @@ class _DriverDeliveryDetailsScreenState
     if (normalized.isEmpty) {
       return '';
     }
-    return normalized.replaceAll(RegExp(r'[\s-]+'), '_');
+    final underscored = normalized.replaceAll(RegExp(r'[\s-]+'), '_');
+    // Truck-level alias: a trip row can sit at `on_trip` while delivery
+    // state lives on the booking. Without this alias the action switches
+    // below fall into `default:` and show stale pickup actions ("Start
+    // trip to pickup") on an already-delivered trip.
+    if (underscored == 'on_trip' || underscored == 'ontrip') {
+      return 'in_transit';
+    }
+    return underscored;
+  }
+
+  static bool _isDeliveredFamily(String status) {
+    return const {
+      'delivered',
+      'completed',
+      'paid',
+      'settled',
+    }.contains(status.trim().toLowerCase());
+  }
+
+  /// Booking status is authoritative for delivery: if the booking says
+  /// delivered (or beyond) the effective trip status is at least
+  /// `delivered`, no matter what the trip row itself carries. Fixes the
+  /// delivered-pill-but-pickup-buttons mismatch after relogin.
+  String _effectiveTripStatus(String tripStatus, Map<String, dynamic> trip) {
+    final booking = _readMap(trip, const ['booking']);
+    final bookingStatus = _normalizeTripStatus(
+      _readString(trip, const [
+            'bookingStatus',
+            'booking_status',
+          ]).isNotEmpty
+          ? _readString(trip, const ['bookingStatus', 'booking_status'])
+          : _readString(booking, const ['status', 'rawStatus']),
+    );
+    if (_isDeliveredFamily(bookingStatus) &&
+        _tripStatusRank(tripStatus) < _tripStatusRank('delivered')) {
+      return 'delivered';
+    }
+    return tripStatus;
   }
 
   /// Forward-only rank of the trip lifecycle. Used to ignore stale snapshots

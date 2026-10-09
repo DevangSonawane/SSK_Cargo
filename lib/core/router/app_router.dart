@@ -77,6 +77,9 @@ import '../../features/client/presentation/widgets/client_flow_widgets.dart';
 import '../../features/chat/data/chat_models.dart';
 import '../../features/chat/presentation/screens/chat_screens.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
+// Part-Load: standalone duplicated flow (full-truck routes untouched).
+import '../../features/part_load/part_load_new_booking_screen.dart';
+import '../../features/part_load/part_load_driver_inbox_screen.dart';
 
 BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
   if (id == null || id.isEmpty) return null;
@@ -185,6 +188,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/broker/driver-requests',
         pageBuilder: (context, state) => NoTransitionPage(
           child: _lightFlow(const BrokerDriverRequestsScreen()),
+        ),
+      ),
+      // Part-Load routes (new files only).
+      GoRoute(
+        path: '/client/part-load/new',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const PartLoadNewBookingScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/part-load-requests',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const PartLoadDriverInboxScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/part-load-requests',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const PartLoadDriverInboxScreen()),
         ),
       ),
       GoRoute(

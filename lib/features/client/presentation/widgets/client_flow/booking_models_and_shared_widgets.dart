@@ -2028,6 +2028,11 @@ Future<void> showQuickBookingFlow(
   BuildContext context, {
   required TripType tripType,
   int? initialVehicleIndex,
+  // Home-owned booking mode (web BookTruck.jsx step-1 pills): the mode
+  // section no longer lives in the choose-trucks sheet, so home passes it
+  // in and the sheet follows. Defaults preserve the old full-truck flow.
+  BookingSearchMode? initialSearchMode,
+  DateTime? initialScheduledDate,
   VoidCallback? onOpen,
   VoidCallback? onClose,
 }) async {
@@ -2059,32 +2064,47 @@ Future<void> showQuickBookingFlow(
       return;
     }
 
+    // Web parity (BookTruck.jsx): transport type is never a manual choice
+    // — same pickup/drop city → intra-city, otherwise inter-city. Falls
+    // back to the passed tripType when either city is unknown.
+    final pickupCity = pickup.city.trim();
+    final dropCity = drop.city.trim();
+    final sameCity = pickupCity.isNotEmpty &&
+        pickupCity.toLowerCase() == dropCity.toLowerCase();
+    final resolvedTripType = pickupCity.isNotEmpty && dropCity.isNotEmpty
+        ? (sameCity ? TripType.intraCity : TripType.interCity)
+        : tripType;
     final bookingData = BookingData(
       from: pickup.formattedAddress,
       to: drop.formattedAddress,
-      tripType: tripType,
-      city: pickup.city.isNotEmpty ? pickup.city : drop.city,
+      tripType: resolvedTripType,
+      city: sameCity
+          ? pickupCity
+          : (pickup.city.isNotEmpty ? pickup.city : drop.city),
       pickupLat: pickup.latitude,
       pickupLng: pickup.longitude,
       dropLat: drop.latitude,
       dropLng: drop.longitude,
-      scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+      scheduledDate:
+          initialScheduledDate ?? DateTime.now().add(const Duration(hours: 3)),
+      isScheduled: initialScheduledDate != null,
+      searchMode: initialSearchMode ?? BookingSearchMode.truck,
     );
 
     if (!context.mounted) {
       return;
     }
 
-    await Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (context) => BookingLocationScreen(
-          tripType: tripType,
-          initialVehicleIndex: initialVehicleIndex ?? 0,
-          initialBookingData: bookingData,
-          skipLocationStep: true,
+      await Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(
+          builder: (context) => BookingLocationScreen(
+            tripType: resolvedTripType,
+            initialVehicleIndex: initialVehicleIndex ?? 0,
+            initialBookingData: bookingData,
+            skipLocationStep: true,
+          ),
         ),
-      ),
-    );
+      );
   } finally {
     onClose?.call();
   }

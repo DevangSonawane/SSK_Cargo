@@ -17,9 +17,14 @@ class DriverDashboardData {
     required this.assignedTruck,
     this.thisMonth,
     this.lastMonth,
+    this.activeTrips = const [],
   });
 
   final TrackingDemoShipment? activeTrip;
+
+  /// Part-Load: all active trips (1 normally, 2 when a shared load was
+  /// accepted alongside the original). Empty only when [activeTrip] is null.
+  final List<TrackingDemoShipment> activeTrips;
   final TrackingDemoShipment? upcomingTrip;
   final List<BrokerSettlement> history;
   final List<DriverTripSummary> tripFeed;
@@ -53,6 +58,7 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
     ]);
 
     final activeTrip = _shipmentFromTripResponse(results[0]);
+    final activeTrips = _shipmentsFromTripResponse(results[0]);
     final upcomingTrip = _shipmentFromTripResponse(results[1]);
     final analyticsRaw = results[2];
     final analytics = _analyticsFromResponse(analyticsRaw);
@@ -72,6 +78,7 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
 
     return DriverDashboardData(
       activeTrip: activeTrip,
+      activeTrips: activeTrips,
       upcomingTrip: upcomingTrip,
       history: analytics,
       tripFeed: tripFeed,
@@ -107,19 +114,45 @@ double? _monthTotalFromAnalytics(
 }
 
 TrackingDemoShipment? _shipmentFromTripResponse(Map<String, dynamic> response) {
+  final trips = _shipmentsFromTripResponse(response);
+  return trips.isEmpty ? null : trips.first;
+}
+
+/// Part-Load: reads the new `trips[]` array when present, falls back to the
+/// legacy single `trip` object so old backends keep working.
+List<TrackingDemoShipment> _shipmentsFromTripResponse(
+    Map<String, dynamic> response) {
   final data = response['data'];
-  final trip = data is Map<String, dynamic>
-      ? (data['trip'] is Map<String, dynamic>
-            ? data['trip'] as Map<String, dynamic>
-            : data)
-      : response['trip'];
-  if (trip is Map<String, dynamic>) {
-    if (_looksLikePlaceholderTrip(trip)) {
-      return null;
+  if (data is Map<String, dynamic>) {
+    final trips = data['trips'];
+    if (trips is List && trips.isNotEmpty) {
+      final out = <TrackingDemoShipment>[];
+      for (final item in trips) {
+        if (item is Map<String, dynamic> &&
+            !_looksLikePlaceholderTrip(item)) {
+          out.add(_shipmentFromTrip(item));
+        } else if (item is Map) {
+          final m = item.cast<String, dynamic>();
+          if (!_looksLikePlaceholderTrip(m)) out.add(_shipmentFromTrip(m));
+        }
+      }
+      if (out.isNotEmpty) return out;
     }
-    return _shipmentFromTrip(trip);
   }
-  return null;
+  final single = () {
+    final data = response['data'];
+    final trip = data is Map<String, dynamic>
+        ? (data['trip'] is Map<String, dynamic>
+              ? data['trip'] as Map<String, dynamic>
+              : data)
+        : response['trip'];
+    if (trip is Map<String, dynamic>) {
+      if (_looksLikePlaceholderTrip(trip)) return null;
+      return _shipmentFromTrip(trip);
+    }
+    return null;
+  }();
+  return single == null ? const [] : [single];
 }
 
 // Kept as a compatibility helper for hot-reloaded isolates that may still

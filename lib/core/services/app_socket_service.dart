@@ -44,6 +44,9 @@ class AppSocketService {
       StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<Map<String, dynamic>> _chatEscalatedController =
       StreamController<Map<String, dynamic>>.broadcast();
+  // Part-Load: second inbox. Additive only — full-truck streams untouched.
+  final StreamController<Map<String, dynamic>> _tripJoinRequestController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<TruckLocationEvent> get truckLocationStream =>
       _truckLocationController.stream;
@@ -68,6 +71,9 @@ class AppSocketService {
 
   Stream<Map<String, dynamic>> get chatEscalatedStream =>
       _chatEscalatedController.stream;
+
+  Stream<Map<String, dynamic>> get tripJoinRequestStream =>
+      _tripJoinRequestController.stream;
 
   io.Socket? get socket => _socket;
 
@@ -194,6 +200,23 @@ class AppSocketService {
         _loginAttemptAlertController.add(event);
       }
     });
+    void handleTripJoinRequestEvent(String eventName, Object? payload) {
+      developer.log(
+        'Shared websocket $eventName payload: $payload',
+        name: 'SSK.Socket',
+      );
+      final event = _parseMapPayload(payload);
+      if (event != null && !_tripJoinRequestController.isClosed) {
+        _tripJoinRequestController.add(event);
+      }
+    }
+
+    socket.on('trip-join-request-created', (payload) {
+      handleTripJoinRequestEvent('trip-join-request-created', payload);
+    });
+    socket.on('trip-join-request-updated', (payload) {
+      handleTripJoinRequestEvent('trip-join-request-updated', payload);
+    });
     socket.on('chat-message', (payload) {
       final event = _parseMapPayload(payload);
       if (event != null && !_chatMessageController.isClosed) {
@@ -288,6 +311,7 @@ class AppSocketService {
     _loginAttemptAlertController.close();
     _chatMessageController.close();
     _chatEscalatedController.close();
+    _tripJoinRequestController.close();
   }
 
   void _resyncTruckTrackingRooms() {

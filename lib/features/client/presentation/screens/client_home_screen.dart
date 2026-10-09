@@ -8,6 +8,7 @@ import '../../../../core/providers/user_location_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/client_flow_widgets.dart';
+import '../widgets/home_schedule_sheet.dart';
 
 class ClientHomeScreen extends ConsumerStatefulWidget {
   const ClientHomeScreen({super.key});
@@ -16,8 +17,14 @@ class ClientHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
 
+/// Home-owned booking mode — mirrors web BookTruck.jsx step-1 pills
+/// (Full Truck / Part Truck / Book Later). The choose-trucks sheet no
+/// longer has a mode section; it follows whichever mode home passes in.
+enum _HomeMode { full, part, later }
+
 class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
-  TripType _selectedTripType = TripType.interCity;
+  _HomeMode _mode = _HomeMode.full;
+  DateTime? _scheduled;
 
   @override
   void initState() {
@@ -31,20 +38,62 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     });
   }
 
-  Future<void> _openBookingLocation({required int vehicleIndex}) async {
+  Future<void> _openBookingLocation() async {
     HapticFeedback.lightImpact();
+    if (_mode == _HomeMode.later && _scheduled == null) {
+      await _pickScheduledDateTime();
+      if (_scheduled == null || !mounted) return;
+    }
     ref.read(bottomNavVisibleProvider.notifier).state = false;
     try {
-      await showQuickBookingFlow(
-        context,
-        tripType: _selectedTripType,
-        initialVehicleIndex: vehicleIndex,
-      );
+      switch (_mode) {
+        case _HomeMode.full:
+          await showQuickBookingFlow(
+            context,
+            tripType: TripType.interCity,
+            initialVehicleIndex: 0,
+          );
+        case _HomeMode.part:
+          await showQuickBookingFlow(
+            context,
+            tripType: TripType.interCity,
+            initialVehicleIndex: 0,
+            initialSearchMode: BookingSearchMode.partLoad,
+          );
+        case _HomeMode.later:
+          await showQuickBookingFlow(
+            context,
+            tripType: TripType.interCity,
+            initialVehicleIndex: 0,
+            initialScheduledDate: _scheduled,
+          );
+      }
     } finally {
       if (mounted) {
         ref.read(bottomNavVisibleProvider.notifier).state = true;
       }
     }
+  }
+
+  Future<void> _pickScheduledDateTime() async {
+    final now = DateTime.now();
+    final initial = _scheduled?.isAfter(now) == true
+        ? _scheduled!
+        : now.add(const Duration(hours: 3));
+    final picked = await showHomeScheduleSheet(
+      context,
+      initialDateTime: initial,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _scheduled = picked);
+  }
+
+  String _formatScheduled(DateTime value) {
+    final hour12 =
+        value.hour == 0 ? 12 : value.hour > 12 ? value.hour - 12 : value.hour;
+    final minute = value.minute.toString().padLeft(2, '0');
+    final period = value.hour >= 12 ? 'PM' : 'AM';
+    return '${value.day}/${value.month}/${value.year} at $hour12:$minute $period';
   }
 
   @override
@@ -86,21 +135,40 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _TripHeader(
-                  selectedTripType: _selectedTripType,
-                  onTripTypeChanged: (value) {
-                    if (_selectedTripType != value) {
+                _ModeHeader(
+                  mode: _mode,
+                  onChanged: (value) {
+                    if (_mode != value) {
                       HapticFeedback.lightImpact();
                     }
                     setState(() {
-                      _selectedTripType = value;
+                      _mode = value;
                     });
                   },
                 ),
                 const SizedBox(height: 14),
-                _BookingPromptCard(
-                  onTap: () {
-                    _openBookingLocation(vehicleIndex: 0);
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeOutCubic,
+                  child: switch (_mode) {
+                    _HomeMode.full => _FullHeroCard(
+                        key: const ValueKey('home-full'),
+                        onTap: _openBookingLocation,
+                      ),
+                    _HomeMode.part => _PartHeroCard(
+                        key: const ValueKey('home-part'),
+                        onTap: _openBookingLocation,
+                      ),
+                    _HomeMode.later => _LaterHeroCard(
+                        key: const ValueKey('home-later'),
+                        scheduled: _scheduled,
+                        scheduledLabel: _scheduled == null
+                            ? null
+                            : _formatScheduled(_scheduled!),
+                        onPickSchedule: _pickScheduledDateTime,
+                        onTap: _openBookingLocation,
+                      ),
                   },
                 ),
               ],
@@ -112,44 +180,52 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   }
 }
 
-class _TripHeader extends StatelessWidget {
-  const _TripHeader({
-    required this.selectedTripType,
-    required this.onTripTypeChanged,
-  });
+/// Three mutually-exclusive booking modes — same pills as web BookTruck.jsx
+/// step 1 (rounded-full group, exact lucide icons Zap / PackagePlus /
+/// CalendarClock, no images). Home owns the choice; the choose-trucks
+/// sheet follows it.
+class _ModeHeader extends StatelessWidget {
+  const _ModeHeader({required this.mode, required this.onChanged});
 
-  final TripType selectedTripType;
-  final ValueChanged<TripType> onTripTypeChanged;
+  final _HomeMode mode;
+  final ValueChanged<_HomeMode> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.zero,
-      child: Column(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: context.colors.fillSubtle,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
         children: [
-          SizedBox(
-            height: 44,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _TripModeLabel(
-                    label: TripType.interCity.displayLabel,
-                    imagePath: 'assets/trucks/inter-city.png',
-                    selected: selectedTripType == TripType.interCity,
-                    onTap: () => onTripTypeChanged(TripType.interCity),
-                  ),
-                ),
-                Container(width: 1, height: 24, color: context.colors.line),
-                Expanded(
-                  child: _TripModeLabel(
-                    label: TripType.intraCity.displayLabel,
-                    imagePath: 'assets/trucks/intra-city.png',
-                    selected: selectedTripType == TripType.intraCity,
-                    onTap: () => onTripTypeChanged(TripType.intraCity),
-                  ),
-                ),
-              ],
+          Expanded(
+            child: _ModePill(
+              label: l10n.tripTypeFullTruck,
+              icon: AppIcons.flash_on_rounded,
+              selected: mode == _HomeMode.full,
+              onTap: () => onChanged(_HomeMode.full),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _ModePill(
+              label: l10n.tripTypePartTruck,
+              icon: AppIcons.package_plus_rounded,
+              selected: mode == _HomeMode.part,
+              onTap: () => onChanged(_HomeMode.part),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _ModePill(
+              label: l10n.checkoutBookLater,
+              icon: AppIcons.calendar_clock_rounded,
+              selected: mode == _HomeMode.later,
+              onTap: () => onChanged(_HomeMode.later),
             ),
           ),
         ],
@@ -158,62 +234,55 @@ class _TripHeader extends StatelessWidget {
   }
 }
 
-class _TripModeLabel extends StatelessWidget {
-  const _TripModeLabel({
+class _ModePill extends StatelessWidget {
+  const _ModePill({
     required this.label,
-    required this.imagePath,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
-  final String imagePath;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2FA56E) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  imagePath,
-                  width: 20,
-                  height: 20,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: selected
-                        ? context.colors.textPrimary
-                        : context.colors.textTertiary,
-                  ),
-                ),
-              ],
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.white : context.colors.textSecondary,
             ),
-            const SizedBox(height: 1),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              height: 2,
-              width: selected ? 30 : 0,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2FA56E),
-                borderRadius: BorderRadius.circular(999),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? Colors.white : context.colors.textSecondary,
+                ),
               ),
             ),
           ],
@@ -223,16 +292,26 @@ class _TripModeLabel extends StatelessWidget {
   }
 }
 
-class _BookingPromptCard extends StatelessWidget {
-  const _BookingPromptCard({required this.onTap});
+/// Shared hero-card shell — same sizing as the old booking prompt card:
+/// surface, radius 24, line border, 0.04/14 shadow, route rows, 52px
+/// radius-15 green button.
+class _HeroCardShell extends StatelessWidget {
+  const _HeroCardShell({
+    required this.buttonLabel,
+    required this.onTap,
+    this.buttonEnabled = true,
+    required this.children,
+  });
 
+  final String buttonLabel;
   final VoidCallback onTap;
+  final bool buttonEnabled;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return InkWell(
-      onTap: onTap,
+      onTap: buttonEnabled ? onTap : null,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
@@ -252,35 +331,24 @@ class _BookingPromptCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _BookingRouteRow(
-              icon: AppIcons.arrow_upward_rounded,
-              iconColor: const Color(0xFF38B47A),
-              hintText: l10n.clientHomeLoadingHint,
-            ),
-            const SizedBox(height: 12),
-            const _BookingRouteDivider(),
-            const SizedBox(height: 12),
-            _BookingRouteRow(
-              icon: AppIcons.arrow_downward_rounded,
-              iconColor: const Color(0xFFF05252),
-              hintText: l10n.clientHomeUnloadingHint,
-            ),
+            ...children,
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: FilledButton(
-                onPressed: onTap,
+                onPressed: buttonEnabled ? onTap : null,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF2FA56E),
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFD8E1ED),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                   padding: EdgeInsets.zero,
                 ),
                 child: Text(
-                  l10n.clientHomeBookAnyTruck,
+                  buttonLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontSize: 15,
@@ -292,6 +360,174 @@ class _BookingPromptCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RouteRows extends StatelessWidget {
+  const _RouteRows();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BookingRouteRow(
+          icon: AppIcons.arrow_upward_rounded,
+          iconColor: const Color(0xFF38B47A),
+          hintText: l10n.clientHomeLoadingHint,
+        ),
+        const SizedBox(height: 12),
+        const _BookingRouteDivider(),
+        const SizedBox(height: 12),
+        _BookingRouteRow(
+          icon: AppIcons.arrow_downward_rounded,
+          iconColor: const Color(0xFFF05252),
+          hintText: l10n.clientHomeUnloadingHint,
+        ),
+      ],
+    );
+  }
+}
+
+class _FullHeroCard extends StatelessWidget {
+  const _FullHeroCard({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _HeroCardShell(
+      buttonLabel: l10n.clientHomeBookAnyTruck,
+      onTap: onTap,
+      children: const [_RouteRows()],
+    );
+  }
+}
+
+class _PartHeroCard extends StatelessWidget {
+  const _PartHeroCard({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _HeroCardShell(
+      buttonLabel: 'Find shared truck',
+      onTap: onTap,
+      children: [
+        const _RouteRows(),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.colors.brandFill,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.colors.brandBorder),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                AppIcons.package_plus_rounded,
+                color: Color(0xFF2FA56E),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Share space on a truck already heading your way — fixed price, no negotiation.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LaterHeroCard extends StatelessWidget {
+  const _LaterHeroCard({
+    super.key,
+    required this.scheduled,
+    required this.scheduledLabel,
+    required this.onPickSchedule,
+    required this.onTap,
+  });
+
+  final DateTime? scheduled;
+  final String? scheduledLabel;
+  final VoidCallback onPickSchedule;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final label = scheduledLabel;
+    return _HeroCardShell(
+      buttonLabel: l10n.checkoutBookLater,
+      onTap: onTap,
+      buttonEnabled: scheduled != null,
+      children: [
+        InkWell(
+          onTap: onPickSchedule,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: context.colors.fillSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.colors.line),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  AppIcons.calendar_clock_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label ?? 'Select date & time',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: label == null
+                          ? context.colors.textTertiary
+                          : context.colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Icon(
+                  AppIcons.chevron_right_rounded,
+                  size: 18,
+                  color: context.colors.textTertiary,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "We'll notify nearby drivers about 2 hours before this time.",
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: context.colors.textTertiary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const _RouteRows(),
+      ],
     );
   }
 }
