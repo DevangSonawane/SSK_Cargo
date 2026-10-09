@@ -19,6 +19,7 @@ class BookingData {
     this.quantity = 1,
     this.weightUnit = 'tons',
     this.truckCategory = '',
+    this.truckBodyType = '',
     this.scheduledDate,
     this.distance = 0,
     this.durationMin,
@@ -57,6 +58,10 @@ class BookingData {
   final int quantity;
   final String weightUnit;
   final String truckCategory;
+  /// Optional open/closed structure filter (`''` = any). Sent as
+  /// `truck_body_type` on `POST /api/bookings`, never on the quote call
+  /// (pricing doesn't use it). Web parity: BookTruck.jsx `truckBodyType`.
+  final String truckBodyType;
   final DateTime? scheduledDate;
   final double distance;
   final int? durationMin;
@@ -105,6 +110,7 @@ class BookingData {
     int? quantity,
     String? weightUnit,
     String? truckCategory,
+    String? truckBodyType,
     DateTime? scheduledDate,
     double? distance,
     int? durationMin,
@@ -143,6 +149,7 @@ class BookingData {
       quantity: quantity ?? this.quantity,
       weightUnit: weightUnit ?? this.weightUnit,
       truckCategory: truckCategory ?? this.truckCategory,
+      truckBodyType: truckBodyType ?? this.truckBodyType,
       scheduledDate: scheduledDate ?? this.scheduledDate,
       distance: distance ?? this.distance,
       durationMin: durationMin ?? this.durationMin,
@@ -402,6 +409,12 @@ String assetPathForTruckCategory(String category) {
     case '19 ft':
     case '22ft':
     case '22 ft':
+    case '32ft_sxl':
+    case '32ft-sxl':
+    case '32ft sxl':
+    case '32ft_mxl':
+    case '32ft-mxl':
+    case '32ft mxl':
     case 'large':
     case 'big':
       return 'assets/trucks/big truck.png';
@@ -441,6 +454,12 @@ Color accentColorForTruckCategory(String category) {
     case '19 ft':
     case '22ft':
     case '22 ft':
+    case '32ft_sxl':
+    case '32ft-sxl':
+    case '32ft sxl':
+    case '32ft_mxl':
+    case '32ft-mxl':
+    case '32ft mxl':
     case 'large':
     case 'big':
       return const Color(0xFF7A5AF8);
@@ -485,6 +504,14 @@ String labelForTruckCategory(
     case '22ft':
     case '22 ft':
       return l10n?.vehicleOption22ftTruck ?? '22ft Truck';
+    case '32ft_sxl':
+    case '32ft-sxl':
+    case '32ft sxl':
+      return '32ft SXL';
+    case '32ft_mxl':
+    case '32ft-mxl':
+    case '32ft mxl':
+      return '32ft MXL';
     case 'small':
       return l10n?.vehicleSmallTruck ?? 'Small truck';
     case 'medium':
@@ -567,6 +594,17 @@ String categoryForVehicleOption(VehicleOption? option) {
   if (text.contains('pickup 10') || text.contains('pickup_10')) {
     return 'pickup_10ft';
   }
+  if (text.contains('32ft sxl') ||
+      text.contains('32ft_sxl') ||
+      text.contains('32ft-sxl')) {
+    return '32ft_sxl';
+  }
+  if (text.contains('32ft mxl') ||
+      text.contains('32ft_mxl') ||
+      text.contains('32ft-mxl')) {
+    return '32ft_mxl';
+  }
+  if (text.contains('32ft') || text.contains('32 ft')) return '32ft_mxl';
   if (text.contains('22ft') || text.contains('22 ft')) return '22ft';
   if (text.contains('19ft') || text.contains('19 ft')) return '19ft';
   if (text.contains('17ft') || text.contains('17 ft')) return '17ft';
@@ -658,8 +696,170 @@ String localizedVehicleOptionLabel(
     case '22ft':
     case '22 ft':
       return l10n.vehicleOption22ftTruck;
+    case '32ft_sxl':
+    case '32ft-sxl':
+    case '32ft sxl':
+      return option.label.isNotEmpty ? option.label : '32ft SXL';
+    case '32ft_mxl':
+    case '32ft-mxl':
+    case '32ft mxl':
+      return option.label.isNotEmpty ? option.label : '32ft MXL';
     default:
       return option.label;
+  }
+}
+
+/// Optional Open/Closed truck-structure picker (web parity: BookTruck.jsx
+/// Step 3 "Truck Structure (optional)" + broker Trucks.jsx "Truck Structure"
+/// dropdown). Two cards, same visual weight as the size grid; tapping the
+/// active card clears the selection (null = not specified, field omitted).
+class TruckBodyTypePicker extends StatelessWidget {
+  const TruckBodyTypePicker({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  /// Normalized `open`/`closed` or `''` when unset.
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = TruckBodyType.normalize(selected);
+    return Row(
+      children: [
+        Expanded(
+          child: _TruckBodyTypeCard(
+            value: TruckBodyType.open,
+            label: 'Open Truck',
+            icon: AppIcons.inbox_rounded,
+            selected: current == TruckBodyType.open,
+            onTap: () => onChanged(
+              current == TruckBodyType.open ? '' : TruckBodyType.open,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _TruckBodyTypeCard(
+            value: TruckBodyType.closed,
+            label: 'Closed Truck',
+            icon: AppIcons.inventory_2_rounded,
+            selected: current == TruckBodyType.closed,
+            onTap: () => onChanged(
+              current == TruckBodyType.closed ? '' : TruckBodyType.closed,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TruckBodyTypeCard extends StatelessWidget {
+  const _TruckBodyTypeCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: selected ? context.colors.brandFill : context.colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected
+                  ? const Color(0xFF2FA56E)
+                  : context.colors.textSecondary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: selected
+                      ? context.colors.brandEmphasis
+                      : context.colors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+            if (selected)
+              const Icon(
+                AppIcons.check_rounded,
+                color: Color(0xFF2FA56E),
+                size: 16,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small "Open"/"Closed" tag shown next to a truck's size label wherever
+/// truck details are displayed. Renders nothing when [bodyType] is unset —
+/// most existing trucks have none until their owner edits them.
+class TruckBodyTypeTag extends StatelessWidget {
+  const TruckBodyTypeTag({super.key, required this.bodyType});
+
+  final String bodyType;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = TruckBodyType.normalize(bodyType);
+    if (normalized.isEmpty) return const SizedBox.shrink();
+    final label = TruckBodyType.labelFor(normalized);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: context.colors.brandFill,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: context.colors.brandBorder),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.colors.brandEmphasis,
+          fontWeight: FontWeight.w900,
+          fontSize: 10,
+        ),
+      ),
+    );
   }
 }
 

@@ -56,8 +56,47 @@ List<VehicleType> fallbackVehicleTypes() => const <VehicleType>[
   VehicleType(id: '17ft', name: '17ft Truck', capacity: '4.5 Ton'),
   VehicleType(id: '19ft', name: '19ft Truck', capacity: '6 Ton'),
   VehicleType(id: '22ft', name: '22ft Truck', capacity: '7 Ton'),
+  VehicleType(id: '32ft_sxl', name: '32ft SXL', capacity: '9 Ton'),
+  VehicleType(id: '32ft_mxl', name: '32ft MXL', capacity: '18 Ton'),
   VehicleType(id: 'part', name: 'Part Load', capacity: 'Shared Space'),
 ];
+
+/// A truck's body structure — independent of its size category (web parity:
+/// `TRUCK_BODY_TYPES` in `truckTypes.js`). Optional everywhere: `''`/null =
+/// not specified, including every truck registered before this existed.
+class TruckBodyType {
+  const TruckBodyType._();
+
+  static const String open = 'open';
+  static const String closed = 'closed';
+
+  static const List<String> values = <String>[open, closed];
+
+  static bool isValid(String? value) {
+    final v = (value ?? '').trim().toLowerCase();
+    return v == open || v == closed;
+  }
+
+  /// Normalizes backend input (`bodyType`/`body_type`) to `open`/`closed`
+  /// or `''` when unset/invalid. Never returns null — callers omit the field
+  /// entirely when this is empty.
+  static String normalize(Object? value) {
+    final v = value?.toString().trim().toLowerCase() ?? '';
+    if (v == open || v == closed) return v;
+    return '';
+  }
+
+  static String labelFor(String value) {
+    switch (value.trim().toLowerCase()) {
+      case open:
+        return 'Open Truck';
+      case closed:
+        return 'Closed Truck';
+      default:
+        return '';
+    }
+  }
+}
 
 /// Extracts the vehicle-types list from a `getVehicleTypes()` response,
 /// tolerating the `data`-wrapped and unwrapped shapes.
@@ -262,6 +301,7 @@ class ClientBooking {
     required this.haltingCharge,
     required this.stops,
     required this.raw,
+    this.truckBodyType = '',
   });
 
   factory ClientBooking.fromJson(Map<String, dynamic> json) {
@@ -465,6 +505,13 @@ class ClientBooking {
           0,
       stops: tripRouteStopsFromSource(json),
       raw: json,
+      truckBodyType: TruckBodyType.normalize(
+        _firstNonEmpty([
+          _readString(json, const ['truckBodyType', 'truck_body_type']),
+          _readString(truck, const ['truckBodyType', 'truck_body_type']),
+          _readString(vehicle, const ['truckBodyType', 'truck_body_type']),
+        ]),
+      ),
     );
   }
 
@@ -495,6 +542,7 @@ class ClientBooking {
   final double haltingCharge;
   final List<TripRouteStop> stops;
   final Map<String, dynamic> raw;
+  final String truckBodyType;
 
   String get displayTitle => material.isNotEmpty
       ? material
@@ -939,6 +987,7 @@ class NearbyTruck {
     required this.lastLocationAt,
     required this.distanceKm,
     required this.raw,
+    this.bodyType = '',
   });
 
   factory NearbyTruck.fromJson(Map<String, dynamic> json) {
@@ -1085,6 +1134,13 @@ class NearbyTruck {
             location['distanceKm'],
       ),
       raw: json,
+      bodyType: TruckBodyType.normalize(
+        _firstNonEmpty([
+          _readString(json, const ['bodyType', 'body_type']),
+          _readString(truck, const ['bodyType', 'body_type']),
+          _readString(vehicle, const ['bodyType', 'body_type']),
+        ]),
+      ),
     );
   }
 
@@ -1101,6 +1157,7 @@ class NearbyTruck {
   final DateTime? lastLocationAt;
   final double distanceKm;
   final Map<String, dynamic> raw;
+  final String bodyType;
 
   bool get hasLocation => currentLat != 0 && currentLng != 0;
 

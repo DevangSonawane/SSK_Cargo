@@ -238,6 +238,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       truckCategory: initialDraft?.truckCategory.isNotEmpty == true
           ? initialDraft!.truckCategory
           : categoryForVehicleOption(_vehicle),
+      truckBodyType: TruckBodyType.normalize(initialDraft?.truckBodyType),
       amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
     );
     _fromController = TextEditingController(text: _draft.from);
@@ -3205,6 +3206,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'truck_category': _draft.truckCategory.isEmpty
           ? categoryForVehicleOption(_vehicle)
           : _draft.truckCategory,
+      if (TruckBodyType.normalize(_draft.truckBodyType).isNotEmpty)
+        'truck_body_type': TruckBodyType.normalize(_draft.truckBodyType),
       'city': _draft.transportType == 'intra'
           ? _draft.city.isNotEmpty
                 ? _draft.city
@@ -4016,6 +4019,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     ),
                     const SizedBox(height: 14),
                     _buildTruckCategoryPicker(context),
+                    const SizedBox(height: 10),
+                    _buildTruckBodyTypeSection(context),
                     const SizedBox(height: 14),
                     Row(
                       children: [
@@ -4194,6 +4199,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         ),
                         const SizedBox(height: 14),
                         _buildTruckCategoryPicker(context),
+                        const SizedBox(height: 10),
+                        _buildTruckBodyTypeSection(context),
                         const SizedBox(height: 14),
                         Row(
                           children: [
@@ -4357,6 +4364,48 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildTruckBodyTypeSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Truck Structure',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: context.colors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            Text(
+              '(optional)',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: context.colors.textTertiary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TruckBodyTypePicker(
+          selected: _draft.truckBodyType,
+          onChanged: (value) {
+            setState(() {
+              _draft = _draft.copyWith(
+                truckBodyType: TruckBodyType.normalize(value),
+              );
+            });
+          },
+        ),
+      ],
     );
   }
 

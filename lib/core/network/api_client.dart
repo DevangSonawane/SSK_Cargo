@@ -1359,12 +1359,13 @@ class SskApiClient {
     required double pickupLng,
     String? truckCategory,
     String? capacity,
+    String? bodyType,
     double? radiusKm,
     int page = 1,
     int limit = 20,
   }) async {
     developer.log(
-      'GET /api/vehicles/trucks/nearby pickupLat=$pickupLat pickupLng=$pickupLng truckCategory=$truckCategory capacity=$capacity radiusKm=$radiusKm page=$page limit=$limit',
+      'GET /api/vehicles/trucks/nearby pickupLat=$pickupLat pickupLng=$pickupLng truckCategory=$truckCategory capacity=$capacity bodyType=$bodyType radiusKm=$radiusKm page=$page limit=$limit',
       name: 'SSK.API',
     );
     return _request(
@@ -1376,6 +1377,7 @@ class SskApiClient {
           if (truckCategory?.isNotEmpty ?? false)
             'truck_category': truckCategory,
           if (capacity?.isNotEmpty ?? false) 'capacity': capacity,
+          if (bodyType?.isNotEmpty ?? false) 'body_type': bodyType,
           if (radiusKm?.isFinite ?? false) 'radius_km': radiusKm,
           'page': page,
           'limit': limit,

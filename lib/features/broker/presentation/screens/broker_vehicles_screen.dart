@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:ssk/l10n/app_localizations.dart';
 
@@ -519,6 +520,11 @@ class _TruckActionDialog extends StatelessWidget {
                   AppLocalizations.of(context)!.addTruckCapacity,
                   vehicle.capacity.isEmpty ? '-' : vehicle.capacity,
                 ),
+                if (TruckBodyType.normalize(vehicle.bodyType).isNotEmpty)
+                  _TruckSummaryRow(
+                    'Structure',
+                    TruckBodyType.labelFor(vehicle.bodyType),
+                  ),
                 _TruckSummaryRow(
                   AppLocalizations.of(context)!.driver,
                   vehicle.assignedDriverName.isEmpty

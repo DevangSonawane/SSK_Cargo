@@ -11,6 +11,8 @@ typedef NearbyTrucksQuery = ({
   double? radiusKm,
   int page,
   int limit,
+  String? truckCategory,
+  String? bodyType,
 });
 
 final clientBookingsProvider = FutureProvider.autoDispose
@@ -113,6 +115,8 @@ final clientNearbyTrucksProvider = FutureProvider.autoDispose
             accessToken: session.tokens.accessToken,
             pickupLat: query.pickupLat,
             pickupLng: query.pickupLng,
+            truckCategory: query.truckCategory,
+            bodyType: query.bodyType,
             radiusKm: query.radiusKm,
             page: query.page,
             limit: query.limit,

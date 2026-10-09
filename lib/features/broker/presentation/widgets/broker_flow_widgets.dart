@@ -9,6 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../shared/data/trip_route_stop.dart';
 
@@ -1290,6 +1291,7 @@ class BrokerVehicle {
     this.make = '',
     this.year = '',
     this.insuranceExpiry = '',
+    this.bodyType = '',
   });
 
   final String id;
@@ -1311,6 +1313,7 @@ class BrokerVehicle {
   final String make;
   final String year;
   final String insuranceExpiry;
+  final String bodyType;
 }
 
 class _BrokerTruckPage {
@@ -1375,6 +1378,9 @@ BrokerVehicle _brokerVehicleFromJson(Map<String, dynamic> json) {
     make: make,
     year: year,
     insuranceExpiry: insuranceExpiry,
+    bodyType: TruckBodyType.normalize(
+      _readString(json, const ['bodyType', 'body_type']),
+    ),
   );
 }
 
@@ -1396,6 +1402,9 @@ String _assetPathForLabel(String label) {
   }
   if (text.contains('pickup 10') || text.contains('pickup_10')) {
     return 'assets/trucks/medium truck.png';
+  }
+  if (text.contains('32ft') || text.contains('32 ft')) {
+    return 'assets/trucks/big truck.png';
   }
   if (text.contains('22ft') ||
       text.contains('22 ft') ||
@@ -3291,16 +3300,30 @@ class VehicleCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          vehicle.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontSize: 12,
-                                color: const Color(0xFF667085),
-                                fontWeight: FontWeight.w600,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                vehicle.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontSize: 12,
+                                      color: const Color(0xFF667085),
+                                      fontWeight: FontWeight.w600,
+                                    ),
                               ),
+                            ),
+                            if (TruckBodyType.normalize(
+                              vehicle.bodyType,
+                            ).isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              TruckBodyTypeTag(
+                                bodyType: vehicle.bodyType,
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 3),
                         Row(

@@ -32,6 +32,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
   BrokerDriver? _selectedDriver;
   int _selectedVehicleIndex = 1;
   bool _submitting = false;
+  // Optional truck structure (open/closed) — `''` = not specified, in which
+  // case `body_type` is omitted from the payload entirely (never sent as an
+  // empty string). Mirrors the web broker Trucks.jsx `bodyType` field.
+  String _selectedBodyType = '';
   // Tracks whether the user has tapped a tile yet — before that, an edit
   // flow highlights by the existing truck's category (stable across the
   // 4-item fallback → 9-item live list switch), not by a stale index.
@@ -57,6 +61,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       _makeController.text = truck.make;
       _yearController.text = truck.year;
       _insuranceExpiryController.text = truck.insuranceExpiry;
+      _selectedBodyType = TruckBodyType.normalize(truck.bodyType);
       _editingCategory = _categoryForExistingTruck(
         label: truck.label,
         category: truck.category,
@@ -128,6 +133,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     });
 
     try {
+      final bodyType = TruckBodyType.normalize(_selectedBodyType);
       final truckPayload = <String, dynamic>{
         'type': selectedVehicle.label,
         'category': categoryForVehicleOption(selectedVehicle),
@@ -135,6 +141,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
         'make': _makeController.text.trim(),
         'year': year,
         'insurance_expiry': _insuranceExpiryController.text.trim(),
+        if (bodyType.isNotEmpty) 'body_type': bodyType,
       }..removeWhere((key, value) => value == null);
 
       if (widget.existingTruck == null) {
@@ -357,6 +364,40 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                           },
                         );
                       },
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Truck Structure',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        Text(
+                          '(optional)',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TruckBodyTypePicker(
+                      selected: _selectedBodyType,
+                      onChanged: (value) => setState(
+                        () => _selectedBodyType = TruckBodyType.normalize(
+                          value,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
@@ -610,7 +651,8 @@ int _indexForCategory(List<VehicleOption> options, String category) {
     if (const {'pickup_10ft', '14ft', 'medium'}.contains(want)) {
       return _indexForIdOr(options, const ['medium'], 1);
     }
-    if (const {'17ft', '19ft', '22ft', 'large', 'big'}.contains(want)) {
+    if (const {'17ft', '19ft', '22ft', '32ft_sxl', '32ft_mxl', 'large', 'big'}
+        .contains(want)) {
       return _indexForIdOr(options, const ['large', 'big'], 2);
     }
     if (want == 'part' || want == 'pooling') {
@@ -646,6 +688,16 @@ String _categoryForExistingTruck({required String label, String category = ''}) 
   }
   if (text.contains('pickup 10') || text.contains('pickup_10')) {
     return 'pickup_10ft';
+  }
+  if (text.contains('32ft sxl') ||
+      text.contains('32ft_sxl') ||
+      text.contains('32ft-sxl')) {
+    return '32ft_sxl';
+  }
+  if (text.contains('32ft mxl') ||
+      text.contains('32ft_mxl') ||
+      text.contains('32ft-mxl')) {
+    return '32ft_mxl';
   }
   if (text.contains('22ft') || text.contains('22 ft')) return '22ft';
   if (text.contains('19ft') || text.contains('19 ft')) return '19ft';
