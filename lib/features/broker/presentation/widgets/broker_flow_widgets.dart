@@ -3535,11 +3535,13 @@ class DriverListTile extends StatelessWidget {
     required this.driver,
     this.onEdit,
     required this.onRemove,
+    this.onTap,
   });
 
   final BrokerDriver driver;
   final VoidCallback? onEdit;
   final VoidCallback onRemove;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -3549,6 +3551,7 @@ class DriverListTile extends StatelessWidget {
     final canCall = driver.phone.trim().isNotEmpty;
 
     return InkWell(
+      onTap: onTap,
       onLongPress: onRemove,
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: AnimatedContainer(

@@ -116,11 +116,38 @@ class SskApiClient {
     );
   }
 
+  /// Sends a phone-OTP for password reset (web parity: `AuthContext.jsx`
+  /// `forgotPassword` → `POST /api/auth/forgot-password`).
+  Future<Map<String, dynamic>> forgotPassword({required String phone}) async {
+    developer.log('POST /api/auth/forgot-password', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/forgot-password',
+        data: {'phone': phone},
+      ),
+    );
+  }
+
+  /// Completes the OTP password reset (web parity: `AuthContext.jsx`
+  /// `resetPassword` → `POST /api/auth/reset-password`).
+  Future<Map<String, dynamic>> resetPassword({
+    required String phone,
+    required String otp,
+    required String newPassword,
+  }) async {
+    developer.log('POST /api/auth/reset-password', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/reset-password',
+        data: {'phone': phone, 'otp': otp, 'new_password': newPassword},
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> logout({
     required String refreshToken,
     bool allDevices = false,
-  }) async {
-    developer.log(
+  }) async {    developer.log(
       'POST /api/auth/logout allDevices=$allDevices refreshTokenLength=${refreshToken.length}',
       name: 'SSK.API',
     );
@@ -890,6 +917,85 @@ class SskApiClient {
     );
   }
 
+  /// Monthly-hiring vehicle listings (broker/driver side — web
+  /// `MonthlyHiring.jsx` parity). Lists the caller's own listings.
+  Future<Map<String, dynamic>> getMonthlyHiringListings({
+    required String accessToken,
+  }) async {
+    developer.log(
+      'GET /api/monthly-hiring/listings/mine',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/monthly-hiring/listings/mine',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Lists a truck for monthly hire (web `MonthlyHiringForm.jsx` parity).
+  Future<Map<String, dynamic>> createMonthlyHiringListing({
+    required String accessToken,
+    required String truckId,
+    required String pricingType,
+    required double rateAmount,
+    String? availabilityNotes,
+  }) async {
+    developer.log('POST /api/monthly-hiring/listings', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/monthly-hiring/listings',
+        data: {
+          'truck_id': truckId,
+          'pricing_type': pricingType,
+          'rate_amount': rateAmount,
+          if (availabilityNotes != null && availabilityNotes.isNotEmpty)
+            'availability_notes': availabilityNotes,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Pauses/resumes a monthly-hiring listing (web `MonthlyHiring.jsx`
+  /// `toggleStatus` parity: `PATCH .../listings/:id { status }`).
+  Future<Map<String, dynamic>> updateMonthlyHiringListing({
+    required String accessToken,
+    required String id,
+    required String status,
+  }) async {
+    developer.log(
+      'PATCH /api/monthly-hiring/listings/$id status=$status',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/monthly-hiring/listings/$id',
+        data: {'status': status},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Removes a monthly-hiring listing (web `MonthlyHiring.jsx`
+  /// `removeListing` parity).
+  Future<Map<String, dynamic>> deleteMonthlyHiringListing({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'DELETE /api/monthly-hiring/listings/$id',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/monthly-hiring/listings/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getSavedPaymentMethods({
     required String accessToken,
   }) async {
@@ -1627,6 +1733,27 @@ class SskApiClient {
     );
   }
 
+  /// Ends every active session for a driver stuck unable to log in (e.g. app
+  /// killed without logout — the backend allows one active driver session).
+  /// Broker-scoped counterpart of the admin force-logout (web parity:
+  /// `broker/Drivers.jsx` `handleResetSession`).
+  Future<Map<String, dynamic>> forceLogoutDriver({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'POST /api/vehicles/drivers/$id/force-logout',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/vehicles/drivers/$id/force-logout',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> declineJobRequest({
     required String accessToken,
     required String id,
@@ -2013,6 +2140,85 @@ class SskApiClient {
         data: FormData.fromMap({
           'file': MultipartFile.fromFileSync(filePath, filename: filename),
         }),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Driver's own UPI ID for collections (web parity:
+  /// `driver/Profile.jsx` — `GET /api/vehicles/drivers/me/upi-id`).
+  Future<Map<String, dynamic>> getDriverUpiId({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/vehicles/drivers/me/upi-id', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/upi-id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Saves the driver's own UPI ID (web parity: `PATCH .../me/upi-id`).
+  Future<Map<String, dynamic>> updateDriverUpiId({
+    required String accessToken,
+    required String upiId,
+  }) async {
+    developer.log('PATCH /api/vehicles/drivers/me/upi-id', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/upi-id',
+        data: {'upi_id': upiId},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Driver's uploaded collection QR code URL (web parity:
+  /// `GET /api/vehicles/drivers/me/qr-code`).
+  Future<Map<String, dynamic>> getDriverQrCode({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/vehicles/drivers/me/qr-code', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/qr-code',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Uploads the driver's collection QR code (web parity:
+  /// `POST /api/vehicles/drivers/me/qr-code` with a `file` field).
+  Future<Map<String, dynamic>> uploadDriverQrCode({
+    required String accessToken,
+    required String filePath,
+  }) async {
+    final filename = filePath.split(RegExp(r'[\\/]+')).last;
+    developer.log(
+      'POST /api/vehicles/drivers/me/qr-code file=$filename',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/qr-code',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromFileSync(filePath, filename: filename),
+        }),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Removes the driver's collection QR code (web parity:
+  /// `DELETE /api/vehicles/drivers/me/qr-code`).
+  Future<Map<String, dynamic>> deleteDriverQrCode({
+    required String accessToken,
+  }) async {
+    developer.log('DELETE /api/vehicles/drivers/me/qr-code', name: 'SSK.API');
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/qr-code',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

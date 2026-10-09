@@ -562,6 +562,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         ) ...[
                           DriverListTile(
                             driver: visibleDrivers[index],
+                            onTap: () => _showDriverActions(
+                              context,
+                              ref,
+                              visibleDrivers[index],
+                            ),
                             onEdit: () => context.push(
                               '/broker/drivers/add',
                               extra: visibleDrivers[index],
@@ -695,6 +700,252 @@ BrokerVehicle? _truckForDriver(
     }
   }
   return null;
+}
+
+Future<void> _showDriverActions(
+  BuildContext context,
+  WidgetRef ref,
+  BrokerDriver driver,
+) async {
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      var resetting = false;
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          Future<void> resetSession() async {
+            final session = ref.read(authSessionProvider).valueOrNull;
+            if (session == null) return;
+            setDialogState(() => resetting = true);
+            try {
+              await ref
+                  .read(apiClientProvider)
+                  .forceLogoutDriver(
+                    accessToken: session.tokens.accessToken,
+                    id: driver.id,
+                  );
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '${driver.name}\u2019s session has been reset — they can log in again now.',
+                  ),
+                ),
+              );
+            } catch (error) {
+              if (!dialogContext.mounted) return;
+              setDialogState(() => resetting = false);
+              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    error.toString().replaceFirst('ApiException: ', ''),
+                  ),
+                  backgroundColor: AppColors.dangerIcon,
+                ),
+              );
+            }
+          }
+
+          final l10n = AppLocalizations.of(dialogContext)!;
+          final initials = driver.name.trim().isEmpty
+              ? '?'
+              : driver.name
+                    .trim()
+                    .split(RegExp(r'\s+'))
+                    .take(2)
+                    .map((part) => part.characters.first.toUpperCase())
+                    .join();
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 24,
+            ),
+            backgroundColor: Colors.transparent,
+            child: Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                boxShadow: AppShadows.float,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: driverAvatarColor(driver.status),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initials,
+                          style: Theme.of(dialogContext).textTheme.titleLarge
+                              ?.copyWith(
+                                color: driverAvatarTextColor(driver.status),
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              driver.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(dialogContext).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                            const SizedBox(height: 5),
+                            StatusPill(
+                              label: driverStatusLabel(driver.status, l10n),
+                              backgroundColor: driverStatusBackground(
+                                driver.status,
+                              ),
+                              textColor: driverStatusColor(driver.status),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        icon: const Icon(AppIcons.close_rounded),
+                        style: IconButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.fillSubtle,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Column(
+                      children: [
+                        _DriverActionRow(
+                          label: 'Truck',
+                          value: driver.assignedVehicle.trim().isEmpty
+                              ? 'Unassigned'
+                              : driver.assignedVehicle,
+                        ),
+                        _DriverActionRow(
+                          label: 'Phone',
+                          value: driver.phone.trim().isEmpty
+                              ? '—'
+                              : driver.phone,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: resetting ? null : resetSession,
+                      icon: resetting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              AppIcons.lock_outline_rounded,
+                              size: 19,
+                            ),
+                      label: Text(
+                        resetting ? 'Resetting…' : 'Reset login session',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.dangerIcon,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Signs them out everywhere so they can log in again.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+class _DriverActionRow extends StatelessWidget {
+  const _DriverActionRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> _confirmDeleteDriver(

@@ -149,6 +149,14 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     onTap: () => context.push('/broker/earnings'),
                   ),
                   _ProfileMenuTile(
+                    title: 'Monthly Hiring',
+                    subtitle:
+                        'List trucks for monthly hire and manage listings',
+                    icon: AppIcons.calendar_month_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/broker/monthly-hiring'),
+                  ),
+                  _ProfileMenuTile(
                     title: l10n.kycRegistration,
                     subtitle: _loadingKyc
                         ? l10n.checkingVerificationStatus

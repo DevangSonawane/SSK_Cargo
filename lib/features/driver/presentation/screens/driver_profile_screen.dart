@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -238,6 +239,14 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     accent: AppColors.brand,
                     onTap: () => context.go('/driver/earnings'),
                   ),
+                  _ProfileMenuTile(
+                    title: 'Monthly Hiring',
+                    subtitle:
+                        'List your truck for monthly hire and manage listings',
+                    icon: AppIcons.calendar_month_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/monthly-hiring'),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -261,6 +270,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     onTap: () => context.push('/driver/chats'),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              const _ProfileSection(
+                title: 'Payments',
+                children: [_DriverPaymentSection()],
               ),
               const SizedBox(height: 16),
               _ProfileSection(
@@ -700,6 +714,262 @@ class _ProfileMenuTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Collection payment settings (web parity: `driver/Profile.jsx` UPI ID +
+/// QR code management — `GET/PATCH .../me/upi-id`, `GET/POST/DELETE
+/// .../me/qr-code`). Used for trip payment collection.
+class _DriverPaymentSection extends ConsumerStatefulWidget {
+  const _DriverPaymentSection();
+
+  @override
+  ConsumerState<_DriverPaymentSection> createState() =>
+      _DriverPaymentSectionState();
+}
+
+class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
+  final _upiController = TextEditingController();
+  final _picker = ImagePicker();
+  bool _loading = true;
+  bool _savingUpi = false;
+  bool _uploadingQr = false;
+  bool _removingQr = false;
+  bool _hasQr = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _upiController.dispose();
+    super.dispose();
+  }
+
+  String _readString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) continue;
+      final text = value.toString().trim();
+      if (text.isNotEmpty && text.toLowerCase() != 'null') return text;
+    }
+    return '';
+  }
+
+  Map<String, dynamic> _dataOf(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is Map<String, dynamic>) return data;
+    return response;
+  }
+
+  Future<void> _load() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    try {
+      final results = await Future.wait([
+        ref
+            .read(apiClientProvider)
+            .getDriverUpiId(accessToken: session.tokens.accessToken),
+        ref
+            .read(apiClientProvider)
+            .getDriverQrCode(accessToken: session.tokens.accessToken),
+      ]);
+      if (!mounted) return;
+      final upiData = _dataOf(results[0]);
+      final qrData = _dataOf(results[1]);
+      setState(() {
+        _upiController.text = _readString(upiData, const ['upiId', 'upi_id']);
+        _hasQr =
+            _readString(qrData, const ['qrCodeUrl', 'qr_code_url']).isNotEmpty;
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _saveUpi() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    final upiId = _upiController.text.trim();
+    if (upiId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your UPI ID first.')),
+      );
+      return;
+    }
+    setState(() => _savingUpi = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .updateDriverUpiId(
+            accessToken: session.tokens.accessToken,
+            upiId: upiId,
+          );
+      if (!mounted) return;
+      final saved = _readString(_dataOf(response), const ['upiId', 'upi_id']);
+      setState(() => _upiController.text = saved.isNotEmpty ? saved : upiId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('UPI ID saved.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _savingUpi = false);
+    }
+  }
+
+  Future<void> _uploadQr() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
+    setState(() => _uploadingQr = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .uploadDriverQrCode(
+            accessToken: session.tokens.accessToken,
+            filePath: picked.path,
+          );
+      if (!mounted) return;
+      setState(() => _hasQr = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('QR code uploaded.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingQr = false);
+    }
+  }
+
+  Future<void> _removeQr() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _removingQr = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .deleteDriverQrCode(accessToken: session.tokens.accessToken);
+      if (!mounted) return;
+      setState(() => _hasQr = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('QR code removed.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _removingQr = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          TextField(
+            controller: _upiController,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _saveUpi(),
+            decoration: InputDecoration(
+              labelText: 'UPI ID',
+              hintText: 'yourname@upi',
+              prefixIcon: const Icon(AppIcons.qr_code_rounded, size: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _savingUpi ? null : _saveUpi,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: Text(_savingUpi ? 'Saving…' : 'Save UPI ID'),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _hasQr ? 'QR code uploaded' : 'No QR code yet',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _uploadingQr ? null : _uploadQr,
+                icon: const Icon(AppIcons.upload_rounded, size: 18),
+                label: Text(_uploadingQr ? 'Uploading…' : 'Upload'),
+              ),
+              if (_hasQr)
+                TextButton.icon(
+                  onPressed: _removingQr ? null : _removeQr,
+                  icon: const Icon(AppIcons.delete_outline_rounded, size: 18),
+                  label: Text(_removingQr ? 'Removing…' : 'Remove'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.dangerIcon,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

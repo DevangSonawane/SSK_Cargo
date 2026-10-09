@@ -40,6 +40,8 @@ import '../../features/broker/presentation/screens/broker_truck_history_screen.d
 import '../../features/broker/presentation/screens/broker_truck_location_screen.dart';
 import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/driver_detail_screen.dart';
+import '../../features/broker/presentation/screens/broker_monthly_hiring_screen.dart';
+import '../../features/broker/presentation/screens/broker_monthly_hiring_form_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/client/data/client_booking_models.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
@@ -283,6 +285,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/all-trips',
         pageBuilder: (context, state) =>
             NoTransitionPage(child: _lightFlow(const DriverAllTripsScreen())),
+      ),
+      GoRoute(
+        path: '/driver/monthly-hiring',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerMonthlyHiringScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/monthly-hiring/new',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerMonthlyHiringFormScreen()),
+        ),
       ),
       GoRoute(
         path: '/signup',
@@ -541,8 +555,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/broker/drivers/:id',
-        pageBuilder: (context, state) {
+        path: '/broker/drivers/:id',        pageBuilder: (context, state) {
           final extraDriver = state.extra as BrokerDriver?;
           final driverId = state.pathParameters['id'];
           final driversAsync = ref.read(
@@ -559,6 +572,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             child: _lightFlow(DriverDetailScreen(driver: driver)),
           );
         },
+      ),
+      GoRoute(
+        path: '/broker/monthly-hiring',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerMonthlyHiringScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/monthly-hiring/new',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerMonthlyHiringFormScreen()),
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

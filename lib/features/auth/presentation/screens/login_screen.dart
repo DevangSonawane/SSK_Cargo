@@ -201,6 +201,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Forgot-password OTP flow (web parity: `Login.jsx` forgot sheet —
+  /// `POST /api/auth/forgot-password` then `POST /api/auth/reset-password`).
+  Future<void> _openForgotPasswordSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => const _ForgotPasswordSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final expiredMessage = ref.watch(authExpiredMessageProvider);
@@ -388,6 +399,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                     fontWeight: FontWeight.w800,
                                                   ),
                                                 ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: _isSubmitting
+                                          ? null
+                                          : _openForgotPasswordSheet,
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        foregroundColor: const Color(
+                                          0xFF2FA56E,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Forgot password?',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ),
@@ -660,6 +695,253 @@ String _routeForRole(String role) {
     'admin' => '/gps/dashboard',
     _ => '/gps/dashboard',
   };
+}
+
+/// Forgot-password bottom sheet (web parity: `Login.jsx` forgot sheet).
+/// Stage 1: phone → OTP is sent. Stage 2: OTP + new password → reset.
+class _ForgotPasswordSheet extends ConsumerStatefulWidget {
+  const _ForgotPasswordSheet();
+
+  @override
+  ConsumerState<_ForgotPasswordSheet> createState() =>
+      _ForgotPasswordSheetState();
+}
+
+class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
+  bool _otpSent = false;
+  bool _loading = false;
+  bool _obscureNew = true;
+  String? _error;
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _otpController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  String _digits(String value) => value.replaceAll(RegExp(r'\D'), '');
+
+  Future<void> _sendOtp() async {
+    final phone = _digits(_phoneController.text);
+    if (phone.length < 10) {
+      setState(() => _error = 'Enter a valid phone number.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(apiClientProvider).forgotPassword(phone: phone);
+      if (!mounted) return;
+      setState(() {
+        _otpSent = true;
+        _loading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP sent — check your phone.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString().replaceFirst('ApiException: ', '');
+      });
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final phone = _digits(_phoneController.text);
+    final otp = _otpController.text.trim();
+    final next = _newPasswordController.text;
+    if (otp.isEmpty) {
+      setState(() => _error = 'Enter the OTP sent to your phone.');
+      return;
+    }
+    if (next.length < 6) {
+      setState(() => _error = 'New password must be at least 6 characters.');
+      return;
+    }
+    if (next != _confirmPasswordController.text) {
+      setState(() => _error = 'Passwords do not match.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .resetPassword(phone: phone, otp: otp, newPassword: next);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset — please sign in.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString().replaceFirst('ApiException: ', '');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 46,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5ECF3),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Forgot password?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1B2A3A),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _otpSent
+                  ? 'Enter the OTP and choose a new password.'
+                  : 'Enter your phone number and we will send you an OTP.',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (!_otpSent) ...[
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _sendOtp(),
+                decoration: _pillDecoration(
+                  label: 'Phone number',
+                  icon: AppIcons.phone_rounded,
+                ),
+              ),
+            ] else ...[
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                decoration: _pillDecoration(
+                  label: 'OTP',
+                  icon: AppIcons.confirmation_number_rounded,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newPasswordController,
+                obscureText: _obscureNew,
+                textInputAction: TextInputAction.next,
+                decoration: _pillDecoration(
+                  label: 'New password',
+                  icon: AppIcons.lock_rounded,
+                  suffixIcon: IconButton(
+                    onPressed: () =>
+                        setState(() => _obscureNew = !_obscureNew),
+                    icon: Icon(
+                      _obscureNew
+                          ? AppIcons.visibility_off_outlined
+                          : AppIcons.visibility_outlined,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: _obscureNew,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _resetPassword(),
+                decoration: _pillDecoration(
+                  label: 'Confirm new password',
+                  icon: AppIcons.lock_rounded,
+                ),
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: const TextStyle(
+                  color: Color(0xFFE23A4B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 52,
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _loading
+                    ? null
+                    : (_otpSent ? _resetPassword : _sendOtp),
+                style: FilledButton.styleFrom(
+                  shape: const StadiumBorder(),
+                  backgroundColor: const Color(0xFF2FA56E),
+                ),
+                child: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        _otpSent ? 'Reset password' : 'Send OTP',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 InputDecoration _pillDecoration({

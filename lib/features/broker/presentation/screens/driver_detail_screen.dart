@@ -22,9 +22,9 @@ class DriverDetailScreen extends ConsumerStatefulWidget {
 class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
   bool _isLiveView = true;
   bool _openingChat = false;
+  bool _resettingSession = false;
 
-  Future<void> _openDirectChat() async {
-    if (_openingChat) return;
+  Future<void> _openDirectChat() async {    if (_openingChat) return;
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
     setState(() => _openingChat = true);
@@ -59,6 +59,65 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
       );
     } finally {
       if (mounted) setState(() => _openingChat = false);
+    }
+  }
+
+  /// Ends the driver's active sessions so a driver stuck unable to log in
+  /// (app killed without logout) can sign in again. Web parity:
+  /// `broker/Drivers.jsx` `handleResetSession`.
+  Future<void> _resetSession() async {
+    if (_resettingSession) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reset login session?'),
+        content: Text(
+          '${widget.driver.name} will be signed out everywhere and can log in again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.dangerIcon,
+            ),
+            child: const Text('Reset session'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _resettingSession = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .forceLogoutDriver(
+            accessToken: session.tokens.accessToken,
+            id: widget.driver.id,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${widget.driver.name}\u2019s session has been reset — they can log in again now.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _resettingSession = false);
     }
   }
 
@@ -141,6 +200,49 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                           ? l10n.driverDetailNotOnTrip
                                           : widget.driver.onTripSince,
                                     ),
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: _resettingSession
+                                            ? null
+                                            : _resetSession,
+                                        icon: _resettingSession
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : const Icon(
+                                                AppIcons
+                                                    .lock_outline_rounded,
+                                                size: 18,
+                                              ),
+                                        label: Text(
+                                          _resettingSession
+                                              ? 'Resetting…'
+                                              : 'Reset login session',
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor:
+                                              AppColors.dangerIcon,
+                                          side: const BorderSide(
+                                            color: AppColors.dangerIcon,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -185,7 +287,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
   }
 }
 
-class _DriverLiveView extends StatefulWidget {
+class _DriverLiveView extends ConsumerStatefulWidget {
   const _DriverLiveView({
     super.key,
     required this.driver,
@@ -196,12 +298,13 @@ class _DriverLiveView extends StatefulWidget {
   final VoidCallback onBack;
 
   @override
-  State<_DriverLiveView> createState() => _DriverLiveViewState();
+  ConsumerState<_DriverLiveView> createState() => _DriverLiveViewState();
 }
 
-class _DriverLiveViewState extends State<_DriverLiveView>
+class _DriverLiveViewState extends ConsumerState<_DriverLiveView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _resettingSession = false;
 
   @override
   void initState() {
@@ -216,6 +319,65 @@ class _DriverLiveViewState extends State<_DriverLiveView>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Ends the driver's active sessions so a driver stuck unable to log in
+  /// (app killed without logout) can sign in again. Web parity:
+  /// `broker/Drivers.jsx` `handleResetSession`.
+  Future<void> _resetSession() async {
+    if (_resettingSession) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reset login session?'),
+        content: Text(
+          '${widget.driver.name} will be signed out everywhere and can log in again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.dangerIcon,
+            ),
+            child: const Text('Reset session'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _resettingSession = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .forceLogoutDriver(
+            accessToken: session.tokens.accessToken,
+            id: widget.driver.id,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${widget.driver.name}\u2019s session has been reset — they can log in again now.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _resettingSession = false);
+    }
   }
 
   @override
@@ -273,6 +435,34 @@ class _DriverLiveViewState extends State<_DriverLiveView>
                     ? l10n.driverDetailAwaitingLiveLocation
                     : widget.driver.currentLocation,
                 height: null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _resettingSession ? null : _resetSession,
+                icon: _resettingSession
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        AppIcons.lock_outline_rounded,
+                        size: 18,
+                      ),
+                label: Text(
+                  _resettingSession ? 'Resetting…' : 'Reset login session',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.dangerIcon,
+                  side: const BorderSide(color: AppColors.dangerIcon),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],
