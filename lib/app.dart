@@ -20,6 +20,10 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/data/auth_models.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/screens/session_expired_sheet.dart';
+import 'features/part_load/part_load_alert.dart';
+import 'features/part_load/part_load_api.dart';
+import 'features/part_load/part_load_driver_inbox_screen.dart';
+import 'features/part_load/part_load_models.dart';
 
 class SSKApp extends ConsumerStatefulWidget {
   const SSKApp({super.key});
@@ -32,6 +36,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
+  StreamSubscription<Map<String, dynamic>>? _partLoadAlertSubscription;
+  Timer? _partLoadPollTimer;
+  OverlayEntry? _partLoadAlertEntry;
   StreamSubscription<Map<String, dynamic>>? _chatMessageSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatEscalatedSubscription;
   StreamSubscription<String?>? _unauthorizedSubscription;
@@ -58,6 +65,19 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
         .read(appSocketServiceProvider)
         .loginAttemptAlertStream
         .listen(_handleLoginAttemptAlert);
+    // Part-Load: global incoming-request alert for drivers/brokers — the
+    // banner shows above ANY screen (tracking included) so a driving driver
+    // never has to go hunting in the inbox tab.
+    _partLoadAlertSubscription = ref
+        .read(appSocketServiceProvider)
+        .tripJoinRequestStream
+        .listen(_handlePartLoadEvent);
+    // Safety net beneath the socket: a missed push (blip while driving)
+    // must never hide a request. Polls quietly; the banner only
+    // rebuilds when the queue actually changes.
+    _partLoadPollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      unawaited(_pollPartLoadInbox());
+    });
     final socketService = ref.read(appSocketServiceProvider);
     _chatMessageSubscription = socketService.chatMessageStream.listen(
       _handleChatMessage,
@@ -166,6 +186,143 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       title: l10n.appNewChatRequestTitle,
       message: '${l10n.appNewChatRequestFrom(byName)}$suffix',
     );
+  }
+
+  PartLoadJoinRequest? _parsePartLoadEvent(Map<String, dynamic> payload) {
+    Map<String, dynamic> req = payload;
+    final data = payload['data'];
+    if (data is Map) {
+      final m = data.cast<String, dynamic>();
+      if (m['request'] is Map) {
+        req = (m['request'] as Map).cast<String, dynamic>();
+      }
+    } else if (payload['request'] is Map) {
+      req = (payload['request'] as Map).cast<String, dynamic>();
+    }
+    try {
+      final parsed = PartLoadJoinRequest.fromJson(req);
+      return parsed.id.isEmpty ? null : parsed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _handlePartLoadEvent(Map<String, dynamic> payload) {
+    if (!mounted) return;
+    final req = _parsePartLoadEvent(payload);
+    if (req == null) return;
+    // Drivers and brokers only — the client has its own waiting UI.
+    final role =
+        (ref.read(authSessionProvider).valueOrNull?.user.role ?? '')
+            .trim()
+            .toLowerCase();
+    if (role != 'driver' && role != 'broker') {
+      if (!req.isPending) {
+        ref.read(partLoadAlertQueueProvider.notifier).resolve(req.id);
+        _refreshPartLoadBanner();
+      }
+      return;
+    }
+    if (req.isPending) {
+      ref.read(partLoadAlertQueueProvider.notifier).push(req);
+      HapticFeedback.heavyImpact();
+      _refreshPartLoadBanner();
+    } else {
+      ref.read(partLoadAlertQueueProvider.notifier).resolve(req.id);
+      _refreshPartLoadBanner();
+    }
+  }
+
+  Future<void> _pollPartLoadInbox() async {
+    if (!mounted) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final role = (session?.user.role ?? '').trim().toLowerCase();
+    if (session == null || (role != 'driver' && role != 'broker')) return;
+    try {
+      final items = await ref
+          .read(partLoadApiProvider)
+          .listInbox(accessToken: session.tokens.accessToken);
+      if (!mounted) return;
+      final queue = ref.read(partLoadAlertQueueProvider.notifier);
+      final before =
+          ref.read(partLoadAlertQueueProvider).queue.map((r) => r.id).toSet();
+      final pendingIds = <String>{};
+      for (final req in items) {
+        if (req.id.isEmpty || !req.isPending) continue;
+        pendingIds.add(req.id);
+        queue.push(req);
+      }
+      for (final id in before) {
+        if (!pendingIds.contains(id)) queue.resolve(id);
+      }
+      final after =
+          ref.read(partLoadAlertQueueProvider).queue.map((r) => r.id).toSet();
+      if (before.length != after.length ||
+          !before.containsAll(after) ||
+          !after.containsAll(before)) {
+        if (after.difference(before).isNotEmpty) {
+          HapticFeedback.heavyImpact();
+        }
+        _refreshPartLoadBanner();
+      }
+    } catch (_) {
+      // Silent — socket and manual refresh still cover it.
+    }
+  }
+
+  void _refreshPartLoadBanner() {
+    if (!mounted) return;
+    final navigatorState = ref.read(rootNavigatorKeyProvider).currentState;
+    final overlay = navigatorState?.overlay;
+    _partLoadAlertEntry?.remove();
+    _partLoadAlertEntry = null;
+    if (overlay == null) return;
+    final queue = ref.read(partLoadAlertQueueProvider).queue;
+    if (queue.isEmpty) return;
+    final latest = queue.last;
+    final extra = queue.length - 1;
+    _partLoadAlertEntry = OverlayEntry(
+      builder: (overlayContext) {
+        // Positioned is mandatory: a bare child gets fullscreen
+        // constraints from the overlay Stack and stretches edge to edge.
+        return Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: PartLoadAlertBanner(
+            request: latest,
+            extraCount: extra,
+            onView: () {
+              ref
+                  .read(partLoadAlertQueueProvider.notifier)
+                  .dismiss(latest.id);
+              _refreshPartLoadBanner();
+              ref
+                  .read(rootNavigatorKeyProvider)
+                  .currentState
+                  ?.push(
+                    MaterialPageRoute(
+                      builder: (_) => const PartLoadDriverInboxScreen(),
+                    ),
+                  );
+            },
+            onDismiss: () {
+              ref
+                  .read(partLoadAlertQueueProvider.notifier)
+                  .dismiss(latest.id);
+              _refreshPartLoadBanner();
+            },
+            onExpire: () {
+              ref
+                  .read(partLoadAlertQueueProvider.notifier)
+                  .resolve(latest.id);
+              _refreshPartLoadBanner();
+            },
+          ),
+        );
+      },
+    );
+    overlay.insert(_partLoadAlertEntry!);
   }
 
   void _incrementChatUnreadCount(Map<String, dynamic> payload) {
@@ -393,6 +550,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _partLoadAlertSubscription?.cancel();
+    _partLoadPollTimer?.cancel();
+    _partLoadAlertEntry?.remove();
     _loginAttemptAlertSubscription?.cancel();
     _chatMessageSubscription?.cancel();
     _chatEscalatedSubscription?.cancel();
@@ -410,6 +570,11 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       if (previousSession?.user.id == nextSession?.user.id) {
         return;
       }
+      // Different user (login/logout/switch): pending alerts belong to
+      // the previous account — clear them and drop the banner.
+      ref.read(partLoadAlertQueueProvider.notifier).clear();
+      _partLoadAlertEntry?.remove();
+      _partLoadAlertEntry = null;
       unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
     });

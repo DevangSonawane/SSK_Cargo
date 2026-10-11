@@ -42,6 +42,12 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   final Map<String, BitmapDescriptor> _stopMarkerIcons = {};
   LatLng? _lastRoutedOrigin;
   String? _lastRoutedPhase;
+  // Follow mode: the camera tracks the trip until the user touches the map.
+  // Every programmatic move is flagged so it never counts as a gesture —
+  // otherwise live updates would yank the zoom back on every poll.
+  bool _following = true;
+  bool _programmaticMove = false;
+  bool _fittedOnce = false;
 
   LatLng? get _pickupPoint =>
       _latLng(widget.shipment.pickupLat, widget.shipment.pickupLng);
@@ -219,19 +225,35 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     return const LatLng(19.0760, 72.8777);
   }
 
-  Future<void> _fitCamera() async {
+  Future<void> _fitCamera({bool force = false}) async {
     final controller = _controller;
     final bounds = _bounds;
     if (controller == null || bounds == null) {
       return;
     }
-
+    // Never steal the camera from the user — only the first fit, an
+    // explicit recenter, or a different trip may move it.
+    if (!force && _fittedOnce) return;
+    _fittedOnce = true;
+    _programmaticMove = true;
     try {
       await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 48));
     } catch (_) {
       // Bounds fitting can fail briefly on initial layout; the fallback camera
       // position still renders the route correctly.
+    } finally {
+      _programmaticMove = false;
     }
+  }
+
+  bool _isSameTrip(
+    TrackingDemoShipment previous,
+    TrackingDemoShipment next,
+  ) {
+    return previous.bookingId == next.bookingId &&
+        previous.tripId == next.tripId &&
+        previous.fromLocation == next.fromLocation &&
+        previous.toLocation == next.toLocation;
   }
 
   @override
@@ -241,7 +263,15 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
         oldWidget.liveMode != widget.liveMode) {
       _loadRoute();
       _loadStopMarkerIcons();
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
+      // A different trip always re-frames and resumes follow; live polls
+      // of the same trip must never touch the user's zoom.
+      if (!_isSameTrip(oldWidget.shipment, widget.shipment)) {
+        _following = true;
+        _fittedOnce = false;
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _fitCamera(force: true),
+        );
+      }
     }
   }
 
@@ -381,38 +411,86 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
       return const _EmptyMapState();
     }
 
-    return GoogleMap(
-      style: widget.liveMode ? null : ClientMapTheme.styleFor(context),
-      initialCameraPosition: CameraPosition(
-        target: _defaultCenter(),
-        zoom: points.length == 1 ? 11 : 7,
-      ),
-      mapType: MapType.normal,
-      markers: markersFor(context),
-      polylines: _polylines,
-      myLocationButtonEnabled: false,
-      zoomGesturesEnabled: true,
-      scrollGesturesEnabled: true,
-      rotateGesturesEnabled: true,
-      tiltGesturesEnabled: true,
-      zoomControlsEnabled: false,
-      compassEnabled: false,
-      mapToolbarEnabled: false,
-      trafficEnabled: true,
-      gestureRecognizers: {
-        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-      },
-      onCameraMoveStarted: () {
-        debugPrint('[TrackingMap] camera move started');
-      },
-      onCameraIdle: () {
-        debugPrint('[TrackingMap] camera idle');
-      },
-      onMapCreated: (controller) {
-        _controller = controller;
-        debugPrint('[TrackingMap] map created, fitting camera');
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
-      },
+    return Stack(
+      children: [
+        GoogleMap(
+          style: widget.liveMode ? null : ClientMapTheme.styleFor(context),
+          initialCameraPosition: CameraPosition(
+            target: _defaultCenter(),
+            zoom: points.length == 1 ? 11 : 7,
+          ),
+          mapType: MapType.normal,
+          markers: markersFor(context),
+          polylines: _polylines,
+          myLocationButtonEnabled: false,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+          zoomControlsEnabled: false,
+          compassEnabled: false,
+          mapToolbarEnabled: false,
+          trafficEnabled: true,
+          gestureRecognizers: {
+            Factory<OneSequenceGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+            ),
+          },
+          onCameraMoveStarted: () {
+            // Our own animateCamera calls also trigger this — only a real
+            // finger gesture pauses follow mode.
+            if (_programmaticMove) {
+              _programmaticMove = false;
+              return;
+            }
+            if (_following && mounted) {
+              setState(() => _following = false);
+            }
+          },
+          onCameraIdle: () {
+            debugPrint('[TrackingMap] camera idle');
+          },
+          onMapCreated: (controller) {
+            _controller = controller;
+            debugPrint('[TrackingMap] map created, fitting camera');
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _fitCamera(force: true),
+            );
+          },
+        ),
+        if (!_following)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: InkWell(
+              onTap: () {
+                setState(() => _following = true);
+                _fitCamera(force: true);
+              },
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  AppIcons.my_location_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -660,6 +738,9 @@ class LiveLocationMapView extends StatefulWidget {
 class _LiveLocationMapViewState extends State<LiveLocationMapView> {
   GoogleMapController? _controller;
   BitmapDescriptor? _truckMarkerIcon;
+  bool _following = true;
+  bool _programmaticMove = false;
+  bool _fittedOnce = false;
 
   LatLng? get _location => _latLng(widget.latitude, widget.longitude);
 
@@ -710,13 +791,17 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
     return _location ?? const LatLng(19.0760, 72.8777);
   }
 
-  Future<void> _fitCamera() async {
+  Future<void> _fitCamera({bool force = false}) async {
     final controller = _controller;
     final location = _location;
     if (controller == null || location == null) {
       return;
     }
-
+    // Same follow contract as the route map: live ticks must never steal
+    // the user's zoom — only the first fit or an explicit recenter moves it.
+    if (!force && _fittedOnce) return;
+    _fittedOnce = true;
+    _programmaticMove = true;
     try {
       await controller.animateCamera(
         CameraUpdate.newLatLngZoom(location, 13.5),
@@ -724,6 +809,8 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
     } catch (_) {
       // The initial camera update can fail while the map view is still
       // laying out. The default camera position already points to the driver.
+    } finally {
+      _programmaticMove = false;
     }
   }
 
@@ -733,6 +820,7 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
     if (oldWidget.latitude != widget.latitude ||
         oldWidget.longitude != widget.longitude ||
         oldWidget.label != widget.label) {
+      // Gated inside _fitCamera: follow mode keeps the user's zoom.
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     }
   }
@@ -747,30 +835,79 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
       );
     }
 
-    return GoogleMap(
-      style: ClientMapTheme.styleFor(context),
-      initialCameraPosition: CameraPosition(
-        target: _defaultCenter(),
-        zoom: 13.5,
-      ),
-      mapType: MapType.normal,
-      markers: _markers,
-      myLocationButtonEnabled: false,
-      zoomGesturesEnabled: true,
-      scrollGesturesEnabled: true,
-      rotateGesturesEnabled: true,
-      tiltGesturesEnabled: true,
-      zoomControlsEnabled: false,
-      compassEnabled: false,
-      mapToolbarEnabled: false,
-      trafficEnabled: true,
-      gestureRecognizers: {
-        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-      },
-      onMapCreated: (controller) {
-        _controller = controller;
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
-      },
+    return Stack(
+      children: [
+        GoogleMap(
+          style: ClientMapTheme.styleFor(context),
+          initialCameraPosition: CameraPosition(
+            target: _defaultCenter(),
+            zoom: 13.5,
+          ),
+          mapType: MapType.normal,
+          markers: _markers,
+          myLocationButtonEnabled: false,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+          zoomControlsEnabled: false,
+          compassEnabled: false,
+          mapToolbarEnabled: false,
+          trafficEnabled: true,
+          gestureRecognizers: {
+            Factory<OneSequenceGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+            ),
+          },
+          onCameraMoveStarted: () {
+            if (_programmaticMove) {
+              _programmaticMove = false;
+              return;
+            }
+            if (_following && mounted) {
+              setState(() => _following = false);
+            }
+          },
+          onMapCreated: (controller) {
+            _controller = controller;
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _fitCamera(force: true),
+            );
+          },
+        ),
+        if (!_following)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: InkWell(
+              onTap: () {
+                setState(() => _following = true);
+                _fitCamera(force: true);
+              },
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  AppIcons.my_location_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

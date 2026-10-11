@@ -1249,6 +1249,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingReference = _partLoadBookingNumber;
         _activeBookingId = _partLoadBookingId;
       });
+      _animatePartLoadSheet(0.16);
     } else if (req.isDeclined) {
       _stopPartLoadPolling();
       if (!silentDeclined && mounted) {
@@ -1262,9 +1263,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _partLoadRequest = null;
         _partLoadPhase = _PartLoadSheetPhase.candidates;
       });
+      _animatePartLoadSheet(0.58);
       _fetchPartLoadCandidates();
     } else {
       setState(() => _partLoadPhase = _PartLoadSheetPhase.pending);
+      _animatePartLoadSheet(0.16);
       _startPartLoadPolling();
     }
   }
@@ -4246,22 +4249,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   },
                 ),
               ),
-            // Part-Load pending/accepted: the sheet closes and a centered
-            // waiting/success card takes over the map (professional overlay,
-            // same as full-truck waiting cards).
+            // Part-Load pending/accepted: the sheet collapses to its
+            // grabber and a compact status bar floats just above it —
+            // never a fullscreen takeover, the map stays interactive.
             if (_partLoadOverlayVisible)
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: false,
-                  child: Container(
-                    color: const Color(0xFF111827).withValues(alpha: 0.34),
-                    child: SafeArea(
-                      child: _buildPartLoadOverlay(context),
-                    ),
-                  ),
-                ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom:
+                    MediaQuery.sizeOf(context).height * 0.20,
+                child: _buildPartLoadStatusBar(context),
               ),
-            if (!hideSearchPanel && !_partLoadOverlayVisible)
+            if (!hideSearchPanel)
               Positioned.fill(
                 child: NotificationListener<DraggableScrollableNotification>(
                   onNotification: (notification) {
@@ -4906,162 +4905,164 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  /// Centered waiting / success card shown after the sheet closes —
-  /// professional overlay on the map, same language as full-truck cards.
-  Widget _buildPartLoadOverlay(BuildContext context) {
+  void _animatePartLoadSheet(double extent) {
+    if (!_truckSearchSheetController.isAttached) return;
+    unawaited(
+      _truckSearchSheetController.animateTo(
+        extent,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  /// Compact floating status bar docked just above the collapsed sheet —
+  /// small by design, the map stays fully interactive behind it.
+  Widget _buildPartLoadStatusBar(BuildContext context) {
     final request = _partLoadRequest;
-    final accepted =
-        _partLoadPhase == _PartLoadSheetPhase.accepted;
-    final driverLine = (request?.truckReg.isNotEmpty ?? false)
-        ? 'Waiting for ${(request!.driverName.isEmpty ? 'the driver' : request.driverName)} (${request.truckReg})'
-        : 'Waiting for the driver to respond';
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          decoration: BoxDecoration(
-            color: accepted
-                ? context.colors.canvas
-                : const Color(0xFFF7FBF9),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: accepted
-                  ? context.colors.line
-                  : context.colors.brandBorder,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.16),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
+    final accepted = _partLoadPhase == _PartLoadSheetPhase.accepted;
+    final title = accepted
+        ? 'Load Confirmed!'
+        : (request?.truckReg.isNotEmpty ?? false)
+            ? 'Waiting for ${(request!.driverName.isEmpty ? 'the driver' : request.driverName)} (${request.truckReg})'
+            : 'Waiting for the driver';
+    final subtitle = accepted
+        ? (_partLoadBookingNumber.isEmpty
+            ? 'Your load is confirmed.'
+            : _partLoadBookingNumber)
+        : (request?.driverTimedOut ?? false)
+            ? 'Driver timed out — waiting on their broker…'
+            : 'Updates automatically on response.';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated.withValues(alpha: 0.97),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color:
+              accepted ? context.colors.line : context.colors.brandBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
               Container(
-                width: 96,
-                height: 96,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: context.colors.brandFill,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          const Color(0xFF2FA56E).withValues(alpha: 0.16),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
                 ),
                 child: accepted
                     ? const Icon(
                         AppIcons.check_rounded,
                         color: Color(0xFF2FA56E),
-                        size: 58,
+                        size: 26,
                       )
                     : const Stack(
                         alignment: Alignment.center,
                         children: [
                           SizedBox(
-                            width: 64,
-                            height: 64,
+                            width: 30,
+                            height: 30,
                             child: CircularProgressIndicator(
-                              strokeWidth: 4,
+                              strokeWidth: 3,
                               color: Color(0xFF2FA56E),
                             ),
                           ),
                           Icon(
                             AppIcons.local_shipping_rounded,
                             color: Color(0xFF2FA56E),
-                            size: 34,
+                            size: 16,
                           ),
                         ],
                       ),
               ),
-              const SizedBox(height: 18),
-              Text(
-                accepted ? 'Load Confirmed!' : driverLine,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: context.colors.textPrimary,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                accepted
-                    ? '${(request?.driverName.isEmpty ?? true) ? 'Your driver' : request!.driverName} will carry your load${(request?.truckReg.isNotEmpty ?? false) ? ' — truck ${request!.truckReg}' : ''}.'
-                    : 'This screen updates automatically once they accept or decline.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colors.textSecondary,
-                    ),
-              ),
-              if (request?.amount.isNotEmpty ?? false) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Price: ₹${request!.amount}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context.colors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ],
-              if (!accepted && (request?.driverTimedOut ?? false)) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Driver timed out — waiting on their broker…',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.colors.textSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
-              if (accepted) ...[
-                const SizedBox(height: 14),
-                Text(
-                  _partLoadBookingNumber.isEmpty
-                      ? 'Booking number pending'
-                      : _partLoadBookingNumber,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context.colors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 22),
-                Row(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () =>
-                            _exitPartLoadTo('/client/tracking'),
-                        child: const Text('Track'),
-                      ),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: context.colors.textPrimary,
+                              ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () =>
-                            _exitPartLoadTo('/client/home'),
-                        child: Text(
-                          AppLocalizations.of(context)!.goToHome,
-                        ),
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: context.colors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ],
+                ),
+              ),
+              if (request?.amount.isNotEmpty ?? false) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '₹${request!.amount}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: context.colors.textPrimary,
+                      ),
                 ),
               ],
             ],
           ),
-        ),
+          if (accepted) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => _exitPartLoadTo('/client/tracking'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text('Track'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _exitPartLoadTo('/client/home'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.goToHome,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

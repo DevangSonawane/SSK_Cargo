@@ -18,6 +18,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 
 import '../../core/services/app_socket_service.dart';
 import '../../core/theme/app_tokens.dart';
+import '../driver/data/driver_dashboard_models.dart';
 import '../../core/widgets/kyc_gate_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
@@ -147,6 +148,9 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
         await api.declineRequest(accessToken: _token, requestId: requestId);
       }
       ref.invalidate(partLoadInboxProvider);
+      // The new load must show up ASAP everywhere (home, active tab,
+      // tracking) without the driver going back and reopening screens.
+      ref.invalidate(driverDashboardProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

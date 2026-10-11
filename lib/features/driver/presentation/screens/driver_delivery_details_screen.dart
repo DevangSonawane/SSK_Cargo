@@ -23,6 +23,7 @@ import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import '../../../part_load/part_load_active_trips.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 import '../widgets/slide_to_confirm.dart';
 
@@ -513,11 +514,129 @@ class _DriverDeliveryDetailsScreenState
         _clearTripSession();
         unawaited(DriverExternalNavigationService.hideBubble());
       }
+      unawaited(_loadSiblingTrips());
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
     } finally {
       _loadingTripInFlight = false;
+    }
+  }
+
+  /// Sibling active trips for the dual-load pager. Best-effort: a second
+  /// simultaneous trip (part-load accept) must be one swipe away on this
+  /// screen — no tabs, no hunting. Failures stay silent.
+  List<TrackingDemoShipment> _siblingTrips = const [];
+
+  String _keyOf(TrackingDemoShipment s) {
+    final tripId = (s.tripId ?? '').trim();
+    if (tripId.isNotEmpty) return tripId;
+    return (s.bookingId ?? '').trim();
+  }
+
+  /// A raw trip map is part-load when it (or its nested booking) carries
+  /// truck_category 'part' / search_mode 'part_load'. Falls back to a
+  /// deep exact-match scan (`part`/`part_load` as a whole value only, so
+  /// addresses can never false-positive) because backend key names vary.
+  bool _rawIsPartLoad(Map<String, dynamic> raw) {
+    bool matches(Map<String, dynamic>? m) {
+      if (m == null) return false;
+      for (final key in const [
+        'truck_category',
+        'truckCategory',
+        'truck_type',
+        'truckType',
+        'category',
+        'loadType',
+        'load_type',
+        'bookingType',
+        'booking_type',
+        'search_mode',
+        'searchMode',
+      ]) {
+        final value = m[key]?.toString().trim().toLowerCase() ?? '';
+        if (value == 'part' || value == 'part_load' || value == 'partload') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (matches(raw)) return true;
+    for (final key in const ['booking', 'trip', 'data']) {
+      final nested = raw[key];
+      if (nested is Map &&
+          matches(nested.cast<String, dynamic>())) {
+        return true;
+      }
+    }
+    var found = false;
+
+    void scan(Map<String, dynamic> map, int depth) {
+      if (found || depth > 2) return;
+      for (final entry in map.entries) {
+        final value = entry.value;
+        if (value is String) {
+          final normalized = value.trim().toLowerCase();
+          if (normalized == 'part' || normalized == 'part_load') {
+            found = true;
+            return;
+          }
+        } else if (value is Map && depth < 2) {
+          scan(value.cast<String, dynamic>(), depth + 1);
+          if (found) return;
+        }
+      }
+    }
+
+    scan(raw, 0);
+    return found;
+  }
+
+  Future<void> _loadSiblingTrips() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) return;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getActiveTrip(accessToken: session.tokens.accessToken);
+      final trips = extractAllActiveTrips(response);
+      if (!mounted) return;
+      final parsed = <TrackingDemoShipment>[];
+      final partKeys = <String>{};
+      final l10n = AppLocalizations.of(context)!;
+      for (final trip in trips) {
+        try {
+          final shipment = _shipmentFromTrip(l10n, trip);
+          if (shipment != null) {
+            parsed.add(shipment);
+            if (_rawIsPartLoad(trip)) {
+              final key = _keyOf(shipment);
+              if (key.isNotEmpty) partKeys.add(key);
+            }
+          }
+        } catch (_) {
+          // Skip unparseable rows — one bad trip hides nothing.
+        }
+      }
+      if (!mounted) return;
+      // Drop rows with no usable id — a row that can't navigate must
+      // never render (it would look tappable and do nothing).
+      parsed.removeWhere(
+        (s) =>
+            (s.tripId ?? '').trim().isEmpty &&
+            (s.bookingId ?? '').trim().isEmpty,
+      );
+      // Part-load trip always comes first: the pager, dots and map all
+      // follow this order (part page → full page).
+      parsed.sort((a, b) {
+        final aPart = partKeys.contains(_keyOf(a)) ? 0 : 1;
+        final bPart = partKeys.contains(_keyOf(b)) ? 0 : 1;
+        return aPart.compareTo(bPart);
+      });
+      setState(() => _siblingTrips = parsed);
+    } catch (_) {
+      // Best-effort only.
     }
   }
 
@@ -1100,9 +1219,12 @@ class _DriverDeliveryDetailsScreenState
     final panelTitle = isArrivalFlow
         ? l10n.arrivedTitle
         : l10n.deliveryDetailsOnRoute;
+    // Load type instead of a hardcoded "Active" pill — PART for shared
+    // loads, FULL otherwise.
+    final isPartLoad = _rawIsPartLoad(_tripRaw);
     final panelBadge = isArrivalFlow
         ? l10n.arrivedStatusReady
-        : l10n.deliveryDetailsActiveBadge;
+        : (isPartLoad ? 'PART' : 'FULL');
     final stopBlockReason = _statusBlockedByStopsReason(l10n);
     final panelSubtitle = isArrivalFlow
         ? l10n.deliveryDetailsConfirmDropReached
@@ -1123,14 +1245,21 @@ class _DriverDeliveryDetailsScreenState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_siblingTrips.length >= 2)
+              _DualTripHandle(
+                count: _siblingTrips.length,
+                currentIndex: _dualTripIndex(),
+                onOpen: _openOtherTrip,
+              ),
+            if (_siblingTrips.length >= 2) const SizedBox(height: 4),
             Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.deliveryDetailsCurrentStatus,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.deliveryDetailsCurrentStatus,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textTertiary,
                           fontWeight: FontWeight.w600,
@@ -2343,6 +2472,187 @@ class _DriverDeliveryDetailsScreenState
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
               child: _buildTripPanel(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isCurrentShipment(TrackingDemoShipment shipment) {
+    final currentTripId =
+        _resolvedTripId?.trim().isNotEmpty == true
+            ? _resolvedTripId!.trim()
+            : _tripId.trim();
+    final currentBookingId = _bookingId.trim();
+    final tripId = (shipment.tripId ?? '').trim();
+    final bookingId = (shipment.bookingId ?? '').trim();
+    if (currentTripId.isNotEmpty &&
+        (tripId == currentTripId || bookingId == currentTripId)) {
+      return true;
+    }
+    return currentBookingId.isNotEmpty &&
+        (tripId == currentBookingId || bookingId == currentBookingId);
+  }
+
+  /// The sibling that is NOT the viewed trip, matched against every id
+  /// this screen knows (trip, resolved trip, booking). Null when there is
+  /// no other load to open.
+  TrackingDemoShipment? _otherSibling() {
+    if (_siblingTrips.length < 2) return null;
+    final ownIds = <String>{
+      _tripId.trim(),
+      _bookingId.trim(),
+      (_resolvedTripId ?? '').trim(),
+    }..removeWhere((id) => id.isEmpty);
+    for (final trip in _siblingTrips) {
+      final tid = (trip.tripId ?? '').trim();
+      final bid = (trip.bookingId ?? '').trim();
+      if ((tid.isNotEmpty && !ownIds.contains(tid)) ||
+          (bid.isNotEmpty && !ownIds.contains(bid))) {
+        return trip;
+      }
+    }
+    return null;
+  }
+
+  void _openSiblingTrip(TrackingDemoShipment shipment) {
+    final id = (shipment.tripId ?? '').trim().isNotEmpty
+        ? shipment.tripId!.trim()
+        : (shipment.bookingId ?? '').trim();
+    developer.log(
+      'Dual-trip open tapped ref=${shipment.trackingId} id=$id '
+      'ownTrip=$_tripId ownBooking=$_bookingId resolved=$_resolvedTripId',
+      name: 'driver.deliveryDetails',
+    );
+    if (id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open that load — please refresh.'),
+        ),
+      );
+      return;
+    }
+    final ownIds = <String>{
+      _tripId.trim(),
+      _bookingId.trim(),
+      (_resolvedTripId ?? '').trim(),
+    }..removeWhere((value) => value.isEmpty);
+    if (ownIds.contains(id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are already viewing this load.')),
+      );
+      return;
+    }
+    try {
+      context.go('/driver/delivery-details/$id');
+    } catch (error) {
+      developer.log(
+        'Dual-trip navigation failed id=$id error=$error',
+        name: 'driver.deliveryDetails',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open that load ($id).')),
+      );
+    }
+  }
+
+  /// Index of the viewed load inside [_siblingTrips] (part first).
+  int _dualTripIndex() {
+    for (var i = 0; i < _siblingTrips.length; i++) {
+      if (_isCurrentShipment(_siblingTrips[i])) return i;
+    }
+    return 0;
+  }
+
+  void _openOtherTrip() {
+    final other = _otherSibling();
+    if (other == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Only one load right now.')),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Opening other load…'),
+        duration: Duration(milliseconds: 900),
+      ),
+    );
+    _openSiblingTrip(other);
+  }
+
+}
+
+/// Swipe handle living INSIDE the bottom dialog (first row of the trip
+/// panel): dots showing position with chevrons on both sides. Swipe it or
+/// tap a chevron to open the other load — nothing above or below the
+/// dialog, and slide-to-confirm further down never competes for gestures.
+/// Switch bar living INSIDE the bottom dialog (its first row): position
+/// dots plus an explicit Switch load button. Deliberately tap-only — no
+/// drag recognizers anywhere near it, so live-rebuilds and the map's eager
+/// gestures can never swallow the interaction. Slide-to-confirm further
+/// down is untouched.
+class _DualTripHandle extends StatelessWidget {
+  const _DualTripHandle({
+    required this.count,
+    required this.currentIndex,
+    required this.onOpen,
+  });
+
+  final int count;
+  final int currentIndex;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < count; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == currentIndex ? 26 : 8,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == currentIndex
+                          ? const Color(0xFF2FA56E)
+                          : AppColors.textTertiary.withValues(
+                              alpha: 0.5,
+                            ),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 9,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2FA56E),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Switch load',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
         ],

@@ -205,8 +205,6 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   int _historyTab = 0;
-  // Part-Load: which of the (up to 2) active trips is showing.
-  int _activeTripIndex = 0;
 
   @override
   void initState() {
@@ -337,25 +335,12 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           ),
         ),
         data: (dashboard) {
-          // Part-Load: prefer the trips[] list (2 when sharing); fall back
-          // to the legacy single activeTrip for old backends. Same
-          // visibility gate as before — finished trips never show here.
-          final activeTrips = (dashboard.activeTrips.isNotEmpty
-                  ? dashboard.activeTrips
-                  : (dashboard.activeTrip != null
-                        ? [dashboard.activeTrip!]
-                        : const <TrackingDemoShipment>[]))
-              .where((t) => _isVisibleDriverTripStatus(t.status))
-              .toList(growable: false);
-          final safeIndex = activeTrips.isEmpty
-              ? 0
-              : _activeTripIndex.clamp(0, activeTrips.length - 1);
-          final currentTrip = activeTrips.isNotEmpty
-              ? activeTrips[safeIndex]
-              : _selectCurrentTrip(
-                  dashboard.activeTrip,
-                  dashboard.upcomingTrip,
-                );
+          // Single current trip only — dual-load switching lives in the
+          // tracking screen, never here.
+          final currentTrip = _selectCurrentTrip(
+            dashboard.activeTrip,
+            dashboard.upcomingTrip,
+          );
           final tripFeed = dashboard.tripFeed;
           // Delivered but not completed = POD upload / payment / client
           // approval still pending. These vanish from Active delivery by
@@ -411,27 +396,6 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                           subtitle: l10n.liveTripAppearsFirst,
                         ),
                         const SizedBox(height: 12),
-                        if (activeTrips.length > 1)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: SegmentedButton<int>(
-                              segments: [
-                                for (var i = 0; i < activeTrips.length; i++)
-                                  ButtonSegment(
-                                    value: i,
-                                    label: Text(
-                                      activeTrips[i].trackingId.isNotEmpty
-                                          ? activeTrips[i].trackingId
-                                          : 'Trip ${i + 1}',
-                                    ),
-                                  ),
-                              ],
-                              selected: {safeIndex},
-                              onSelectionChanged: (s) => setState(
-                                () => _activeTripIndex = s.first,
-                              ),
-                            ),
-                          ),
                         if (currentTrip == null)
                           _EmptyCard(
                             icon: AppIcons.route_rounded,
