@@ -985,7 +985,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (source is! List) return const [];
     return source
         .whereType<Map<String, dynamic>>()
-        .map((json) => _EligibleBroker.fromJson(json, fallbackName: fallbackBrokerName))
+        .map(
+          (json) =>
+              _EligibleBroker.fromJson(json, fallbackName: fallbackBrokerName),
+        )
         .where((broker) => broker.id.isNotEmpty)
         .toList(growable: false);
   }
@@ -1141,7 +1144,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
         return;
       }
-      final response = await ref.read(apiClientProvider).createBooking(
+      final response = await ref
+          .read(apiClientProvider)
+          .createBooking(
             accessToken: session.tokens.accessToken,
             booking: _bookingPayload(),
             idempotencyKey: _buildIdempotencyKey(),
@@ -1191,15 +1196,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _partLoadError = false;
     });
     try {
-      final trucks =
-          await ref.read(partLoadApiProvider).searchNearbyOnTrip(
-                accessToken: _partLoadToken,
-                pickupLat: _draft.pickupLat ?? 0,
-                pickupLng: _draft.pickupLng ?? 0,
-                dropLat: _draft.dropLat ?? 0,
-                dropLng: _draft.dropLng ?? 0,
-                weightTons: _draft.weight > 0 ? _draft.weight : 1.0,
-              );
+      final trucks = await ref
+          .read(partLoadApiProvider)
+          .searchNearbyOnTrip(
+            accessToken: _partLoadToken,
+            pickupLat: _draft.pickupLat ?? 0,
+            pickupLng: _draft.pickupLng ?? 0,
+            dropLat: _draft.dropLat ?? 0,
+            dropLng: _draft.dropLng ?? 0,
+            weightTons: _draft.weight > 0 ? _draft.weight : 1.0,
+          );
       if (!mounted) return;
       setState(() {
         _partLoadTrucks = trucks;
@@ -1218,11 +1224,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<void> _refreshPartLoadRequest({bool resume = false}) async {
     if (_partLoadBookingId.isEmpty) return;
     try {
-      final existing =
-          await ref.read(partLoadApiProvider).getRequestForBooking(
-                accessToken: _partLoadToken,
-                bookingId: _partLoadBookingId,
-              );
+      final existing = await ref
+          .read(partLoadApiProvider)
+          .getRequestForBooking(
+            accessToken: _partLoadToken,
+            bookingId: _partLoadBookingId,
+          );
       if (!mounted) return;
       if (existing != null) {
         _applyPartLoadUpdate(existing, silentDeclined: resume);
@@ -1234,8 +1241,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
-  void _applyPartLoadUpdate(PartLoadJoinRequest req,
-      {bool silentDeclined = false}) {
+  void _applyPartLoadUpdate(
+    PartLoadJoinRequest req, {
+    bool silentDeclined = false,
+  }) {
     if (!mounted) return;
     setState(() => _partLoadRequest = req);
     if (req.isAccepted) {
@@ -1255,8 +1264,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!silentDeclined && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content:
-                  Text('That driver declined — pick another truck.')),
+            content: Text('That driver declined — pick another truck.'),
+          ),
         );
       }
       setState(() {
@@ -1298,25 +1307,25 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         .read(appSocketServiceProvider)
         .tripJoinRequestStream
         .listen((payload) {
-      Map<String, dynamic> req = payload;
-      final data = payload['data'];
-      if (data is Map) {
-        final m = data.cast<String, dynamic>();
-        if (m['request'] is Map) {
-          req = (m['request'] as Map).cast<String, dynamic>();
-        }
-      } else if (payload['request'] is Map) {
-        req = (payload['request'] as Map).cast<String, dynamic>();
-      }
-      final bookingId =
-          (req['bookingId'] ?? req['booking_id'] ?? '').toString();
-      if (bookingId.isNotEmpty && bookingId != _partLoadBookingId) return;
-      try {
-        _applyPartLoadUpdate(PartLoadJoinRequest.fromJson(req));
-      } catch (_) {
-        // Poll corrects malformed pushes.
-      }
-    });
+          Map<String, dynamic> req = payload;
+          final data = payload['data'];
+          if (data is Map) {
+            final m = data.cast<String, dynamic>();
+            if (m['request'] is Map) {
+              req = (m['request'] as Map).cast<String, dynamic>();
+            }
+          } else if (payload['request'] is Map) {
+            req = (payload['request'] as Map).cast<String, dynamic>();
+          }
+          final bookingId = (req['bookingId'] ?? req['booking_id'] ?? '')
+              .toString();
+          if (bookingId.isNotEmpty && bookingId != _partLoadBookingId) return;
+          try {
+            _applyPartLoadUpdate(PartLoadJoinRequest.fromJson(req));
+          } catch (_) {
+            // Poll corrects malformed pushes.
+          }
+        });
   }
 
   Future<void> _requestPartLoadTruck(PartLoadTruck candidate) async {
@@ -1327,9 +1336,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'That truck is no longer on a trip — pick another.',
-          ),
+          content: Text('That truck is no longer on a trip — pick another.'),
         ),
       );
       await _fetchPartLoadCandidates();
@@ -1337,7 +1344,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
     setState(() => _partLoadRequestingId = candidate.truckId);
     try {
-      final req = await ref.read(partLoadApiProvider).requestTruck(
+      final req = await ref
+          .read(partLoadApiProvider)
+          .requestTruck(
             accessToken: _partLoadToken,
             bookingId: _partLoadBookingId,
             targetTripId: candidate.currentTripId,
@@ -1348,8 +1357,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              error.toString().replaceFirst('Exception: ', '')),
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
       await _fetchPartLoadCandidates();
@@ -1467,6 +1475,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingReference = resolvedBookingNumber;
         _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
         _postNegotiationPayment = false;
+      });
+      if (_draft.isScheduled) {
+        _stopFindTruckZoomOutLoop();
+        _showScheduledBookingDonePage();
+        return;
+      }
+
+      setState(() {
         _brokerOffers = const [];
         _brokerBookingStatus = null;
         _primaryBrokerOfferId = null;
@@ -1587,6 +1603,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingReference = resolvedBookingNumber;
         _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
         _postNegotiationPayment = false;
+      });
+      if (_draft.isScheduled) {
+        _stopFindTruckZoomOutLoop();
+        _showScheduledBookingDonePage();
+        return;
+      }
+
+      setState(() {
         _step = _BookingFlowStep.brokerSelection;
       });
       _startFindTruckZoomOutLoop();
@@ -3479,6 +3503,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     router.go('/client/delivery');
   }
 
+  void _showScheduledBookingDonePage() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _submitting = false;
+      _paymentCompletionVisible = false;
+      _step = _BookingFlowStep.payment;
+    });
+  }
+
   Future<_DirectRequestSession?> _createDirectTruckRequestSession({
     required String truckId,
     required double amount,
@@ -3581,8 +3616,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'scheduled_date': scheduled.toUtc().toIso8601String(),
       if (_draft.isScheduled) 'is_scheduled': true,
       // Scheduled (Book Later) bookings are always full truck, never
-      // part-load — force truck mode server-side even if Part was active.
-      if (_draft.isScheduled) ...{
+      // part-load, but the audience choice remains independent like web:
+      // truck fan-out or one selected broker, broadcast later by backend.
+      if (_draft.isScheduled && mode == BookingSearchMode.broker) ...{
+        'search_mode': 'broker',
+        'broker_id': _draft.selectedBrokerId,
+      } else if (_draft.isScheduled) ...{
         'search_mode': 'truck',
         'search_radius_km': _draft.searchRadiusKm.clamp(0.5, 200).toDouble(),
       } else if (mode == BookingSearchMode.partLoad) ...{
@@ -3802,6 +3841,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _BookingFlowStep.brokerSelection => false,
       _BookingFlowStep.itemDetails => false,
     };
+    final showingDonePage =
+        _step == _BookingFlowStep.payment &&
+        _bookingCreated &&
+        !_postNegotiationPayment &&
+        !_paymentCompletionVisible;
     final bodyPadding = _step == _BookingFlowStep.brokerSelection
         ? EdgeInsets.zero
         : EdgeInsets.fromLTRB(
@@ -3934,8 +3978,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (_step !=
-                                    _BookingFlowStep.brokerSelection) ...[
+                                if (_step != _BookingFlowStep.brokerSelection &&
+                                    !showingDonePage) ...[
                                   Row(
                                     children: [
                                       InkWell(
@@ -4142,8 +4186,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 children: [
                                   Text(
                                     _brokerOffersAllDeclined
-                                        ? l10n
-                                              .clientBookingBrokerDeclinedTitle
+                                        ? l10n.clientBookingBrokerDeclinedTitle
                                         : l10n.clientBookingFindingBrokers,
                                     style: Theme.of(context)
                                         .textTheme
@@ -4159,8 +4202,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   Text(
                                     _brokerOffersAllDeclined
                                         ? l10n.clientBookingBrokerDeclinedBody
-                                        : l10n
-                                              .clientBookingScanningBrokerOffers,
+                                        : l10n.clientBookingScanningBrokerOffers,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: context.colors.textSecondary,
@@ -4192,52 +4234,52 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                     ),
                                   ] else ...[
                                     if (showNegotiate) ...[
-                                    const SizedBox(height: 12),
-                                    OutlinedButton.icon(
-                                      onPressed: () =>
-                                          _openBrokerOfferNegotiation(
-                                            negotiableOffer,
+                                      const SizedBox(height: 12),
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            _openBrokerOfferNegotiation(
+                                              negotiableOffer,
+                                            ),
+                                        icon: const Icon(
+                                          AppIcons.handshake_rounded,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          chosenBrokerName.isNotEmpty
+                                              ? l10n.clientBookingNegotiateWith(
+                                                  chosenBrokerName,
+                                                )
+                                              : l10n.negotiate,
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFF167247,
                                           ),
-                                      icon: const Icon(
-                                        AppIcons.handshake_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        chosenBrokerName.isNotEmpty
-                                            ? l10n.clientBookingNegotiateWith(
-                                                chosenBrokerName,
-                                              )
-                                            : l10n.negotiate,
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF167247,
-                                        ),
-                                        side: const BorderSide(
-                                          color: Color(0xFF2FA56E),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 13,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                          side: const BorderSide(
+                                            color: Color(0xFF2FA56E),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 13,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                         ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                      onPressed: _cancellingFindTruckSearch
+                                          ? null
+                                          : _cancelFindTruckSearch,
+                                      child: Text(
+                                        _cancellingFindTruckSearch
+                                            ? l10n.clientBookingCancelling
+                                            : l10n.clientBookingCancelSearch,
                                       ),
                                     ),
-                                  ],
-                                  const SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: _cancellingFindTruckSearch
-                                        ? null
-                                        : _cancelFindTruckSearch,
-                                    child: Text(
-                                      _cancellingFindTruckSearch
-                                          ? l10n.clientBookingCancelling
-                                          : l10n.clientBookingCancelSearch,
-                                    ),
-                                  ),
                                   ],
                                 ],
                               ),
@@ -4256,8 +4298,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               Positioned(
                 left: 16,
                 right: 16,
-                bottom:
-                    MediaQuery.sizeOf(context).height * 0.20,
+                bottom: MediaQuery.sizeOf(context).height * 0.20,
                 child: _buildPartLoadStatusBar(context),
               ),
             if (!hideSearchPanel)
@@ -4774,8 +4815,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _BrokerLoadingCard(
-              message:
-                  'Looking for trucks already heading your way...',
+              message: 'Looking for trucks already heading your way...',
             ),
           ],
         );
@@ -4819,10 +4859,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               if (i > 0) const SizedBox(height: 10),
               PartLoadCandidateTile(
                 truck: _partLoadTrucks[i],
-                requesting:
-                    _partLoadRequestingId == _partLoadTrucks[i].truckId,
-                onRequest: () =>
-                    _requestPartLoadTruck(_partLoadTrucks[i]),
+                requesting: _partLoadRequestingId == _partLoadTrucks[i].truckId,
+                onRequest: () => _requestPartLoadTruck(_partLoadTrucks[i]),
               ),
             ],
           ],
@@ -4830,9 +4868,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       case _PartLoadSheetPhase.pending:
       case _PartLoadSheetPhase.accepted:
         // Rendered as a centered overlay — the sheet stays hidden.
-        return const SizedBox.shrink(
-          key: ValueKey('partload-overlay'),
-        );
+        return const SizedBox.shrink(key: ValueKey('partload-overlay'));
       case _PartLoadSheetPhase.idle:
         return Column(
           key: const ValueKey('partload-idle'),
@@ -4847,19 +4883,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             _buildPartLoadOptions(context),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed:
-                  _submitting ? null : _startPartLoadSearch,
-              icon: const Icon(
-                AppIcons.search_rounded,
-                size: 19,
-              ),
+              onPressed: _submitting ? null : _startPartLoadSearch,
+              icon: const Icon(AppIcons.search_rounded, size: 19),
               label: const Text('Find shared truck'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF2FA56E),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -4895,9 +4925,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: context.colors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -4924,15 +4954,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final title = accepted
         ? 'Load Confirmed!'
         : (request?.truckReg.isNotEmpty ?? false)
-            ? 'Waiting for ${(request!.driverName.isEmpty ? 'the driver' : request.driverName)} (${request.truckReg})'
-            : 'Waiting for the driver';
+        ? 'Waiting for ${(request!.driverName.isEmpty ? 'the driver' : request.driverName)} (${request.truckReg})'
+        : 'Waiting for the driver';
     final subtitle = accepted
         ? (_partLoadBookingNumber.isEmpty
-            ? 'Your load is confirmed.'
-            : _partLoadBookingNumber)
+              ? 'Your load is confirmed.'
+              : _partLoadBookingNumber)
         : (request?.driverTimedOut ?? false)
-            ? 'Driver timed out — waiting on their broker…'
-            : 'Updates automatically on response.';
+        ? 'Driver timed out — waiting on their broker…'
+        : 'Updates automatically on response.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -4940,8 +4970,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         color: context.colors.surfaceElevated.withValues(alpha: 0.97),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color:
-              accepted ? context.colors.line : context.colors.brandBorder,
+          color: accepted ? context.colors.line : context.colors.brandBorder,
         ),
         boxShadow: [
           BoxShadow(
@@ -4997,11 +5026,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: context.colors.textPrimary,
-                              ),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: context.colors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -5009,9 +5037,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: context.colors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: context.colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -5021,9 +5049,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 Text(
                   '₹${request!.amount}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: context.colors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w900,
+                    color: context.colors.textPrimary,
+                  ),
                 ),
               ],
             ],
@@ -5054,9 +5082,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: Text(
-                      AppLocalizations.of(context)!.goToHome,
-                    ),
+                    child: Text(AppLocalizations.of(context)!.goToHome),
                   ),
                 ),
               ],
@@ -6327,15 +6353,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildSuccessStep(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (_draft.isScheduled) {
+      return _ScheduledBookingDoneCard(
+        bookingReference: _bookingReference,
+        scheduledDate: _draft.scheduledDate,
+        from: _draft.from,
+        to: _draft.to,
+        onTrack: _goToClientTracking,
+        onHome: _goToClientHome,
+      );
+    }
     return _BookingSuccessCard(
       bookingReference: _bookingReference,
-      title: _draft.isScheduled
-          ? l10n.bookingScheduled
-          : l10n.bookingConfirmed,
-      message: _draft.isScheduled
-          ? l10n.bookingScheduledNotifyMessage
-          : l10n.bookingPlacedSuccessfully,
-      onTrack: () => context.go('/client/tracking'),
+      title: l10n.bookingConfirmed,
+      message: l10n.bookingPlacedSuccessfully,
+      onTrack: _goToClientTracking,
       onHome: _goToClientHome,
     );
   }
@@ -6348,9 +6380,23 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       declinedCount: _findTruckDeclinedCount,
       searchRadiusKm: _draft.searchRadiusKm,
       showActions: true,
-      onTrack: () => context.go('/client/tracking'),
+      onTrack: _goToClientTracking,
       onHome: _goToClientHome,
     );
+  }
+
+  void _goToClientTracking() {
+    _bottomNavVisibleController.state = true;
+    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.go('/client/tracking');
+      });
+      return;
+    }
+    router.go('/client/tracking');
   }
 
   void _goToClientHome() {

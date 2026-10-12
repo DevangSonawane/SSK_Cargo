@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/driver_dashboard_models.dart';
+import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -94,6 +95,20 @@ class _DriverShellState extends ConsumerState<DriverShell> {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        IconButton(
+                          onPressed: () =>
+                              context.push('/driver/notifications'),
+                          icon: const Icon(
+                            AppIcons.notifications_none_rounded,
+                            color: Colors.white,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         InkWell(
                           onTap: () => context.push('/driver/profile'),
                           borderRadius: BorderRadius.circular(AppRadius.pill),

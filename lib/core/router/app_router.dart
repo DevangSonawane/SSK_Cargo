@@ -55,6 +55,7 @@ import '../../features/driver/presentation/screens/driver_delivery_completion_fl
 import '../../features/driver/presentation/screens/driver_pod_waiting_screen.dart';
 import '../../features/driver/presentation/screens/driver_thank_you_screen.dart';
 import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
+import '../../features/driver/presentation/screens/driver_notifications_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
 import '../../features/driver/presentation/screens/driver_rider_screen.dart';
@@ -67,6 +68,7 @@ import '../../features/client/presentation/screens/client_payment_method_add_scr
 import '../../features/client/presentation/screens/client_payment_methods_screen.dart';
 import '../../features/client/presentation/screens/client_saved_addresses_screen.dart';
 import '../../features/client/presentation/screens/client_settings_screen.dart';
+import '../../features/client/presentation/screens/client_static_info_screen.dart';
 import '../../features/client/presentation/screens/client_monthly_hiring_screen.dart';
 import '../../features/client/presentation/screens/client_monthly_hiring_form_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
@@ -321,6 +323,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/driver/notifications',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const DriverNotificationsScreen()),
+        ),
+      ),
+      GoRoute(
         path: '/signup',
         pageBuilder: (context, state) =>
             NoTransitionPage(child: _lightFlow(const SignupScreen())),
@@ -425,6 +433,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/client/notifications',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientNotificationsScreen()),
+      ),
+      GoRoute(
+        path: '/client/help-support',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: ClientStaticInfoScreen(kind: ClientInfoPageKind.help),
+        ),
+      ),
+      GoRoute(
+        path: '/client/terms-privacy',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: ClientStaticInfoScreen(kind: ClientInfoPageKind.terms),
+        ),
       ),
       GoRoute(
         path: '/chats',
@@ -577,7 +597,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/broker/drivers/:id',        pageBuilder: (context, state) {
+        path: '/broker/drivers/:id',
+        pageBuilder: (context, state) {
           final extraDriver = state.extra as BrokerDriver?;
           final driverId = state.pathParameters['id'];
           final driversAsync = ref.read(

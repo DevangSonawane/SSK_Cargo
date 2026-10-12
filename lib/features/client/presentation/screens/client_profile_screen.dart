@@ -145,14 +145,12 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                         _ProfileMenuTile(
                           icon: AppIcons.headset_mic_outlined,
                           title: l10n.helpSupport,
-                          subtitle: l10n.comingSoon,
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => context.push('/client/help-support'),
                         ),
                         _ProfileMenuTile(
                           icon: AppIcons.description_outlined,
                           title: l10n.termsPrivacy,
-                          subtitle: l10n.comingSoon,
-                          onTap: () => _showComingSoon(context),
+                          onTap: () => context.push('/client/terms-privacy'),
                         ),
                       ],
                     ),
@@ -175,12 +173,6 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.featureComingSoon)),
     );
   }
 }

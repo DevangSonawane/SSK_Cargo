@@ -254,6 +254,13 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                 title: l10n.communication,
                 children: [
                   _ProfileMenuTile(
+                    title: l10n.brokerNotifNotifications,
+                    subtitle: l10n.brokerNotifNewAlertsWillAppearHere,
+                    icon: AppIcons.notifications_none_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/notifications'),
+                  ),
+                  _ProfileMenuTile(
                     title: _openingBrokerChat
                         ? l10n.openingChat
                         : l10n.messageMyBroker,
@@ -787,8 +794,10 @@ class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
       final qrData = _dataOf(results[1]);
       setState(() {
         _upiController.text = _readString(upiData, const ['upiId', 'upi_id']);
-        _hasQr =
-            _readString(qrData, const ['qrCodeUrl', 'qr_code_url']).isNotEmpty;
+        _hasQr = _readString(qrData, const [
+          'qrCodeUrl',
+          'qr_code_url',
+        ]).isNotEmpty;
         _loading = false;
       });
     } catch (_) {
@@ -801,9 +810,9 @@ class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
     if (session == null) return;
     final upiId = _upiController.text.trim();
     if (upiId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter your UPI ID first.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter your UPI ID first.')));
       return;
     }
     setState(() => _savingUpi = true);
@@ -817,9 +826,9 @@ class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
       if (!mounted) return;
       final saved = _readString(_dataOf(response), const ['upiId', 'upi_id']);
       setState(() => _upiController.text = saved.isNotEmpty ? saved : upiId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('UPI ID saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('UPI ID saved.')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -851,9 +860,9 @@ class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
           );
       if (!mounted) return;
       setState(() => _hasQr = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR code uploaded.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('QR code uploaded.')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -877,9 +886,9 @@ class _DriverPaymentSectionState extends ConsumerState<_DriverPaymentSection> {
           .deleteDriverQrCode(accessToken: session.tokens.accessToken);
       if (!mounted) return;
       setState(() => _hasQr = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR code removed.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('QR code removed.')));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

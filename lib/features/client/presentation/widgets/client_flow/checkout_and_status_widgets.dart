@@ -851,7 +851,10 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatSchedulePreview(AppLocalizations.of(context)!, _selectedDateTime),
+                  _formatSchedulePreview(
+                    AppLocalizations.of(context)!,
+                    _selectedDateTime,
+                  ),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: context.colors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -1250,6 +1253,310 @@ class _BookingSuccessCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ScheduledBookingDoneCard extends StatelessWidget {
+  const _ScheduledBookingDoneCard({
+    required this.bookingReference,
+    required this.scheduledDate,
+    required this.from,
+    required this.to,
+    required this.onTrack,
+    required this.onHome,
+  });
+
+  final String? bookingReference;
+  final DateTime? scheduledDate;
+  final String from;
+  final String to;
+  final VoidCallback onTrack;
+  final VoidCallback onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
+    final scheduled = scheduledDate;
+    final dateLabel = scheduled == null
+        ? l10n.chooseFuturePickupTime
+        : _scheduledDateLabel(scheduled);
+    final timeLabel = scheduled == null ? '' : _scheduledTimeLabel(scheduled);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+      decoration: BoxDecoration(
+        color: colors.canvas,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colors.line),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 92,
+            height: 92,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2FA56E), Color(0xFF167247)],
+              ),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: const Icon(
+              AppIcons.event_available_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.bookingScheduled,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.bookingScheduledNotifyMessage,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFEAF8EF), Color(0xFFFFFFFF)],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFD4EBDD)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFD4EBDD)),
+                  ),
+                  child: const Icon(
+                    AppIcons.schedule_rounded,
+                    color: Color(0xFF167247),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pickup date & time',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: colors.textSecondary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        timeLabel.isEmpty
+                            ? dateLabel
+                            : '$dateLabel • $timeLabel',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _ScheduledRouteCard(from: from, to: to),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.fillSubtle,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.line),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  AppIcons.receipt_long_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    bookingReference == null || bookingReference!.isEmpty
+                        ? l10n.bookingNumberPending
+                        : l10n.bookingNumberValue(bookingReference!),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onTrack,
+                  icon: const Icon(AppIcons.local_shipping_rounded, size: 18),
+                  label: Text(l10n.trackBooking),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onHome,
+                  icon: const Icon(AppIcons.home_rounded, size: 18),
+                  label: Text(l10n.goToHome),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduledRouteCard extends StatelessWidget {
+  const _ScheduledRouteCard({required this.from, required this.to});
+
+  final String from;
+  final String to;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.line),
+      ),
+      child: Column(
+        children: [
+          _ScheduledStopRow(
+            icon: AppIcons.radio_button_checked_rounded,
+            iconColor: AppColors.brand,
+            label: from.isEmpty ? 'Pickup' : from,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 9),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(width: 2, height: 18, color: colors.line),
+            ),
+          ),
+          _ScheduledStopRow(
+            icon: AppIcons.location_on_rounded,
+            iconColor: AppColors.dangerIcon,
+            label: to.isEmpty ? 'Drop' : to,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduledStopRow extends StatelessWidget {
+  const _ScheduledStopRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: iconColor),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textPrimary,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _scheduledDateLabel(DateTime value) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]} ${value.year}';
+}
+
+String _scheduledTimeLabel(DateTime value) {
+  final hour12 = value.hour == 0
+      ? 12
+      : value.hour > 12
+      ? value.hour - 12
+      : value.hour;
+  final minute = value.minute.toString().padLeft(2, '0');
+  final period = value.hour >= 12 ? 'PM' : 'AM';
+  return '$hour12:$minute $period';
 }
 
 class _BookingWaitingCard extends StatelessWidget {
