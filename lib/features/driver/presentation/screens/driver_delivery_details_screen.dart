@@ -24,6 +24,7 @@ import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../../part_load/part_load_active_trips.dart';
+import '../../../part_load/part_load_providers.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 import '../widgets/slide_to_confirm.dart';
 
@@ -42,8 +43,9 @@ class _TripStop {
 
   bool get done => status == 'done' || status == 'completed';
   bool get loading => type == 'loading';
-  String label(AppLocalizations l10n) =>
-      loading ? l10n.deliveryDetailsLoadingPoint : l10n.deliveryDetailsUnloadingPoint;
+  String label(AppLocalizations l10n) => loading
+      ? l10n.deliveryDetailsLoadingPoint
+      : l10n.deliveryDetailsUnloadingPoint;
   String actionLabel(AppLocalizations l10n) =>
       loading ? l10n.markLoaded : l10n.markUnloaded;
 
@@ -206,9 +208,13 @@ class _DriverDeliveryDetailsScreenState
   String? _resolvedBookingId;
   Timer? _tripRefreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
+  StreamSubscription<Map<String, dynamic>>? _tripJoinRequestSubscription;
   bool _loadingTripInFlight = false;
+  bool _reloadTripAfterInFlight = false;
   String? _resolvedTripId;
   bool _awaitingOverlayPermission = false;
+  late final PageController _tripPagerController;
+  int _tripPagerIndex = 0;
 
   String get _tripId => _resolvedTripId?.trim().isNotEmpty == true
       ? _resolvedTripId!.trim()
@@ -254,6 +260,7 @@ class _DriverDeliveryDetailsScreenState
   @override
   void initState() {
     super.initState();
+    _tripPagerController = PageController();
     WidgetsBinding.instance.addObserver(this);
     final initialTripId = widget.tripId.trim();
     if (initialTripId.isNotEmpty) {
@@ -279,6 +286,8 @@ class _DriverDeliveryDetailsScreenState
     WidgetsBinding.instance.removeObserver(this);
     _tripRefreshTimer?.cancel();
     _tripStatusSubscription?.cancel();
+    _tripJoinRequestSubscription?.cancel();
+    _tripPagerController.dispose();
     unawaited(DriverExternalNavigationService.hideBubble());
     super.dispose();
   }
@@ -329,6 +338,14 @@ class _DriverDeliveryDetailsScreenState
       }
       unawaited(_loadTrip());
     });
+    await _tripJoinRequestSubscription?.cancel();
+    _tripJoinRequestSubscription = socketService.tripJoinRequestStream.listen((
+      _,
+    ) {
+      if (!mounted) return;
+      ref.invalidate(driverDashboardProvider);
+      unawaited(_loadSiblingTrips());
+    });
   }
 
   bool _matchesTripStatusPayload(Map<String, dynamic> payload) {
@@ -347,6 +364,7 @@ class _DriverDeliveryDetailsScreenState
 
   Future<void> _loadTrip() async {
     if (_loadingTripInFlight) {
+      _reloadTripAfterInFlight = true;
       return;
     }
 
@@ -520,6 +538,10 @@ class _DriverDeliveryDetailsScreenState
       setState(() => _loadingTrip = false);
     } finally {
       _loadingTripInFlight = false;
+      if (_reloadTripAfterInFlight && mounted) {
+        _reloadTripAfterInFlight = false;
+        unawaited(_loadTrip());
+      }
     }
   }
 
@@ -565,8 +587,7 @@ class _DriverDeliveryDetailsScreenState
     if (matches(raw)) return true;
     for (final key in const ['booking', 'trip', 'data']) {
       final nested = raw[key];
-      if (nested is Map &&
-          matches(nested.cast<String, dynamic>())) {
+      if (nested is Map && matches(nested.cast<String, dynamic>())) {
         return true;
       }
     }
@@ -635,9 +656,52 @@ class _DriverDeliveryDetailsScreenState
         return aPart.compareTo(bPart);
       });
       setState(() => _siblingTrips = parsed);
+      _syncTripPagerToCurrentTrip();
     } catch (_) {
       // Best-effort only.
     }
+  }
+
+  void _syncTripPagerToCurrentTrip() {
+    if (_siblingTrips.length < 2) {
+      _tripPagerIndex = 0;
+      return;
+    }
+    final nextIndex = _dualTripIndex().clamp(0, _siblingTrips.length - 1);
+    _tripPagerIndex = nextIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_tripPagerController.hasClients) return;
+      final currentPage = _tripPagerController.page?.round();
+      if (currentPage == nextIndex) return;
+      _tripPagerController.jumpToPage(nextIndex);
+    });
+  }
+
+  void _switchToShipment(TrackingDemoShipment shipment) {
+    final tripId = (shipment.tripId ?? '').trim();
+    final bookingId = (shipment.bookingId ?? '').trim();
+    if (tripId.isEmpty && bookingId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open that load — please refresh.'),
+        ),
+      );
+      return;
+    }
+
+    if (_isCurrentShipment(shipment)) {
+      return;
+    }
+
+    setState(() {
+      _resolvedTripId = tripId.isNotEmpty ? tripId : null;
+      _resolvedBookingId = bookingId.isNotEmpty ? bookingId : null;
+      _loadingTrip = true;
+      _arrivalFlowActive = false;
+      _showArrivalSwipe = false;
+      _completingStopIndex = null;
+    });
+    unawaited(_loadTrip());
   }
 
   /// Publishes a fresh tracking point without ever blocking a trip action.
@@ -734,9 +798,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
 
       final updatedStatus = _effectiveTripStatus(
-        _normalizeTripStatus(
-          _readString(trip, const ['status', 'rawStatus']),
-        ),
+        _normalizeTripStatus(_readString(trip, const ['status', 'rawStatus'])),
         trip,
       );
       final resolvedStatus = updatedStatus.isNotEmpty
@@ -775,7 +837,12 @@ class _DriverDeliveryDetailsScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_statusChangeMessageFor(AppLocalizations.of(context)!, resolvedStatus)),
+          content: Text(
+            _statusChangeMessageFor(
+              AppLocalizations.of(context)!,
+              resolvedStatus,
+            ),
+          ),
           backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
@@ -956,9 +1023,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return null;
 
       final updatedStatus = _effectiveTripStatus(
-        _normalizeTripStatus(
-          _readString(trip, const ['status', 'rawStatus']),
-        ),
+        _normalizeTripStatus(_readString(trip, const ['status', 'rawStatus'])),
         trip,
       );
       final resolvedStatus = updatedStatus.isNotEmpty
@@ -993,7 +1058,12 @@ class _DriverDeliveryDetailsScreenState
 
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_statusChangeMessageFor(AppLocalizations.of(context)!, resolvedStatus)),
+          content: Text(
+            _statusChangeMessageFor(
+              AppLocalizations.of(context)!,
+              resolvedStatus,
+            ),
+          ),
           backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
@@ -1246,20 +1316,25 @@ class _DriverDeliveryDetailsScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_siblingTrips.length >= 2)
-              _DualTripHandle(
-                count: _siblingTrips.length,
-                currentIndex: _dualTripIndex(),
-                onOpen: _openOtherTrip,
+              _DualTripPager(
+                trips: _siblingTrips,
+                controller: _tripPagerController,
+                currentIndex: _tripPagerIndex,
+                onPageChanged: (index) {
+                  if (index < 0 || index >= _siblingTrips.length) return;
+                  setState(() => _tripPagerIndex = index);
+                  _switchToShipment(_siblingTrips[index]);
+                },
               ),
             if (_siblingTrips.length >= 2) const SizedBox(height: 4),
             Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.deliveryDetailsCurrentStatus,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.deliveryDetailsCurrentStatus,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textTertiary,
                           fontWeight: FontWeight.w600,
@@ -1899,10 +1974,7 @@ class _DriverDeliveryDetailsScreenState
   String _effectiveTripStatus(String tripStatus, Map<String, dynamic> trip) {
     final booking = _readMap(trip, const ['booking']);
     final bookingStatus = _normalizeTripStatus(
-      _readString(trip, const [
-            'bookingStatus',
-            'booking_status',
-          ]).isNotEmpty
+      _readString(trip, const ['bookingStatus', 'booking_status']).isNotEmpty
           ? _readString(trip, const ['bookingStatus', 'booking_status'])
           : _readString(booking, const ['status', 'rawStatus']),
     );
@@ -2137,8 +2209,9 @@ class _DriverDeliveryDetailsScreenState
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(sheetContext)!
-                              .deliveryDetailsEmergencyAssistance,
+                          AppLocalizations.of(
+                            sheetContext,
+                          )!.deliveryDetailsEmergencyAssistance,
                           style: Theme.of(sheetContext).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.textPrimary,
@@ -2150,8 +2223,7 @@ class _DriverDeliveryDetailsScreenState
                         onPressed: () => Navigator.of(sheetContext).pop(),
                         icon: const Icon(AppIcons.close_rounded),
                         color: AppColors.textTertiary,
-                        tooltip:
-                            AppLocalizations.of(sheetContext)!.close,
+                        tooltip: AppLocalizations.of(sheetContext)!.close,
                       ),
                     ],
                   ),
@@ -2161,14 +2233,17 @@ class _DriverDeliveryDetailsScreenState
                     iconColor: AppColors.brand,
                     icon: AppIcons.navigation_rounded,
                     title: _navHeadingToPickup
-                        ? AppLocalizations.of(sheetContext)!
-                              .deliveryDetailsOpenPickupInMaps
-                        : AppLocalizations.of(sheetContext)!
-                              .deliveryDetailsOpenDropInMaps,
+                        ? AppLocalizations.of(
+                            sheetContext,
+                          )!.deliveryDetailsOpenPickupInMaps
+                        : AppLocalizations.of(
+                            sheetContext,
+                          )!.deliveryDetailsOpenDropInMaps,
                     subtitle: _navHeadingToPickup
                         ? (_navPickupAddress.isEmpty
-                              ? AppLocalizations.of(sheetContext)!
-                                    .deliveryDetailsNavigateToPickup
+                              ? AppLocalizations.of(
+                                  sheetContext,
+                                )!.deliveryDetailsNavigateToPickup
                               : _navPickupAddress)
                         : (_dropLocation.isEmpty
                               ? AppLocalizations.of(context)!.navigateToDrop
@@ -2356,6 +2431,11 @@ class _DriverDeliveryDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(partLoadActiveTripsRefreshSignalProvider, (previous, next) {
+      if (previous == next) return;
+      ref.invalidate(driverDashboardProvider);
+      unawaited(_loadSiblingTrips());
+    });
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -2480,10 +2560,9 @@ class _DriverDeliveryDetailsScreenState
   }
 
   bool _isCurrentShipment(TrackingDemoShipment shipment) {
-    final currentTripId =
-        _resolvedTripId?.trim().isNotEmpty == true
-            ? _resolvedTripId!.trim()
-            : _tripId.trim();
+    final currentTripId = _resolvedTripId?.trim().isNotEmpty == true
+        ? _resolvedTripId!.trim()
+        : _tripId.trim();
     final currentBookingId = _bookingId.trim();
     final tripId = (shipment.tripId ?? '').trim();
     final bookingId = (shipment.bookingId ?? '').trim();
@@ -2495,69 +2574,6 @@ class _DriverDeliveryDetailsScreenState
         (tripId == currentBookingId || bookingId == currentBookingId);
   }
 
-  /// The sibling that is NOT the viewed trip, matched against every id
-  /// this screen knows (trip, resolved trip, booking). Null when there is
-  /// no other load to open.
-  TrackingDemoShipment? _otherSibling() {
-    if (_siblingTrips.length < 2) return null;
-    final ownIds = <String>{
-      _tripId.trim(),
-      _bookingId.trim(),
-      (_resolvedTripId ?? '').trim(),
-    }..removeWhere((id) => id.isEmpty);
-    for (final trip in _siblingTrips) {
-      final tid = (trip.tripId ?? '').trim();
-      final bid = (trip.bookingId ?? '').trim();
-      if ((tid.isNotEmpty && !ownIds.contains(tid)) ||
-          (bid.isNotEmpty && !ownIds.contains(bid))) {
-        return trip;
-      }
-    }
-    return null;
-  }
-
-  void _openSiblingTrip(TrackingDemoShipment shipment) {
-    final id = (shipment.tripId ?? '').trim().isNotEmpty
-        ? shipment.tripId!.trim()
-        : (shipment.bookingId ?? '').trim();
-    developer.log(
-      'Dual-trip open tapped ref=${shipment.trackingId} id=$id '
-      'ownTrip=$_tripId ownBooking=$_bookingId resolved=$_resolvedTripId',
-      name: 'driver.deliveryDetails',
-    );
-    if (id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open that load — please refresh.'),
-        ),
-      );
-      return;
-    }
-    final ownIds = <String>{
-      _tripId.trim(),
-      _bookingId.trim(),
-      (_resolvedTripId ?? '').trim(),
-    }..removeWhere((value) => value.isEmpty);
-    if (ownIds.contains(id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You are already viewing this load.')),
-      );
-      return;
-    }
-    try {
-      context.go('/driver/delivery-details/$id');
-    } catch (error) {
-      developer.log(
-        'Dual-trip navigation failed id=$id error=$error',
-        name: 'driver.deliveryDetails',
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open that load ($id).')),
-      );
-    }
-  }
-
   /// Index of the viewed load inside [_siblingTrips] (part first).
   int _dualTripIndex() {
     for (var i = 0; i < _siblingTrips.length; i++) {
@@ -2565,95 +2581,140 @@ class _DriverDeliveryDetailsScreenState
     }
     return 0;
   }
-
-  void _openOtherTrip() {
-    final other = _otherSibling();
-    if (other == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Only one load right now.')),
-      );
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening other load…'),
-        duration: Duration(milliseconds: 900),
-      ),
-    );
-    _openSiblingTrip(other);
-  }
-
 }
 
-/// Swipe handle living INSIDE the bottom dialog (first row of the trip
-/// panel): dots showing position with chevrons on both sides. Swipe it or
-/// tap a chevron to open the other load — nothing above or below the
-/// dialog, and slide-to-confirm further down never competes for gestures.
-/// Switch bar living INSIDE the bottom dialog (its first row): position
-/// dots plus an explicit Switch load button. Deliberately tap-only — no
-/// drag recognizers anywhere near it, so live-rebuilds and the map's eager
-/// gestures can never swallow the interaction. Slide-to-confirm further
-/// down is untouched.
-class _DualTripHandle extends StatelessWidget {
-  const _DualTripHandle({
-    required this.count,
+/// Load pager living inside the bottom dialog. It is intentionally compact:
+/// swiping this strip switches the active trip, then the map/actions below
+/// refresh to match the selected load.
+class _DualTripPager extends StatelessWidget {
+  const _DualTripPager({
+    required this.trips,
+    required this.controller,
     required this.currentIndex,
-    required this.onOpen,
+    required this.onPageChanged,
   });
 
-  final int count;
+  final List<TrackingDemoShipment> trips;
+  final PageController controller;
   final int currentIndex;
-  final VoidCallback onOpen;
+  final ValueChanged<int> onPageChanged;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < count; i++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == currentIndex ? 26 : 8,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == currentIndex
-                          ? const Color(0xFF2FA56E)
-                          : AppColors.textTertiary.withValues(
-                              alpha: 0.5,
-                            ),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-              ],
+          Container(
+            width: 46,
+            height: 5,
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              color: AppColors.line,
+              borderRadius: BorderRadius.circular(999),
             ),
           ),
-          InkWell(
-            onTap: onOpen,
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 9,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2FA56E),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Text(
-                'Switch load',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+          SizedBox(
+            height: 84,
+            child: PageView.builder(
+              controller: controller,
+              itemCount: trips.length,
+              onPageChanged: onPageChanged,
+              itemBuilder: (context, index) {
+                final trip = trips[index];
+                final isPart = index == 0;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isPart
+                          ? AppColors.brandTint
+                          : AppColors.fillSubtle,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: index == currentIndex
+                            ? AppColors.brandBorder
+                            : AppColors.line,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            isPart
+                                ? AppIcons.inventory_2_outlined
+                                : AppIcons.local_shipping_rounded,
+                            color: AppColors.brand,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isPart ? 'Part truck' : 'Full truck',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${trip.fromLocation} → ${trip.toLocation}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          AppIcons.drag_indicator_rounded,
+                          color: AppColors.textTertiary,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < trips.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == currentIndex ? 24 : 7,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == currentIndex
+                        ? AppColors.brand
+                        : AppColors.textTertiary.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -2835,8 +2896,9 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!
-                                  .deliveryDetailsEnterPickupCode,
+                              AppLocalizations.of(
+                                context,
+                              )!.deliveryDetailsEnterPickupCode,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w900,
@@ -2844,8 +2906,9 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              AppLocalizations.of(context)!
-                                  .deliveryDetailsAskCustomerForCode,
+                              AppLocalizations.of(
+                                context,
+                              )!.deliveryDetailsAskCustomerForCode,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w500,
@@ -2951,8 +3014,9 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                               ),
                             )
                           : Text(
-                              AppLocalizations.of(context)!
-                                  .deliveryDetailsConfirmPickup,
+                              AppLocalizations.of(
+                                context,
+                              )!.deliveryDetailsConfirmPickup,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -3151,8 +3215,7 @@ class _DeliverySlaCard extends StatelessWidget {
               children: [
                 Text(
                   hasCharge
-                      ? AppLocalizations.of(context)!
-                            .deliveryDetailsDelayCharge
+                      ? AppLocalizations.of(context)!.deliveryDetailsDelayCharge
                       : AppLocalizations.of(context)!.deliveryDetailsSla,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textPrimary,
@@ -3162,19 +3225,21 @@ class _DeliverySlaCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   hasCharge
-                      ? AppLocalizations.of(context)!
-                            .deliveryDetailsDelayChargeBody(
-                              '₹${overageCharge.toStringAsFixed(overageCharge % 1 == 0 ? 0 : 2)}',
-                              overageHours.toStringAsFixed(
-                                overageHours % 1 == 0 ? 0 : 1,
-                              ),
-                            )
-                      : AppLocalizations.of(context)!
-                            .deliveryDetailsExpectedWithin(
-                              expectedHours!.toStringAsFixed(
-                                expectedHours! % 1 == 0 ? 0 : 1,
-                              ),
-                            ),
+                      ? AppLocalizations.of(
+                          context,
+                        )!.deliveryDetailsDelayChargeBody(
+                          '₹${overageCharge.toStringAsFixed(overageCharge % 1 == 0 ? 0 : 2)}',
+                          overageHours.toStringAsFixed(
+                            overageHours % 1 == 0 ? 0 : 1,
+                          ),
+                        )
+                      : AppLocalizations.of(
+                          context,
+                        )!.deliveryDetailsExpectedWithin(
+                          expectedHours!.toStringAsFixed(
+                            expectedHours! % 1 == 0 ? 0 : 1,
+                          ),
+                        ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: hasCharge
                         ? AppColors.warningText
@@ -3647,8 +3712,9 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context)!
-                          .deliveryDetailsMechanicStatus,
+                      AppLocalizations.of(
+                        context,
+                      )!.deliveryDetailsMechanicStatus,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
@@ -3665,8 +3731,9 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                AppLocalizations.of(context)!
-                    .deliveryDetailsLiveIncidentUpdates,
+                AppLocalizations.of(
+                  context,
+                )!.deliveryDetailsLiveIncidentUpdates,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -3773,8 +3840,9 @@ class _MechanicIncidentCard extends StatelessWidget {
             Text(
               AppLocalizations.of(context)!.deliveryDetailsMechanicLine(
                 mechanicName.isEmpty
-                    ? AppLocalizations.of(context)!
-                          .deliveryDetailsPendingAssignment
+                    ? AppLocalizations.of(
+                        context,
+                      )!.deliveryDetailsPendingAssignment
                     : mechanicName,
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -3785,8 +3853,9 @@ class _MechanicIncidentCard extends StatelessWidget {
             if (mechanicPhone.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
-                AppLocalizations.of(context)!
-                    .deliveryDetailsPhoneLine(mechanicPhone),
+                AppLocalizations.of(
+                  context,
+                )!.deliveryDetailsPhoneLine(mechanicPhone),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -3794,13 +3863,13 @@ class _MechanicIncidentCard extends StatelessWidget {
             ],
             const SizedBox(height: 2),
             Text(
-              AppLocalizations.of(context)!
-                  .deliveryDetailsStatusLine(
-                    mechanicStatus.isEmpty
-                        ? AppLocalizations.of(context)!
-                              .deliveryDetailsRequestedLabel
-                        : mechanicStatus,
-                  ),
+              AppLocalizations.of(context)!.deliveryDetailsStatusLine(
+                mechanicStatus.isEmpty
+                    ? AppLocalizations.of(
+                        context,
+                      )!.deliveryDetailsRequestedLabel
+                    : mechanicStatus,
+              ),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),

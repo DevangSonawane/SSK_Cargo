@@ -39,9 +39,7 @@ class PartLoadDriverInboxScreen extends StatelessWidget {
         title: const Text('Shared-load requests'),
       ),
       body: const SafeArea(
-        child: PartLoadInboxList(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, 96),
-        ),
+        child: PartLoadInboxList(padding: EdgeInsets.fromLTRB(20, 12, 20, 96)),
       ),
     );
   }
@@ -71,7 +69,8 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
   bool get _isBroker =>
       (ref.read(authSessionProvider).valueOrNull?.user.role ?? '')
           .trim()
-          .toLowerCase() == 'broker';
+          .toLowerCase() ==
+      'broker';
 
   @override
   void initState() {
@@ -86,13 +85,15 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
   Future<void> _listenSocket() async {
     final token = _token;
     if (token.isEmpty) return;
-    await ref.read(appSocketServiceProvider).ensureConnected(accessToken: token);
+    await ref
+        .read(appSocketServiceProvider)
+        .ensureConnected(accessToken: token);
     _socketSub = ref
         .read(appSocketServiceProvider)
         .tripJoinRequestStream
         .listen((_) {
-      if (mounted) ref.invalidate(partLoadInboxProvider);
-    });
+          if (mounted) ref.invalidate(partLoadInboxProvider);
+        });
   }
 
   Future<void> _act(String requestId, bool accept) async {
@@ -151,12 +152,17 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
       // The new load must show up ASAP everywhere (home, active tab,
       // tracking) without the driver going back and reopening screens.
       ref.invalidate(driverDashboardProvider);
+      if (accept) {
+        ref
+            .read(partLoadActiveTripsRefreshSignalProvider.notifier)
+            .update((value) => value + 1);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(accept
-                ? 'Load added to your current trip.'
-                : 'Request declined.'),
+            content: Text(
+              accept ? 'Load added to your current trip.' : 'Request declined.',
+            ),
           ),
         );
       }
@@ -192,9 +198,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
           : ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: widget.padding ?? const EdgeInsets.all(20),
-              children: const [
-                Center(child: CircularProgressIndicator()),
-              ],
+              children: const [Center(child: CircularProgressIndicator())],
             ),
       error: (error, _) => widget.embedded
           ? _PartLoadEmptyStateCard(
@@ -203,8 +207,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
               subtitle: error.toString().replaceFirst('Exception: ', ''),
             )
           : RefreshIndicator(
-              onRefresh: () async =>
-                  ref.invalidate(partLoadInboxProvider),
+              onRefresh: () async => ref.invalidate(partLoadInboxProvider),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: widget.padding ?? const EdgeInsets.all(20),
@@ -212,8 +215,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
                   _PartLoadEmptyStateCard(
                     icon: AppIcons.wifi_off_rounded,
                     title: 'Could not load requests',
-                    subtitle:
-                        error.toString().replaceFirst('Exception: ', ''),
+                    subtitle: error.toString().replaceFirst('Exception: ', ''),
                   ),
                 ],
               ),
@@ -223,14 +225,14 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
         // pendingJoinRequests only): old accepted/declined rows belong to
         // trip history, never this inbox — otherwise stale requests linger
         // on the home page forever.
-        final items =
-            allItems.where((r) => r.isPending).toList(growable: false);
+        final items = allItems
+            .where((r) => r.isPending)
+            .toList(growable: false);
         if (items.isEmpty) {
           final empty = _PartLoadEmptyStateCard(
             icon: AppIcons.inbox_rounded,
             title: 'No shared-load requests',
-            subtitle:
-                'New requests appear here instantly once a client picks your truck.',
+            subtitle: 'New requests appear here instantly once a client picks your truck.',
           );
           if (widget.embedded) return empty;
           return RefreshIndicator(
@@ -268,7 +270,9 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
             itemBuilder: (_, i) {
               final r = items[i];
               return Padding(
-                padding: EdgeInsets.only(bottom: i == items.length - 1 ? 0 : 14),
+                padding: EdgeInsets.only(
+                  bottom: i == items.length - 1 ? 0 : 14,
+                ),
                 child: _PartLoadRequestTile(
                   request: r,
                   isBroker: broker,
@@ -324,18 +328,16 @@ class _PartLoadEmptyStateCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.textSecondary, height: 1.4),
           ),
         ],
       ),
@@ -368,8 +370,7 @@ class _PartLoadRequestTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     // Web parity: a timed-out driver loses the action — their broker acts.
     // (TripJoinRequestCard `locked`.)
-    final locked =
-        !isBroker && request.isPending && request.driverTimedOut;
+    final locked = !isBroker && request.isPending && request.driverTimedOut;
     final canAct = request.isPending && !locked;
     final refText = request.bookingNumber.isNotEmpty
         ? request.bookingNumber
@@ -400,9 +401,7 @@ class _PartLoadRequestTile extends StatelessWidget {
                       children: [
                         Text(
                           refText.isEmpty ? '—' : refText,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textTertiary,
                                 fontWeight: FontWeight.w600,
@@ -428,9 +427,7 @@ class _PartLoadRequestTile extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 'Part-Load',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
+                                style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(
                                       color: AppColors.brand,
                                       fontWeight: FontWeight.w800,
@@ -448,9 +445,9 @@ class _PartLoadRequestTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -459,22 +456,20 @@ class _PartLoadRequestTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    request.amount.isNotEmpty
-                        ? '₹${request.amount}'
-                        : '—',
+                    request.amount.isNotEmpty ? '₹${request.amount}' : '—',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   if (dateLabel.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       dateLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textTertiary,
-                            fontSize: 11,
-                          ),
+                        color: AppColors.textTertiary,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ],
@@ -521,10 +516,7 @@ class _PartLoadRequestTile extends StatelessWidget {
           if (locked) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(12),
@@ -534,9 +526,9 @@ class _PartLoadRequestTile extends StatelessWidget {
                 "You didn't respond in time — your broker has taken over this request.",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ] else if (canAct) ...[
@@ -590,18 +582,15 @@ class _PartLoadRequestTile extends StatelessWidget {
                 "Driver timed out — you're responding on their behalf.",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.warningText,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColors.warningText,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ] else if (request.isAccepted) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.successFill,
                 borderRadius: BorderRadius.circular(12),
@@ -611,18 +600,18 @@ class _PartLoadRequestTile extends StatelessWidget {
                 'Accepted — added to your current trip',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.successText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.successText,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ] else ...[
             Text(
               'Declined.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textTertiary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
           if (request.clientName.isNotEmpty ||
@@ -643,9 +632,8 @@ class _PartLoadRequestTile extends StatelessWidget {
                         : request.clientName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textSecondary),
                   ),
                 ),
               ],
@@ -707,10 +695,10 @@ class _PartLoadInfoTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.textTertiary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 10,
-                      ),
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ],
@@ -721,9 +709,9 @@ class _PartLoadInfoTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -773,9 +761,9 @@ class _PartLoadRoutePoint extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -785,10 +773,10 @@ class _PartLoadRoutePoint extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
           ),
         ],
       ),

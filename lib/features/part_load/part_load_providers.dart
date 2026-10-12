@@ -10,11 +10,11 @@ import 'part_load_models.dart';
 
 final partLoadInboxProvider =
     FutureProvider.autoDispose<List<PartLoadJoinRequest>>((ref) async {
-  final token =
-      ref.watch(authSessionProvider).valueOrNull?.tokens.accessToken ?? '';
-  if (token.isEmpty) return const [];
-  return ref.watch(partLoadApiProvider).listInbox(accessToken: token);
-});
+      final token =
+          ref.watch(authSessionProvider).valueOrNull?.tokens.accessToken ?? '';
+      if (token.isEmpty) return const [];
+      return ref.watch(partLoadApiProvider).listInbox(accessToken: token);
+    });
 
 /// Pending (actionable) shared-load requests — drives tab badges.
 final partLoadPendingCountProvider = Provider.autoDispose<int>((ref) {
@@ -22,3 +22,7 @@ final partLoadPendingCountProvider = Provider.autoDispose<int>((ref) {
   if (items == null) return 0;
   return items.where((r) => r.isPending).length;
 });
+
+/// Bumped after a shared-load request is accepted/updated so screens that do
+/// not directly watch the inbox can refresh active-trip siblings immediately.
+final partLoadActiveTripsRefreshSignalProvider = StateProvider<int>((ref) => 0);
