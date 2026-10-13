@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
-import '../../../part_load/part_load_driver_inbox_screen.dart';
-import '../../../part_load/part_load_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -26,7 +24,6 @@ class _BrokerDriverRequestsScreenState
     extends ConsumerState<BrokerDriverRequestsScreen> {
   static const _query = (page: 1, limit: 100);
   final Set<String> _actioningIds = <String>{};
-  int _tab = 0;
 
   Future<void> _refresh() async {
     ref.invalidate(brokerDriverRequestsProvider(_query));
@@ -79,8 +76,9 @@ class _BrokerDriverRequestsScreenState
     if (!mounted) return;
     return _runAction(
       request: request,
-      successMessage: AppLocalizations.of(context)!
-          .brokerDriverRequestsAccepted,
+      successMessage: AppLocalizations.of(
+        context,
+      )!.brokerDriverRequestsAccepted,
       action: (api, token) {
         return api.acceptDriverRequestAsDriver(
           accessToken: token,
@@ -93,8 +91,9 @@ class _BrokerDriverRequestsScreenState
   Future<void> _declineRequest(BrokerDriverRequest request) {
     return _runAction(
       request: request,
-      successMessage: AppLocalizations.of(context)!
-          .brokerDriverRequestsDeclined,
+      successMessage: AppLocalizations.of(
+        context,
+      )!.brokerDriverRequestsDeclined,
       action: (api, token) {
         return api.rejectDriverRequest(accessToken: token, id: request.id);
       },
@@ -134,12 +133,6 @@ class _BrokerDriverRequestsScreenState
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
-    // Part-Load: two tabs on the same Requests screen (web parity) —
-    // negotiations stay exactly as they were, shared loads get their own
-    // tab backed by the standalone inbox list (no negotiation fields).
-    // Custom strip (not TabBar) so both tabs carry web's count badges.
-    final directCount = requestsAsync.valueOrNull?.length ?? 0;
-    final sharedPending = ref.watch(partLoadPendingCountProvider);
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
@@ -147,22 +140,7 @@ class _BrokerDriverRequestsScreenState
         elevation: 0,
         title: Text(l10n.brokerDriverReqDriverRequests),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: _BrokerRequestTabs(
-              selected: _tab,
-              directCount: directCount,
-              sharedCount: sharedPending,
-              onChanged: (index) => setState(() => _tab = index),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _tab == 0
-                ? RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: _refresh,
         child: requestsAsync.when(
           loading: () => ListView(
@@ -236,16 +214,21 @@ class _BrokerDriverRequestsScreenState
                     TextButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(AppIcons.refresh_rounded),
-                      label: Text(AppLocalizations.of(context)!.brokerDriverReqReload),
+                      label: Text(
+                        AppLocalizations.of(context)!.brokerDriverReqReload,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 if (visibleRequests.isEmpty)
                   _EmptyState(
-                    title: AppLocalizations.of(context)!.brokerDriverReqNoDriverRequestsYet,
-                    subtitle:
-                        AppLocalizations.of(context)!.brokerDriverReqWhenADriverTimesOutTheRequest,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.brokerDriverReqNoDriverRequestsYet,
+                    subtitle: AppLocalizations.of(
+                      context,
+                    )!.brokerDriverReqWhenADriverTimesOutTheRequest,
                   )
                 else
                   ...visibleRequests.asMap().entries.expand((entry) {
@@ -265,150 +248,6 @@ class _BrokerDriverRequestsScreenState
               ],
             );
           },
-        ),
-                )
-                // Second tab: shared-load requests (timed-out rows for broker).
-                : const PartLoadInboxList(
-                    padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BrokerRequestTabs extends StatelessWidget {
-  const _BrokerRequestTabs({
-    required this.selected,
-    required this.directCount,
-    required this.sharedCount,
-    required this.onChanged,
-  });
-
-  final int selected;
-  final int directCount;
-  final int sharedCount;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.fillSubtle,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _BrokerTabButton(
-              label: 'Direct Requests',
-              count: directCount,
-              selected: selected == 0,
-              onTap: () => onChanged(0),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _BrokerTabButton(
-              label: 'Part-Load Requests',
-              icon: AppIcons.inventory_2_rounded,
-              count: sharedCount,
-              countTinted: true,
-              selected: selected == 1,
-              onTap: () => onChanged(1),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BrokerTabButton extends StatelessWidget {
-  const _BrokerTabButton({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-    this.icon,
-    this.countTinted = false,
-  });
-
-  final String label;
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
-  final IconData? icon;
-  final bool countTinted;
-
-  @override
-  Widget build(BuildContext context) {
-    final iconData = icon;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: selected ? AppShadows.card : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (iconData != null) ...[
-              Icon(
-                iconData,
-                size: 13,
-                color: const Color(0xFF0F766E),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: selected
-                          ? AppColors.textPrimary
-                          : AppColors.textTertiary,
-                    ),
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: countTinted
-                      ? AppColors.brandTint
-                      : AppColors.divider,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '$count',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: countTinted
-                            ? AppColors.brand
-                            : AppColors.textSecondary,
-                      ),
-                ),
-              ),
-            ],
-          ],
         ),
       ),
     );
@@ -494,6 +333,10 @@ class _BrokerRequestTile extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
+                    if (request.isPartLoad) ...[
+                      const SizedBox(height: 8),
+                      const _BrokerPartLoadBadge(),
+                    ],
                   ],
                 ),
               ),
@@ -517,8 +360,9 @@ class _BrokerRequestTile extends StatelessWidget {
                     ),
                     child: Text(
                       request.driverTimedOut
-                          ? AppLocalizations.of(context)!
-                                .brokerDriverRequestsTimedOut
+                          ? AppLocalizations.of(
+                              context,
+                            )!.brokerDriverRequestsTimedOut
                           : AppLocalizations.of(context)!.live,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: request.driverTimedOut
@@ -601,9 +445,15 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          if (request.isPartLoad) ...[
+            _BrokerPartLoadNotice(request: request),
+            const SizedBox(height: 14),
+          ],
           if (waitingOnClient) ...[
             _WaitingBadge(
-              label: AppLocalizations.of(context)!.brokerDriverReqAcceptedWaitingForTheClientToConfirm,
+              label: AppLocalizations.of(
+                context,
+              )!.brokerDriverReqAcceptedWaitingForTheClientToConfirm,
             ),
           ] else if (yourTurn) ...[
             Row(
@@ -655,7 +505,9 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              AppLocalizations.of(context)!.brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr,
+              AppLocalizations.of(
+                context,
+              )!.brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -677,7 +529,9 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: AppLocalizations.of(context)!.brokerDriverReqChangeFare,
+                    label: AppLocalizations.of(
+                      context,
+                    )!.brokerDriverReqChangeFare,
                     icon: AppIcons.payments_rounded,
                     color: AppColors.accentBlue,
                     backgroundColor: AppColors.brandFill,
@@ -700,10 +554,86 @@ class _BrokerRequestTile extends StatelessWidget {
           if (request.driverTimedOut) ...[
             const SizedBox(height: 10),
             Text(
-              AppLocalizations.of(context)!.brokerDriverReqDriverTimedOutBrokerTakeoverActive,
+              AppLocalizations.of(
+                context,
+              )!.brokerDriverReqDriverTimedOutBrokerTakeoverActive,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.warningText,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerPartLoadBadge extends StatelessWidget {
+  const _BrokerPartLoadBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFFDF6),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFB9E8D0)),
+      ),
+      child: Text(
+        'Part Truck',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF167247),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerPartLoadNotice extends StatelessWidget {
+  const _BrokerPartLoadNotice({required this.request});
+
+  final BrokerDriverRequest request;
+
+  String _tons(double value) =>
+      '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}t';
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = <String>[
+      if (request.weight.isNotEmpty) 'Load ${request.weight}',
+      if (request.truckCapacityTons != null)
+        'Capacity ${_tons(request.truckCapacityTons!)}',
+      if (request.truckSpareTons != null)
+        'Spare ${_tons(request.truckSpareTons!)}',
+    ];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFFDF6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFB9E8D0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Second shared load on this truck',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF167247),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (metrics.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              metrics.join(' / '),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -720,7 +650,6 @@ class _WaitingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -741,7 +670,7 @@ class _WaitingBadge extends StatelessWidget {
 }
 
 class _BrokerAssignedBadge extends StatelessWidget {
-  _BrokerAssignedBadge();
+  const _BrokerAssignedBadge();
 
   @override
   Widget build(BuildContext context) {
@@ -779,7 +708,6 @@ class _RouteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -839,7 +767,6 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 46,
       child: FilledButton.tonal(
@@ -919,124 +846,127 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
         top: false,
         child: SingleChildScrollView(
           child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 54,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: AppColors.line,
-                  borderRadius: BorderRadius.circular(999),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 54,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: AppColors.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.brokerDriverReqChangeFare2,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 6),
-            Text(
-              widget.request.bookingNumber.isNotEmpty
-                  ? widget.request.bookingNumber
-                  : widget.request.bookingId,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.fillSubtle,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.brokerDriverReqSetFareAmount,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.brokerDriverReqChangeFare2,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '₹${clamped.toStringAsFixed(0)}',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.accentBlue,
-                    ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  widget.request.bookingNumber.isNotEmpty
+                      ? widget.request.bookingNumber
+                      : widget.request.bookingId,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
                   ),
-                  Slider(
-                    value: clamped,
-                    min: min,
-                    max: max,
-                    divisions: 100,
-                    activeColor: AppColors.accentBlue,
-                    onChanged: (value) {
-                      setState(() => _value = value);
-                    },
+                ),
+                SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.fillSubtle,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.line),
                   ),
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '₹${min.toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                        l10n.brokerDriverReqSetFareAmount,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 10),
                       Text(
-                        '₹${max.toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                        '₹${clamped.toStringAsFixed(0)}',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accentBlue,
+                            ),
+                      ),
+                      Slider(
+                        value: clamped,
+                        min: min,
+                        max: max,
+                        divisions: 100,
+                        activeColor: AppColors.accentBlue,
+                        onChanged: (value) {
+                          setState(() => _value = value);
+                        },
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            '₹${min.toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '₹${max.toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(AppLocalizations.of(context)!.brokerDriverReqCancel),
-                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(clamped),
-                    child: Text(
-                      AppLocalizations.of(context)!.brokerDriverReqChangeFare,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          AppLocalizations.of(context)!.brokerDriverReqCancel,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).pop(clamped),
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.brokerDriverReqChangeFare,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
           ),
         ),
       ),
@@ -1052,7 +982,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(

@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 100% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 90% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 100% 55%;
+    --radius: 0.625rem;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Global safety net: whatever specific element is momentarily a few px too wide (dynamic
+     content — a long address string, a live map, a 7-item bottom nav — is exactly the kind of
+     thing that keeps finding new ways to trip CSS Grid/Flex's default min-width:auto floor one
+     element at a time), the PAGE itself should never be able to scroll/shift horizontally on a
+     page that has no intentional horizontal scrolling anywhere. overflow-x-auto elements (the
+     Recent Shipments table) are unaffected — that's their own local scroll container, nested
+     inside this, not this rule.
+     `clip`, not `hidden` — per the CSS overflow spec, setting overflow-x to anything but
+     `visible` while overflow-y is left `visible` forces overflow-y to compute as `auto`
+     instead, turning html/body into their own independent vertical scroll container. That's
+     what broke BottomNav's `position: sticky`, which needs the real window to be the scrolling
+     ancestor. `clip` doesn't trigger that same-axis coupling, so vertical scrolling stays
+     exactly as it was (visible/window-driven) while horizontal overflow is still clipped. */
+  html, body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+    background-size: 200% 100%;
+  }
+
+  .btn-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-ripple::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.4s, opacity 0.4s;
+  }
+
+  .btn-ripple:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+}

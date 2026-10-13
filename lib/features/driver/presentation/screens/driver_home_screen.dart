@@ -14,8 +14,6 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
-import '../../../part_load/part_load_driver_inbox_screen.dart';
-import '../../../part_load/part_load_providers.dart';
 import '../widgets/driver_currency.dart';
 import '../widgets/slide_to_action.dart';
 
@@ -28,12 +26,16 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _launchingActiveTrip = false;
-  // Part-Load: 0 = direct requests, 1 = shared-load requests (web parity:
-  // driver Requests.jsx renders these as two tabs, not one merged list).
-  int _requestTab = 0;
+  bool _togglingTruckMode = false;
+  bool? _optimisticPartTruckMode;
+  int _truckModeSeq = 0;
+  bool _togglingAcceptingLoads = false;
+  bool? _optimisticAcceptingLoads;
+  int _acceptingLoadsSeq = 0;
   bool _reconcilingActiveTrip = false;
   String _reconcilingTripId = '';
   final Set<String> _answeringRequestIds = <String>{};
+  final Set<String> _autoNavigatedAcceptedIds = <String>{};
   Timer? _activeTripReconcileTimer;
   late final WidgetsBindingObserver _lifecycleObserver;
 
@@ -87,6 +89,131 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       }
     }
     return '';
+  }
+
+  bool _readTruckBool(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return false;
+    for (final key in keys) {
+      final value = json[key];
+      if (value is bool) return value;
+      final normalized = value?.toString().trim().toLowerCase();
+      if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+        return true;
+      }
+      if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _setTruckMode(
+    Map<String, dynamic>? truck, {
+    required bool partTruckMode,
+  }) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || truck == null) return;
+    final serverMode = _readTruckBool(truck, const [
+      'partTruckMode',
+      'part_truck_mode',
+    ]);
+    final effective = _optimisticPartTruckMode ?? serverMode;
+    if (effective == partTruckMode) return;
+    final serverAccepting = _readTruckBool(truck, const [
+      'acceptingLoads',
+      'accepting_loads',
+    ]);
+    // Instant UI: flip selection immediately, sync in background.
+    final seq = ++_truckModeSeq;
+    setState(() {
+      _optimisticPartTruckMode = partTruckMode;
+      _togglingTruckMode = true;
+      // Switching to Part mode must resume part matching — otherwise the
+      // driver sits in Part + online with zero part requests and no way to
+      // tell why (stale accepting_loads=false).
+      if (partTruckMode && !serverAccepting) {
+        _optimisticAcceptingLoads = true;
+      }
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .updateDriverTruckMode(
+            accessToken: session.tokens.accessToken,
+            partTruckMode: partTruckMode,
+          );
+      if (seq != _truckModeSeq) return; // superseded by a newer tap
+      // Best-effort: re-enable part matching when entering Part mode.
+      if (partTruckMode && !serverAccepting) {
+        try {
+          await ref
+              .read(apiClientProvider)
+              .updateDriverAcceptingLoads(
+                accessToken: session.tokens.accessToken,
+                acceptingLoads: true,
+              );
+        } catch (_) {
+          // Non-fatal — clear the optimistic flip so the button shows the
+          // real paused state and the driver can retry.
+          if (mounted && seq == _truckModeSeq) {
+            setState(() => _optimisticAcceptingLoads = null);
+          }
+        }
+      }
+      ref.invalidate(driverDashboardProvider);
+    } on ApiException catch (error) {
+      if (seq != _truckModeSeq) return;
+      if (mounted) {
+        setState(() {
+          _optimisticPartTruckMode = serverMode;
+          _optimisticAcceptingLoads = null;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted && seq == _truckModeSeq) {
+        setState(() => _togglingTruckMode = false);
+      }
+    }
+  }
+
+  Future<void> _toggleAcceptingLoads(Map<String, dynamic>? truck) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || truck == null) return;
+    final serverCurrent = _readTruckBool(truck, const [
+      'acceptingLoads',
+      'accepting_loads',
+    ]);
+    final desired = !(_optimisticAcceptingLoads ?? serverCurrent);
+    final seq = ++_acceptingLoadsSeq;
+    setState(() {
+      _optimisticAcceptingLoads = desired;
+      _togglingAcceptingLoads = true;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .updateDriverAcceptingLoads(
+            accessToken: session.tokens.accessToken,
+            acceptingLoads: desired,
+          );
+      if (seq != _acceptingLoadsSeq) return;
+      ref.invalidate(driverDashboardProvider);
+    } on ApiException catch (error) {
+      if (seq != _acceptingLoadsSeq) return;
+      if (mounted) {
+        setState(() => _optimisticAcceptingLoads = serverCurrent);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted && seq == _acceptingLoadsSeq) {
+        setState(() => _togglingAcceptingLoads = false);
+      }
+    }
   }
 
   void _syncActiveTripReconciliation(String activeTripId) {
@@ -227,13 +354,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(accept
-              ? AppLocalizations.of(context)!.driverHomeTripAccepted
-              : AppLocalizations.of(context)!.driverHomeTripDeclined),
+          content: Text(
+            accept
+                ? AppLocalizations.of(context)!.driverHomeTripAccepted
+                : AppLocalizations.of(context)!.driverHomeTripDeclined,
+          ),
           backgroundColor: accept ? AppColors.brand : AppColors.dangerIcon,
         ),
       );
       if (accept) {
+        _autoNavigatedAcceptedIds.add(request.id);
         unawaited(_goToActiveTrip());
       }
     } on ApiException catch (error) {
@@ -327,10 +457,37 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             .trim();
     final hasActiveTrip = activeTripId.isNotEmpty;
     final requestsAsync = ref.watch(driverRequestFeedProvider);
+    final dashboard = ref.watch(driverDashboardProvider).valueOrNull;
+    final assignedTruck = dashboard?.assignedTruck;
+    final serverPartTruckMode = _readTruckBool(assignedTruck, const [
+      'partTruckMode',
+      'part_truck_mode',
+    ]);
+    // Drop stale optimistic value once the server confirms it.
+    if (_optimisticPartTruckMode != null &&
+        _optimisticPartTruckMode == serverPartTruckMode) {
+      _optimisticPartTruckMode = null;
+    }
+    final partTruckMode = _optimisticPartTruckMode ?? serverPartTruckMode;
+    final serverAcceptingLoads = _readTruckBool(assignedTruck, const [
+      'acceptingLoads',
+      'accepting_loads',
+    ]);
+    if (_optimisticAcceptingLoads != null &&
+        _optimisticAcceptingLoads == serverAcceptingLoads) {
+      _optimisticAcceptingLoads = null;
+    }
+    final acceptingLoads =
+        _optimisticAcceptingLoads ?? serverAcceptingLoads;
     _syncActiveTripReconciliation(activeTripId);
 
     ref.listen(driverRequestFeedProvider, (previous, next) {
       if (!mounted || _launchingActiveTrip) {
+        return;
+      }
+      // Wait till any in-progress accept/decline finishes — don't yank
+      // the user mid-flow.
+      if (_answeringRequestIds.isNotEmpty) {
         return;
       }
 
@@ -341,11 +498,31 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       );
       final nextAccepted = _acceptedRequestForUser(next.valueOrNull, userId);
 
-      if (nextAccepted != null &&
-          nextAccepted.id != previousAccepted?.id &&
-          nextAccepted.driverId == userId) {
-        unawaited(_goToActiveTrip());
+      if (nextAccepted == null || nextAccepted.driverId != userId) {
+        return;
       }
+      // Same accepted request as before (or already auto-opened, e.g.
+      // provider refresh nulls `previous` during loading) — stay put,
+      // never loop.
+      if (nextAccepted.id == previousAccepted?.id ||
+          _autoNavigatedAcceptedIds.contains(nextAccepted.id)) {
+        return;
+      }
+      // User already left home to complete the flow (negotiation /
+      // tracking / detail page) — let them stay there.
+      try {
+        final path = GoRouterState.of(context).uri.path;
+        if (path.contains('delivery-details') ||
+            path.contains('/driver/request') ||
+            path.contains('complete/')) {
+          _autoNavigatedAcceptedIds.add(nextAccepted.id);
+          return;
+        }
+      } catch (_) {
+        // Router not ready — fall through to navigate.
+      }
+      _autoNavigatedAcceptedIds.add(nextAccepted.id);
+      unawaited(_goToActiveTrip());
     });
 
     return SafeArea(
@@ -444,9 +621,24 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 18),
+            if (assignedTruck != null) ...[
+              const SizedBox(height: 10),
+              _TruckModeCard(
+                partTruckMode: partTruckMode,
+                acceptingLoads: acceptingLoads,
+                togglingMode: _togglingTruckMode,
+                togglingLoads: _togglingAcceptingLoads,
+                onSelectFullTruck: () =>
+                    _setTruckMode(assignedTruck, partTruckMode: false),
+                onSelectPartTruck: () =>
+                    _setTruckMode(assignedTruck, partTruckMode: true),
+                onToggleAcceptingLoads: () =>
+                    _toggleAcceptingLoads(assignedTruck),
+              ),
+            ],
+            const SizedBox(height: 12),
             const Divider(height: 1, thickness: 1, color: AppColors.divider),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -461,7 +653,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 IconButton(
                   onPressed: () {
                     ref.read(driverRequestFeedProvider.notifier).refresh();
-                    ref.invalidate(partLoadInboxProvider);
                   },
                   icon: const Icon(AppIcons.refresh_rounded),
                   tooltip: l10n.refreshRequests,
@@ -482,29 +673,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 subtitle: l10n.activeSessionNeededForRequests,
               )
             else ...[
-              _RequestTabs(
-                selected: _requestTab,
-                directCount: requestsAsync.valueOrNull
-                        ?.where((request) => request.isVisibleInNewTravel)
-                        .length ??
-                    0,
-                sharedCount: ref.watch(partLoadPendingCountProvider),
-                onChanged: (index) =>
-                    setState(() => _requestTab = index),
-              ),
-              const SizedBox(height: 6),
               Text(
                 'Respond within 2 minutes — after that your broker can act on your behalf.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColors.textTertiary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 12),
-              if (_requestTab == 1)
-                const PartLoadInboxList(embedded: true)
-              else
-                requestsAsync.when(
+              requestsAsync.when(
                 loading: () => _EmptyStateCard(
                   icon: AppIcons.hourglass_top_rounded,
                   title: l10n.loadingRequests,
@@ -516,9 +693,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (requests) {
-                  final newRequests = requests
-                      .where((request) => request.isVisibleInNewTravel)
-                      .toList();
+                  // Hide duplicates of the already-accepted active trip —
+                  // accepting those always fails with "offer not valid".
+                  final newRequests = requests.where((request) {
+                    if (!request.isVisibleInNewTravel) return false;
+                    if (hasActiveTrip &&
+                        request.tripId.trim().isNotEmpty &&
+                        request.tripId.trim() == activeTripId) {
+                      return false;
+                    }
+                    return true;
+                  }).toList();
 
                   if (newRequests.isEmpty) {
                     return _EmptyStateCard(
@@ -603,147 +788,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 }
 
-/// Part-Load tab switch — mirrors web driver Requests.jsx: Direct Requests
-/// vs Part-Load Requests with pending-count badges, not one merged list.
-class _RequestTabs extends StatelessWidget {
-  const _RequestTabs({
-    required this.selected,
-    required this.directCount,
-    required this.sharedCount,
-    required this.onChanged,
-  });
-
-  final int selected;
-  final int directCount;
-  final int sharedCount;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.fillSubtle,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _RequestTabButton(
-              label: 'Direct Requests',
-              icon: AppIcons.handshake_rounded,
-              count: directCount,
-              selected: selected == 0,
-              onTap: () => onChanged(0),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _RequestTabButton(
-              label: 'Part-Load Requests',
-              icon: AppIcons.inventory_2_rounded,
-              count: sharedCount,
-              countTinted: true,
-              selected: selected == 1,
-              onTap: () => onChanged(1),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RequestTabButton extends StatelessWidget {
-  const _RequestTabButton({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-    this.icon,
-    this.countTinted = false,
-  });
-
-  final String label;
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
-  final IconData? icon;
-  final bool countTinted;
-
-  @override
-  Widget build(BuildContext context) {
-    final iconData = icon;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: selected ? AppShadows.card : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (iconData != null) ...[
-              Icon(
-                iconData,
-                size: 13,
-                color: selected
-                    ? AppColors.brand
-                    : AppColors.textTertiary,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: selected
-                          ? AppColors.textPrimary
-                          : AppColors.textTertiary,
-                    ),
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      countTinted ? AppColors.brandTint : AppColors.divider,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '$count',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: countTinted
-                            ? AppColors.brand
-                            : AppColors.textSecondary,
-                      ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _HomeLifecycleObserver extends WidgetsBindingObserver {
   _HomeLifecycleObserver({required this.onResume});
 
@@ -754,6 +798,232 @@ class _HomeLifecycleObserver extends WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       onResume();
     }
+  }
+}
+
+class _TruckModeCard extends StatelessWidget {
+  const _TruckModeCard({
+    required this.partTruckMode,
+    required this.acceptingLoads,
+    required this.togglingMode,
+    required this.togglingLoads,
+    required this.onSelectFullTruck,
+    required this.onSelectPartTruck,
+    required this.onToggleAcceptingLoads,
+  });
+
+  final bool partTruckMode;
+  final bool acceptingLoads;
+  final bool togglingMode;
+  final bool togglingLoads;
+  final VoidCallback onSelectFullTruck;
+  final VoidCallback onSelectPartTruck;
+  final VoidCallback onToggleAcceptingLoads;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.fillSubtle,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _TruckModeOptionBox(
+                  title: 'Full Truck',
+                  subtitle: 'Full load',
+                  icon: AppIcons.local_shipping_rounded,
+                  selected: !partTruckMode,
+                  busy: togglingMode && !partTruckMode,
+                  onTap: onSelectFullTruck,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: _TruckModeOptionBox(
+                  title: 'Part Truck',
+                  subtitle: 'Shared',
+                  icon: AppIcons.package_plus_rounded,
+                  selected: partTruckMode,
+                  busy: togglingMode && partTruckMode,
+                  onTap: onSelectPartTruck,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Mark-full control — only in Part Truck section.
+        if (partTruckMode) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              // Never block on sync — optimistic state already flipped.
+              onPressed: onToggleAcceptingLoads,
+              icon: togglingLoads
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      acceptingLoads
+                          ? AppIcons.inventory_2_rounded
+                          : AppIcons.package_plus_rounded,
+                      size: 16,
+                    ),
+              label: Text(
+                togglingLoads
+                    ? 'Updating…'
+                    : acceptingLoads
+                        ? 'Mark Truck as Full'
+                        : 'Truck Full — Tap to Accept More',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: acceptingLoads
+                    ? AppColors.textPrimary
+                    : Colors.white,
+                backgroundColor: acceptingLoads
+                    ? AppColors.surface
+                    : AppColors.dangerIcon,
+                side: BorderSide(
+                  color: acceptingLoads
+                      ? AppColors.divider
+                      : AppColors.dangerIcon,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _TruckModeOptionBox extends StatelessWidget {
+  const _TruckModeOptionBox({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      // Never block taps while syncing — optimistic state already flipped,
+      // so rapid Full <-> Part switching stays instant.
+      onTap: selected ? null : onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.brand : Colors.transparent,
+            width: 1.2,
+          ),
+          boxShadow: selected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 17,
+              color: selected ? AppColors.brand : AppColors.textTertiary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                      height: 1.15,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10.5,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            if (busy)
+              const SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else if (selected)
+              const Icon(
+                AppIcons.check_circle_rounded,
+                size: 15,
+                color: AppColors.brand,
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -869,6 +1139,10 @@ class _DeliveryOrderCard extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (request.isPartLoad) ...[
+                      const SizedBox(height: 6),
+                      const _DriverPartLoadBadge(),
+                    ],
                   ],
                 ),
               ),
@@ -922,6 +1196,10 @@ class _DeliveryOrderCard extends StatelessWidget {
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
             _BrokerAssignedNotice(),
+          ],
+          if (request.isPartLoad) ...[
+            const SizedBox(height: 12),
+            _DriverPartLoadNotice(request: request),
           ],
           const SizedBox(height: 14),
           if (brokerAssigned)
@@ -1028,6 +1306,10 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (request.isPartLoad) ...[
+                      const SizedBox(height: 6),
+                      const _DriverPartLoadBadge(),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       request.clientName.isNotEmpty
@@ -1110,6 +1392,10 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
             _BrokerAssignedNotice(),
+          ],
+          if (request.isPartLoad) ...[
+            const SizedBox(height: 12),
+            _DriverPartLoadNotice(request: request),
           ],
           const SizedBox(height: 14),
           if (brokerAssigned) ...[
@@ -1212,6 +1498,69 @@ class _BrokerAssignedActions extends StatelessWidget {
   }
 }
 
+class _DriverPartLoadBadge extends StatelessWidget {
+  const _DriverPartLoadBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.brandTint,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        'Part Truck',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: AppColors.brand,
+          fontWeight: FontWeight.w900,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverPartLoadNotice extends StatelessWidget {
+  const _DriverPartLoadNotice({required this.request});
+
+  final DriverRequestItem request;
+
+  String _tons(double value) =>
+      '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}t';
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[
+      if (request.weight.isNotEmpty) 'Load ${request.weight}',
+      if (request.truckCapacityTons != null)
+        'Capacity ${_tons(request.truckCapacityTons!)}',
+      if (request.truckSpareTons != null)
+        'Spare ${_tons(request.truckSpareTons!)}',
+    ];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.brandFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.brandBorder),
+      ),
+      child: Text(
+        [
+          'Second load request for your truck.',
+          if (parts.isNotEmpty) parts.join(' • '),
+        ].join(' '),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w700,
+          height: 1.35,
+        ),
+      ),
+    );
+  }
+}
+
 class _BrokerAssignedNotice extends StatelessWidget {
   const _BrokerAssignedNotice();
 
@@ -1301,9 +1650,9 @@ class _RoutePointCard extends StatelessWidget {
           Text(
             hasValue
                 ? parts.title
-                : AppLocalizations.of(context)!.driverHomeLocationFallback(
-                    label,
-                  ),
+                : AppLocalizations.of(
+                    context,
+                  )!.driverHomeLocationFallback(label),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

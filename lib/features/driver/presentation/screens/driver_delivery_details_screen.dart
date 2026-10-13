@@ -22,6 +22,7 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
+import '../../data/driver_request_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../../part_load/part_load_active_trips.dart';
 import '../../../part_load/part_load_providers.dart';
@@ -213,7 +214,11 @@ class _DriverDeliveryDetailsScreenState
   bool _reloadTripAfterInFlight = false;
   String? _resolvedTripId;
   bool _awaitingOverlayPermission = false;
-  late final PageController _tripPagerController;
+  bool _requestSheetOpen = false;
+  bool _togglingAcceptingLoads = false;
+  bool? _optimisticAcceptingLoads;
+  int _acceptingLoadsSeq = 0;
+  final Set<String> _shownRequestSheetIds = <String>{};
   int _tripPagerIndex = 0;
 
   String get _tripId => _resolvedTripId?.trim().isNotEmpty == true
@@ -257,10 +262,158 @@ class _DriverDeliveryDetailsScreenState
     ref.read(driverTripSessionProvider.notifier).state = null;
   }
 
+  bool _readTruckBool(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return false;
+    for (final key in keys) {
+      final value = json[key];
+      if (value is bool) return value;
+      final normalized = value?.toString().trim().toLowerCase();
+      if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+        return true;
+      }
+      if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _toggleAcceptingLoads(Map<String, dynamic>? truck) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || truck == null) return;
+    final serverCurrent = _readTruckBool(truck, const [
+      'acceptingLoads',
+      'accepting_loads',
+    ]);
+    final effective = _optimisticAcceptingLoads ?? serverCurrent;
+    final desired = !effective;
+    // Instant flip — sync in background so the button never feels stuck.
+    final seq = ++_acceptingLoadsSeq;
+    setState(() {
+      _optimisticAcceptingLoads = desired;
+      _togglingAcceptingLoads = true;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .updateDriverAcceptingLoads(
+            accessToken: session.tokens.accessToken,
+            acceptingLoads: desired,
+          );
+      if (seq != _acceptingLoadsSeq) return; // superseded by a newer tap
+      ref.invalidate(driverDashboardProvider);
+    } on ApiException catch (error) {
+      if (seq != _acceptingLoadsSeq) return;
+      if (mounted) {
+        setState(() => _optimisticAcceptingLoads = serverCurrent);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted && seq == _acceptingLoadsSeq) {
+        setState(() => _togglingAcceptingLoads = false);
+      }
+    }
+  }
+
+  Set<String> _knownTripKeys() {
+    final keys = <String>{};
+    void add(Object? value) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty) keys.add(text);
+    }
+
+    add(_tripId);
+    add(_bookingId);
+    add(_resolvedTripId);
+    add(_resolvedBookingId);
+    add(_shipment?.tripId);
+    add(_shipment?.bookingId);
+    add(_shipment?.trackingId);
+    for (final s in _siblingTrips) {
+      add(_keyOf(s));
+      add(s.tripId);
+      add(s.bookingId);
+      add(s.trackingId);
+    }
+    add(_tripRaw['bookingNumber']);
+    add(_tripRaw['booking_number']);
+    add(_tripRaw['bookingId']);
+    add(_tripRaw['booking_id']);
+    return keys;
+  }
+
+  String _normalizeRef(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  bool _isRequestForKnownTrip(DriverRequestItem request) {
+    final keys = _knownTripKeys();
+    if (keys.isEmpty) return false;
+    final normalizedKeys = <String>{
+      for (final key in keys)
+        if (_normalizeRef(key).isNotEmpty) _normalizeRef(key),
+    };
+    bool hit(String value) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return false;
+      if (keys.contains(trimmed)) return true;
+      final normalized = _normalizeRef(trimmed);
+      return normalized.isNotEmpty && normalizedKeys.contains(normalized);
+    }
+
+    return hit(request.tripId) ||
+        hit(request.bookingId) ||
+        hit(request.bookingNumber);
+  }
+
+  void _maybeShowIncomingRequestSheet(List<DriverRequestItem>? requests) {
+    if (!mounted || _requestSheetOpen || requests == null) return;
+    // Trip not loaded yet — known-trip keys are incomplete (siblings/raw
+    // still in flight). Defer WITHOUT marking shown, so the just-accepted
+    // load can't misclassify as new; re-evaluated on the next build.
+    if (_loadingTrip && _tripRaw.isEmpty && _shipment == null) return;
+    final visible = requests.where((request) {
+      return request.isVisibleInNewTravel &&
+          request.id.isNotEmpty &&
+          !_shownRequestSheetIds.contains(request.id) &&
+          !_isRequestForKnownTrip(request);
+    }).toList();
+    if (visible.isEmpty) return;
+    final request = visible.first;
+    _shownRequestSheetIds.add(request.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _requestSheetOpen) return;
+      unawaited(_showIncomingRequestSheet(request));
+    });
+  }
+
+  Future<void> _showIncomingRequestSheet(DriverRequestItem request) async {
+    setState(() => _requestSheetOpen = true);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (sheetContext) => _IncomingDriverRequestSheet(
+        request: request,
+        onOpen: () {
+          Navigator.of(sheetContext).pop();
+          context.push('/driver/request', extra: request.raw);
+        },
+      ),
+    );
+    if (mounted) {
+      setState(() => _requestSheetOpen = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _tripPagerController = PageController();
     WidgetsBinding.instance.addObserver(this);
     final initialTripId = widget.tripId.trim();
     if (initialTripId.isNotEmpty) {
@@ -287,7 +440,6 @@ class _DriverDeliveryDetailsScreenState
     _tripRefreshTimer?.cancel();
     _tripStatusSubscription?.cancel();
     _tripJoinRequestSubscription?.cancel();
-    _tripPagerController.dispose();
     unawaited(DriverExternalNavigationService.hideBubble());
     super.dispose();
   }
@@ -442,10 +594,14 @@ class _DriverDeliveryDetailsScreenState
         }
       }
 
+      // Pin this load: if the driver swipes to another load mid-flight,
+      // the late response must not overwrite the newly viewed trip.
+      final requestTripId = tripId;
       final response = await api.getTrip(
         accessToken: session.tokens.accessToken,
         tripId: tripId,
       );
+      if (!mounted || _tripId != requestTripId) return;
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -549,6 +705,7 @@ class _DriverDeliveryDetailsScreenState
   /// simultaneous trip (part-load accept) must be one swipe away on this
   /// screen — no tabs, no hunting. Failures stay silent.
   List<TrackingDemoShipment> _siblingTrips = const [];
+  Set<String> _siblingPartKeys = <String>{};
 
   String _keyOf(TrackingDemoShipment s) {
     final tripId = (s.tripId ?? '').trim();
@@ -648,6 +805,21 @@ class _DriverDeliveryDetailsScreenState
             (s.tripId ?? '').trim().isEmpty &&
             (s.bookingId ?? '').trim().isEmpty,
       );
+      // Collapse duplicate rows for the SAME trip id: two pills driving one
+      // trip id means one status PATCH visibly "advances both loads". Each
+      // card must own an individual trip.
+      final seenTripIds = <String>{};
+      parsed.removeWhere((s) {
+        final id = (s.tripId ?? '').trim();
+        if (id.isEmpty) return false;
+        if (seenTripIds.contains(id)) return true;
+        seenTripIds.add(id);
+        return false;
+      });
+      developer.log(
+        'Sibling loads resolved: ${parsed.map(_keyOf).toList()}',
+        name: 'driver.deliveryDetails',
+      );
       // Part-load trip always comes first: the pager, dots and map all
       // follow this order (part page → full page).
       parsed.sort((a, b) {
@@ -655,7 +827,10 @@ class _DriverDeliveryDetailsScreenState
         final bPart = partKeys.contains(_keyOf(b)) ? 0 : 1;
         return aPart.compareTo(bPart);
       });
-      setState(() => _siblingTrips = parsed);
+      setState(() {
+        _siblingTrips = parsed;
+        _siblingPartKeys = partKeys;
+      });
       _syncTripPagerToCurrentTrip();
     } catch (_) {
       // Best-effort only.
@@ -667,14 +842,7 @@ class _DriverDeliveryDetailsScreenState
       _tripPagerIndex = 0;
       return;
     }
-    final nextIndex = _dualTripIndex().clamp(0, _siblingTrips.length - 1);
-    _tripPagerIndex = nextIndex;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_tripPagerController.hasClients) return;
-      final currentPage = _tripPagerController.page?.round();
-      if (currentPage == nextIndex) return;
-      _tripPagerController.jumpToPage(nextIndex);
-    });
+    _tripPagerIndex = _dualTripIndex().clamp(0, _siblingTrips.length - 1);
   }
 
   void _switchToShipment(TrackingDemoShipment shipment) {
@@ -700,6 +868,11 @@ class _DriverDeliveryDetailsScreenState
       _arrivalFlowActive = false;
       _showArrivalSwipe = false;
       _completingStopIndex = null;
+      // Drop the old load's status immediately: _tripStatus is shared across
+      // loads, and keeping it would show (and act on) the wrong load's
+      // transition until the new trip finishes loading. Empty also makes the
+      // fresh snapshot always accepted by _mayApplyTripStatus.
+      _tripStatus = '';
     });
     unawaited(_loadTrip());
   }
@@ -732,6 +905,14 @@ class _DriverDeliveryDetailsScreenState
 
   Future<void> _advanceTripStatus() async {
     final l10n = AppLocalizations.of(context)!;
+    // Never act on mixed state: right after switching loads the shared
+    // _tripStatus still describes the previous load until reload finishes.
+    if (_loadingTrip) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.tripStillSyncing)),
+      );
+      return;
+    }
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
     if (nextStatus == 'picked_up') {
@@ -766,6 +947,9 @@ class _DriverDeliveryDetailsScreenState
     }
 
     if (!mounted) return;
+    // Pin the action to this load — a pill switch mid-flight must not let
+    // the response land on the newly viewed trip.
+    final actionTripId = _tripId;
     setState(() => _loadingTrip = true);
 
     // Fire-and-forget: the status update must not wait on a satellite fix.
@@ -773,7 +957,7 @@ class _DriverDeliveryDetailsScreenState
 
     try {
       developer.log(
-        'Sending trip status update to backend. tripId=$_tripId status=$nextStatus',
+        'Sending trip status update to backend. tripId=$actionTripId status=$nextStatus',
         name: 'driver.deliveryDetails',
       );
       final apiStopwatch = Stopwatch()..start();
@@ -781,14 +965,15 @@ class _DriverDeliveryDetailsScreenState
           .read(apiClientProvider)
           .updateTripStatus(
             accessToken: session.tokens.accessToken,
-            tripId: _tripId,
+            tripId: actionTripId,
             status: nextStatus,
           );
       apiStopwatch.stop();
       developer.log(
-        'Backend returned trip status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId status=$nextStatus',
+        'Backend returned trip status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$actionTripId status=$nextStatus',
         name: 'driver.deliveryDetails',
       );
+      if (!mounted || _tripId != actionTripId) return;
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -885,6 +1070,14 @@ class _DriverDeliveryDetailsScreenState
     if (_completingStopIndex != null) {
       return;
     }
+    // Stops shown belong to the loaded trip — refuse while a load switch is
+    // still resolving, else the index lands on the wrong trip.
+    if (_loadingTrip) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.tripStillSyncing)),
+      );
+      return;
+    }
 
     final messenger = ScaffoldMessenger.of(context);
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -901,6 +1094,7 @@ class _DriverDeliveryDetailsScreenState
         return;
       }
     }
+    final stopTripId = _tripId;
 
     setState(() => _completingStopIndex = index);
     // Fire-and-forget: completing a stop must not wait on a satellite fix.
@@ -910,9 +1104,11 @@ class _DriverDeliveryDetailsScreenState
           .read(apiClientProvider)
           .completeTripStop(
             accessToken: session.tokens.accessToken,
-            tripId: _tripId,
+            tripId: stopTripId,
             index: index,
           );
+      // Driver switched loads mid-flight — drop the stale snapshot.
+      if (!mounted || _tripId != stopTripId) return;
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -963,26 +1159,38 @@ class _DriverDeliveryDetailsScreenState
   }
 
   Future<void> _showPickupOtpPrompt() async {
+    // Pin the OTP to this load: the dialog can outlive a load switch, and
+    // submitting against the newly viewed trip would advance the wrong load.
+    final otpTripId = _tripId;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _PickupOtpDialog(onSubmit: _submitPickupOtp),
+      builder: (_) => _PickupOtpDialog(
+        onSubmit: (pickupOtp) => _submitPickupOtp(pickupOtp, tripId: otpTripId),
+      ),
     );
   }
 
-  Future<String?> _submitPickupOtp(String pickupOtp) async {
+  Future<String?> _submitPickupOtp(String pickupOtp, {String tripId = ''}) async {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
     final stopwatch = Stopwatch()..start();
+    var resolvedTripId = tripId.trim().isNotEmpty ? tripId.trim() : _tripId;
     developer.log(
-      'Pickup OTP confirmation started. tripId=$_tripId',
+      'Pickup OTP confirmation started. tripId=$resolvedTripId',
       name: 'driver.deliveryDetails',
     );
-    if (_tripId.isEmpty) {
+    if (resolvedTripId.isEmpty) {
       await _loadTrip();
       if (_tripId.isEmpty) {
         return l10n.tripStillSyncing;
       }
+      resolvedTripId = _tripId;
+    }
+    // Driver swiped to another load while the dialog was open — refuse
+    // rather than advancing the wrong trip.
+    if (resolvedTripId != _tripId) {
+      return l10n.tripStillSyncing;
     }
 
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -997,7 +1205,7 @@ class _DriverDeliveryDetailsScreenState
 
     try {
       developer.log(
-        'Sending pickup OTP status update to backend. tripId=$_tripId',
+        'Sending pickup OTP status update to backend. tripId=$resolvedTripId',
         name: 'driver.deliveryDetails',
       );
       final apiStopwatch = Stopwatch()..start();
@@ -1005,15 +1213,17 @@ class _DriverDeliveryDetailsScreenState
           .read(apiClientProvider)
           .updateTripStatus(
             accessToken: session.tokens.accessToken,
-            tripId: _tripId,
+            tripId: resolvedTripId,
             status: 'picked_up',
             pickupOtp: pickupOtp,
           );
       apiStopwatch.stop();
       developer.log(
-        'Backend returned pickup OTP status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId',
+        'Backend returned pickup OTP status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$resolvedTripId',
         name: 'driver.deliveryDetails',
       );
+      // Driver switched loads mid-flight — drop the stale snapshot.
+      if (!mounted || _tripId != resolvedTripId) return null;
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -1318,7 +1528,7 @@ class _DriverDeliveryDetailsScreenState
             if (_siblingTrips.length >= 2)
               _DualTripPager(
                 trips: _siblingTrips,
-                controller: _tripPagerController,
+                partKeys: _siblingPartKeys,
                 currentIndex: _tripPagerIndex,
                 onPageChanged: (index) {
                   if (index < 0 || index >= _siblingTrips.length) return;
@@ -1326,7 +1536,7 @@ class _DriverDeliveryDetailsScreenState
                   _switchToShipment(_siblingTrips[index]);
                 },
               ),
-            if (_siblingTrips.length >= 2) const SizedBox(height: 4),
+            if (_siblingTrips.length >= 2) const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -1622,6 +1832,55 @@ class _DriverDeliveryDetailsScreenState
           );
       if (!mounted) return;
       ref.invalidate(driverDashboardProvider);
+      // Part-truck: another load may still be active — stay on tracking and
+      // switch to it instead of dropping to home. Home redirect only when
+      // no active trips remain (full-truck case / last load declined).
+      final declinedTripId = _tripId;
+      final declinedBookingId = _bookingId;
+      try {
+        final activeResponse = await ref
+            .read(apiClientProvider)
+            .getActiveTrip(accessToken: session.tokens.accessToken);
+        // Match on trip + booking refs (not raw trip-id equality): the
+        // server can echo the just-declined trip with a different id shape,
+        // which previously looked like a "remaining" load and stranded a
+        // single part-truck decline on tracking instead of home.
+        final remaining = extractAllActiveTrips(activeResponse)
+            .where(
+              (trip) => !tripMatchesContext(
+                trip,
+                bookingId: declinedBookingId,
+                tripId: declinedTripId,
+              ),
+            )
+            .toList();
+        final nextTripId = remaining.isNotEmpty
+            ? extractTripId(remaining.first)
+            : '';
+        if (remaining.isNotEmpty && nextTripId.isNotEmpty && mounted) {
+          ref.read(driverActiveTripIdProvider.notifier).state = nextTripId;
+          setState(() {
+            _resolvedTripId = nextTripId;
+            _resolvedBookingId = null;
+            _loadingTrip = true;
+            _arrivalFlowActive = false;
+            _showArrivalSwipe = false;
+            _completingStopIndex = null;
+          });
+          _setTripSession(tripId: nextTripId);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.tripDeclined),
+            ),
+          );
+          unawaited(_loadTrip());
+          unawaited(_loadSiblingTrips());
+          return;
+        }
+      } catch (_) {
+        // Best-effort — fall through to the home redirect.
+      }
+      if (!mounted) return;
       ref.read(driverActiveTripIdProvider.notifier).state = null;
       ref.read(driverTripSessionProvider.notifier).state = null;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2436,6 +2695,32 @@ class _DriverDeliveryDetailsScreenState
       ref.invalidate(driverDashboardProvider);
       unawaited(_loadSiblingTrips());
     });
+    final requestsAsync = ref.watch(driverRequestFeedProvider);
+    _maybeShowIncomingRequestSheet(requestsAsync.valueOrNull);
+    ref.listen<AsyncValue<List<DriverRequestItem>>>(driverRequestFeedProvider, (
+      previous,
+      next,
+    ) {
+      _maybeShowIncomingRequestSheet(next.valueOrNull);
+    });
+    final assignedTruck = ref
+        .watch(driverDashboardProvider)
+        .valueOrNull
+        ?.assignedTruck;
+    final partTruckMode = _readTruckBool(assignedTruck, const [
+      'partTruckMode',
+      'part_truck_mode',
+    ]);
+    final serverAcceptingLoads = _readTruckBool(assignedTruck, const [
+      'acceptingLoads',
+      'accepting_loads',
+    ]);
+    if (_optimisticAcceptingLoads != null &&
+        _optimisticAcceptingLoads == serverAcceptingLoads) {
+      _optimisticAcceptingLoads = null;
+    }
+    final acceptingLoads =
+        _optimisticAcceptingLoads ?? serverAcceptingLoads;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -2545,6 +2830,21 @@ class _DriverDeliveryDetailsScreenState
               ),
             ),
           ),
+          if (partTruckMode)
+            SafeArea(
+              bottom: false,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 60, right: 14),
+                  child: _TruckFullActionButton(
+                    acceptingLoads: acceptingLoads,
+                    busy: _togglingAcceptingLoads,
+                    onPressed: () => _toggleAcceptingLoads(assignedTruck),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             left: 14,
             right: 14,
@@ -2583,140 +2883,523 @@ class _DriverDeliveryDetailsScreenState
   }
 }
 
-/// Load pager living inside the bottom dialog. It is intentionally compact:
-/// swiping this strip switches the active trip, then the map/actions below
-/// refresh to match the selected load.
-class _DualTripPager extends StatelessWidget {
+class _TruckFullActionButton extends StatelessWidget {
+  const _TruckFullActionButton({
+    required this.acceptingLoads,
+    required this.busy,
+    required this.onPressed,
+  });
+
+  final bool acceptingLoads;
+  final bool busy;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: OutlinedButton.icon(
+        // Never block on sync — optimistic state already flipped.
+        onPressed: onPressed,
+        icon: busy
+            ? const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                acceptingLoads
+                    ? AppIcons.inventory_2_rounded
+                    : AppIcons.package_plus_rounded,
+                size: 16,
+              ),
+        label: Text(
+          acceptingLoads ? 'Mark Truck as Full' : 'Accept More Loads',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: acceptingLoads
+              ? AppColors.textPrimary
+              : Colors.white,
+          backgroundColor: acceptingLoads
+              ? Colors.white.withValues(alpha: 0.96)
+              : AppColors.dangerIcon,
+          side: BorderSide(
+            color: acceptingLoads ? AppColors.divider : AppColors.dangerIcon,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+          textStyle: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+      ),
+    );
+  }
+}
+
+class _IncomingDriverRequestSheet extends StatelessWidget {
+  const _IncomingDriverRequestSheet({
+    required this.request,
+    required this.onOpen,
+  });
+
+  final DriverRequestItem request;
+  final VoidCallback onOpen;
+
+  String _tons(double value) =>
+      '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}t';
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final amount = request.amount > 0
+        ? 'Rs ${request.amount.toStringAsFixed(request.amount % 1 == 0 ? 0 : 2)}'
+        : 'New request';
+    final metrics = <String>[
+      if (request.weight.isNotEmpty) 'Load ${request.weight}',
+      if (request.truckCapacityTons != null)
+        'Capacity ${_tons(request.truckCapacityTons!)}',
+      if (request.truckSpareTons != null)
+        'Spare ${_tons(request.truckSpareTons!)}',
+    ];
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14, 0, 14, 14 + bottomInset),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppShadows.float,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      request.isPartLoad
+                          ? 'New Part Truck Request'
+                          : 'New Delivery Request',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandTint,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      amount,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.brand,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (request.isPartLoad) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFFDF6),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFB9E8D0)),
+                    ),
+                    child: Text(
+                      'Part Truck',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF167247),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              _IncomingRouteLine(
+                icon: AppIcons.radio_button_checked_rounded,
+                color: AppColors.brand,
+                label: 'Pickup',
+                value: request.pickup.isEmpty ? 'Pickup' : request.pickup,
+              ),
+              const SizedBox(height: 10),
+              _IncomingRouteLine(
+                icon: AppIcons.location_on_rounded,
+                color: AppColors.dangerIcon,
+                label: 'Drop',
+                value: request.drop.isEmpty ? 'Drop' : request.drop,
+              ),
+              if (metrics.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  metrics.join(' / '),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('Later'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: onOpen,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('Open Request'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IncomingRouteLine extends StatelessWidget {
+  const _IncomingRouteLine({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.textTertiary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Slim load switcher fused into the single bottom dialog — one segmented
+/// strip, no card-in-card. Tap a load to switch; a horizontal swipe on the
+/// strip does the same. Labels come from the real part-load flag per trip,
+/// so a second full load never mislabels as "Part".
+/// Scales to 6–7+ loads: fixed-width pills in a horizontal scroll view that
+/// auto-scrolls to the selected load, instead of squeezing N pills into one
+/// row.
+class _DualTripPager extends StatefulWidget {
   const _DualTripPager({
     required this.trips,
-    required this.controller,
+    required this.partKeys,
     required this.currentIndex,
     required this.onPageChanged,
   });
 
   final List<TrackingDemoShipment> trips;
-  final PageController controller;
+  final Set<String> partKeys;
   final int currentIndex;
   final ValueChanged<int> onPageChanged;
 
   @override
+  State<_DualTripPager> createState() => _DualTripPagerState();
+}
+
+class _DualTripPagerState extends State<_DualTripPager> {
+  static const double _pillWidth = 158;
+  static const double _pillGap = 4;
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+  }
+
+  @override
+  void didUpdateWidget(covariant _DualTripPager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex ||
+        oldWidget.trips.length != widget.trips.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  String _pagerKey(TrackingDemoShipment trip) {
+    final tripId = (trip.tripId ?? '').trim();
+    if (tripId.isNotEmpty) return tripId;
+    return (trip.bookingId ?? '').trim();
+  }
+
+  void _step(int delta) {
+    final next = (widget.currentIndex + delta).clamp(
+      0,
+      widget.trips.length - 1,
+    );
+    if (next != widget.currentIndex) widget.onPageChanged(next);
+  }
+
+  void _scrollToCurrent() {
+    if (!_scrollController.hasClients || widget.trips.isEmpty) return;
+    final maxOffset = _scrollController.position.maxScrollExtent;
+    final target =
+        (widget.currentIndex * (_pillWidth + _pillGap) - 40).clamp(0.0, maxOffset);
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 46,
-            height: 5,
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: AppColors.line,
-              borderRadius: BorderRadius.circular(999),
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${widget.trips.length} loads • swipe or tap to switch',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: AppColors.textTertiary,
+            fontWeight: FontWeight.w700,
+            fontSize: 10.5,
           ),
-          SizedBox(
-            height: 84,
-            child: PageView.builder(
-              controller: controller,
-              itemCount: trips.length,
-              onPageChanged: onPageChanged,
-              itemBuilder: (context, index) {
-                final trip = trips[index];
-                final isPart = index == 0;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isPart
-                          ? AppColors.brandTint
-                          : AppColors.fillSubtle,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: index == currentIndex
-                            ? AppColors.brandBorder
-                            : AppColors.line,
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+            if (velocity < -200) {
+              _step(1);
+            } else if (velocity > 200) {
+              _step(-1);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.fillSubtle,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.divider),
+            ),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (var i = 0; i < widget.trips.length; i++) ...[
+                    if (i > 0) const SizedBox(width: _pillGap),
+                    SizedBox(
+                      width: _pillWidth,
+                      child: _LoadPill(
+                        label: 'Load ${i + 1}',
+                        typeLabel: widget.partKeys.contains(
+                          _pagerKey(widget.trips[i]),
+                        )
+                            ? 'Part'
+                            : 'Full',
+                        route:
+                            '${widget.trips[i].fromLocation} → ${widget.trips[i].toLocation}',
+                        selected: i == widget.currentIndex,
+                        onTap: i == widget.currentIndex
+                            ? null
+                            : () => widget.onPageChanged(i),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            isPart
-                                ? AppIcons.inventory_2_outlined
-                                : AppIcons.local_shipping_rounded,
-                            color: AppColors.brand,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isPart ? 'Part truck' : 'Full truck',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${trip.fromLocation} → ${trip.toLocation}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          AppIcons.drag_indicator_rounded,
-                          color: AppColors.textTertiary,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < trips.length; i++)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == currentIndex ? 24 : 7,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == currentIndex
-                        ? AppColors.brand
-                        : AppColors.textTertiary.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-            ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LoadPill extends StatelessWidget {
+  const _LoadPill({
+    required this.label,
+    required this.typeLabel,
+    required this.route,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String typeLabel;
+  final String route;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isPart = typeLabel == 'Part';
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.brand : Colors.transparent,
+            width: 1.2,
           ),
-        ],
+          boxShadow: selected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isPart ? AppColors.brand : AppColors.textTertiary,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$label • $typeLabel',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      height: 1.15,
+                    ),
+                  ),
+                  Text(
+                    route,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10.5,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              const Icon(
+                AppIcons.check_circle_rounded,
+                size: 14,
+                color: AppColors.brand,
+              ),
+          ],
+        ),
       ),
     );
   }

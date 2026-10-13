@@ -19,6 +19,7 @@ class BookingData {
     this.quantity = 1,
     this.weightUnit = 'tons',
     this.truckCategory = '',
+    this.partTruckSizeCategory = '',
     this.truckBodyType = '',
     this.scheduledDate,
     this.distance = 0,
@@ -58,6 +59,11 @@ class BookingData {
   final int quantity;
   final String weightUnit;
   final String truckCategory;
+
+  /// Optional size/category filter for Part Truck broadcasts. The booking
+  /// still sends `truck_category: part`; this only narrows matching.
+  final String partTruckSizeCategory;
+
   /// Optional open/closed structure filter (`''` = any). Sent as
   /// `truck_body_type` on `POST /api/bookings`, never on the quote call
   /// (pricing doesn't use it). Web parity: BookTruck.jsx `truckBodyType`.
@@ -110,6 +116,7 @@ class BookingData {
     int? quantity,
     String? weightUnit,
     String? truckCategory,
+    String? partTruckSizeCategory,
     String? truckBodyType,
     DateTime? scheduledDate,
     double? distance,
@@ -149,6 +156,8 @@ class BookingData {
       quantity: quantity ?? this.quantity,
       weightUnit: weightUnit ?? this.weightUnit,
       truckCategory: truckCategory ?? this.truckCategory,
+      partTruckSizeCategory:
+          partTruckSizeCategory ?? this.partTruckSizeCategory,
       truckBodyType: truckBodyType ?? this.truckBodyType,
       scheduledDate: scheduledDate ?? this.scheduledDate,
       distance: distance ?? this.distance,
@@ -863,11 +872,7 @@ class TruckBodyTypeTag extends StatelessWidget {
   }
 }
 
-
-String localizedPaymentStatus(
-  AppLocalizations l10n,
-  String status,
-) {
+String localizedPaymentStatus(AppLocalizations l10n, String status) {
   final normalized = status.trim().toLowerCase();
   if (normalized.isEmpty) {
     return l10n.pending;
@@ -2069,7 +2074,8 @@ Future<void> showQuickBookingFlow(
     // back to the passed tripType when either city is unknown.
     final pickupCity = pickup.city.trim();
     final dropCity = drop.city.trim();
-    final sameCity = pickupCity.isNotEmpty &&
+    final sameCity =
+        pickupCity.isNotEmpty &&
         pickupCity.toLowerCase() == dropCity.toLowerCase();
     final resolvedTripType = pickupCity.isNotEmpty && dropCity.isNotEmpty
         ? (sameCity ? TripType.intraCity : TripType.interCity)
@@ -2095,16 +2101,16 @@ Future<void> showQuickBookingFlow(
       return;
     }
 
-      await Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(
-          builder: (context) => BookingLocationScreen(
-            tripType: resolvedTripType,
-            initialVehicleIndex: initialVehicleIndex ?? 0,
-            initialBookingData: bookingData,
-            skipLocationStep: true,
-          ),
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (context) => BookingLocationScreen(
+          tripType: resolvedTripType,
+          initialVehicleIndex: initialVehicleIndex ?? 0,
+          initialBookingData: bookingData,
+          skipLocationStep: true,
         ),
-      );
+      ),
+    );
   } finally {
     onClose?.call();
   }

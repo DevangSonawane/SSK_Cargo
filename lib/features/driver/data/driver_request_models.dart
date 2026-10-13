@@ -31,6 +31,9 @@ class DriverRequestItem {
     required this.amount,
     required this.status,
     required this.driverTimedOut,
+    required this.isPartLoad,
+    required this.truckCapacityTons,
+    required this.truckSpareTons,
     required this.offerCount,
     required this.respondentCountersUsed,
     required this.maxCountersPerSide,
@@ -61,6 +64,9 @@ class DriverRequestItem {
   final double amount;
   final String status;
   final bool driverTimedOut;
+  final bool isPartLoad;
+  final double? truckCapacityTons;
+  final double? truckSpareTons;
   final int offerCount;
   final int respondentCountersUsed;
   final int maxCountersPerSide;
@@ -226,6 +232,24 @@ class DriverRequestItem {
       amount: _readDouble(json, const ['amount', 'price', 'value']),
       status: status.isEmpty ? 'requested' : status,
       driverTimedOut: driverTimedOut,
+      isPartLoad: _readBool(json, const [
+        'isPartLoad',
+        'is_part_load',
+        'partLoad',
+        'part_load',
+      ]),
+      truckCapacityTons: _readOptionalDouble(json, const [
+        'truckCapacityTons',
+        'truck_capacity_tons',
+        'capacityTons',
+        'capacity_tons',
+      ]),
+      truckSpareTons: _readOptionalDouble(json, const [
+        'truckSpareTons',
+        'truck_spare_tons',
+        'spareTons',
+        'spare_tons',
+      ]),
       offerCount: offerHistory.length,
       respondentCountersUsed:
           _readInt(json, const [
@@ -283,6 +307,9 @@ class DriverRequestItem {
       amount: 0,
       status: 'requested',
       driverTimedOut: false,
+      isPartLoad: false,
+      truckCapacityTons: null,
+      truckSpareTons: null,
       offerCount: 0,
       respondentCountersUsed: 0,
       maxCountersPerSide: 0,
@@ -600,6 +627,17 @@ double _readDouble(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return 0;
+}
+
+double? _readOptionalDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+  return null;
 }
 
 bool _readBool(Map<String, dynamic> json, List<String> keys) {

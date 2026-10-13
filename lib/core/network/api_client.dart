@@ -147,7 +147,8 @@ class SskApiClient {
   Future<Map<String, dynamic>> logout({
     required String refreshToken,
     bool allDevices = false,
-  }) async {    developer.log(
+  }) async {
+    developer.log(
       'POST /api/auth/logout allDevices=$allDevices refreshTokenLength=${refreshToken.length}',
       name: 'SSK.API',
     );
@@ -869,10 +870,7 @@ class SskApiClient {
   Future<Map<String, dynamic>> getMonthlyHiringEnquiries({
     required String accessToken,
   }) async {
-    developer.log(
-      'GET /api/monthly-hiring/enquiries/mine',
-      name: 'SSK.API',
-    );
+    developer.log('GET /api/monthly-hiring/enquiries/mine', name: 'SSK.API');
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/monthly-hiring/enquiries/mine',
@@ -922,10 +920,7 @@ class SskApiClient {
   Future<Map<String, dynamic>> getMonthlyHiringListings({
     required String accessToken,
   }) async {
-    developer.log(
-      'GET /api/monthly-hiring/listings/mine',
-      name: 'SSK.API',
-    );
+    developer.log('GET /api/monthly-hiring/listings/mine', name: 'SSK.API');
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/monthly-hiring/listings/mine',
@@ -984,10 +979,7 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log(
-      'DELETE /api/monthly-hiring/listings/$id',
-      name: 'SSK.API',
-    );
+    developer.log('DELETE /api/monthly-hiring/listings/$id', name: 'SSK.API');
     return _request(
       () => _dio.delete<Map<String, dynamic>>(
         '/api/monthly-hiring/listings/$id',
@@ -1401,6 +1393,40 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/vehicles/drivers/me/truck',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateDriverTruckMode({
+    required String accessToken,
+    required bool partTruckMode,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/drivers/me/truck-mode part_truck_mode=$partTruckMode',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/truck-mode',
+        data: {'part_truck_mode': partTruckMode},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateDriverAcceptingLoads({
+    required String accessToken,
+    required bool acceptingLoads,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/drivers/me/accepting-loads accepting_loads=$acceptingLoads',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/accepting-loads',
+        data: {'accepting_loads': acceptingLoads},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -2733,8 +2759,7 @@ class SskApiClient {
         }
         if (parts.isNotEmpty) {
           final message = responseData['message']?.toString().trim() ?? '';
-          if (message.isEmpty ||
-              message.toLowerCase() == 'validation failed') {
+          if (message.isEmpty || message.toLowerCase() == 'validation failed') {
             return parts.join('; ');
           }
           return message;

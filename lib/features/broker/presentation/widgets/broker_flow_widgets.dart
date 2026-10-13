@@ -49,7 +49,8 @@ final brokerActiveJobsCountProvider = FutureProvider.autoDispose<int>((
       .watch(apiClientProvider)
       .getBookings(
         accessToken: session.tokens.accessToken,
-        status: 'assigned,accepted,confirmed,en_route_pickup,picked_up,in_transit',
+        status:
+            'assigned,accepted,confirmed,en_route_pickup,picked_up,in_transit',
         page: 1,
         limit: 1,
       )
@@ -284,6 +285,9 @@ class BrokerDriverRequest {
     required this.requestedAt,
     required this.updatedAt,
     required this.raw,
+    this.isPartLoad = false,
+    this.truckCapacityTons,
+    this.truckSpareTons,
   });
 
   final String id;
@@ -308,6 +312,9 @@ class BrokerDriverRequest {
   final bool driverTimedOut;
   final int offerCount;
   final bool isExpress;
+  final bool isPartLoad;
+  final double? truckCapacityTons;
+  final double? truckSpareTons;
   final DateTime? requestedAt;
   final DateTime? updatedAt;
   final Map<String, dynamic> raw;
@@ -449,6 +456,47 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     isExpress:
         _readBool(payload, const ['isExpress', 'is_express']) ||
         _readBool(source, const ['isExpress', 'is_express']),
+    isPartLoad:
+        _readBool(payload, const [
+          'isPartLoad',
+          'is_part_load',
+          'partLoad',
+          'part_load',
+        ]) ||
+        _readBool(source, const [
+          'isPartLoad',
+          'is_part_load',
+          'partLoad',
+          'part_load',
+        ]),
+    truckCapacityTons:
+        _readOptionalDouble(payload, const [
+          'truckCapacityTons',
+          'truck_capacity_tons',
+          'capacityTons',
+          'capacity_tons',
+        ]) ??
+        _readOptionalDouble(source, const [
+          'truckCapacityTons',
+          'truck_capacity_tons',
+          'capacityTons',
+          'capacity_tons',
+        ]) ??
+        _readOptionalDouble(truck, const ['capacityTons', 'capacity_tons']),
+    truckSpareTons:
+        _readOptionalDouble(payload, const [
+          'truckSpareTons',
+          'truck_spare_tons',
+          'spareTons',
+          'spare_tons',
+        ]) ??
+        _readOptionalDouble(source, const [
+          'truckSpareTons',
+          'truck_spare_tons',
+          'spareTons',
+          'spare_tons',
+        ]) ??
+        _readOptionalDouble(truck, const ['spareTons', 'spare_tons']),
     requestedAt: _parseDateTimeObject(
       payload['createdAt'] ?? payload['created_at'] ?? payload['requested_at'],
     ),
@@ -1268,6 +1316,35 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
     isExpress:
         _readBool(json, const ['isExpress', 'is_express']) ||
         _readBool(_asMap(json['booking']), const ['isExpress', 'is_express']),
+    isPartLoad:
+        _readBool(json, const [
+          'isPartLoad',
+          'is_part_load',
+          'partLoad',
+          'part_load',
+        ]) ||
+        _readBool(_asMap(json['booking']), const [
+          'isPartLoad',
+          'is_part_load',
+          'partLoad',
+          'part_load',
+        ]),
+    truckCapacityTons:
+        _readOptionalDouble(json, const [
+          'truckCapacityTons',
+          'truck_capacity_tons',
+          'capacityTons',
+          'capacity_tons',
+        ]) ??
+        _readOptionalDouble(truck, const ['capacityTons', 'capacity_tons']),
+    truckSpareTons:
+        _readOptionalDouble(json, const [
+          'truckSpareTons',
+          'truck_spare_tons',
+          'spareTons',
+          'spare_tons',
+        ]) ??
+        _readOptionalDouble(truck, const ['spareTons', 'spare_tons']),
     requestedAt: _parseDateTimeObject(
       json['createdAt'] ?? json['created_at'] ?? json['requested_at'],
     ),
@@ -1735,6 +1812,23 @@ double _readDouble(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return 0;
+}
+
+double? _readOptionalDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    final parsed = double.tryParse(value.toString().trim());
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 int? _readInt(Map<String, dynamic> json, List<String> keys) {
@@ -3319,9 +3413,7 @@ class VehicleCard extends StatelessWidget {
                               vehicle.bodyType,
                             ).isNotEmpty) ...[
                               const SizedBox(width: 6),
-                              TruckBodyTypeTag(
-                                bodyType: vehicle.bodyType,
-                              ),
+                              TruckBodyTypeTag(bodyType: vehicle.bodyType),
                             ],
                           ],
                         ),
@@ -3975,9 +4067,7 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver, AppLocalizations l10n) {
   if (driver.hasCompletedTrip) {
     return _DriverCardMeta(
       statusLine: driver.tripStatus.isNotEmpty
-          ? l10n.brokerFlowTripWithStatus(
-              _prettyTripStatus(driver.tripStatus),
-            )
+          ? l10n.brokerFlowTripWithStatus(_prettyTripStatus(driver.tripStatus))
           : l10n.tripCompleted,
       lastSeen: driver.onTripSince.isEmpty
           ? l10n.brokerFlowRecentlyCompleted
@@ -3992,7 +4082,9 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver, AppLocalizations l10n) {
     case BrokerDriverStatus.onTrip:
       return _DriverCardMeta(
         statusLine: driver.tripStatus.isNotEmpty
-            ? l10n.brokerFlowTripWithStatus(_prettyTripStatus(driver.tripStatus))
+            ? l10n.brokerFlowTripWithStatus(
+                _prettyTripStatus(driver.tripStatus),
+              )
             : driver.currentBookingRef.isEmpty
             ? l10n.brokerFlowActiveOnTrip
             : l10n.brokerFlowActiveOnBooking(driver.currentBookingRef),
@@ -4413,7 +4505,10 @@ Color vehicleStatusColor(BrokerVehicleStatus status) {
   }
 }
 
-String vehicleStatusLabel(BrokerVehicleStatus status, [AppLocalizations? l10n]) {
+String vehicleStatusLabel(
+  BrokerVehicleStatus status, [
+  AppLocalizations? l10n,
+]) {
   switch (status) {
     case BrokerVehicleStatus.idle:
       return l10n?.brokerFlowVehicleIdle ?? 'Idle';

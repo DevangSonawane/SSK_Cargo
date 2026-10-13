@@ -2257,7 +2257,8 @@ class _PremiumStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayLabel = _formatTrackingStatusLabel(
-      AppLocalizations.of(context)!, label,
+      AppLocalizations.of(context)!,
+      label,
     );
     final isCancelled = _isCancelledTrackingStatus(label);
     final backgroundColor = isCancelled
@@ -2367,7 +2368,9 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                             ),
                             SizedBox(width: 3),
                             Text(
-                              AppLocalizations.of(context)!.trackingPickupVerifiedBadge,
+                              AppLocalizations.of(
+                                context,
+                              )!.trackingPickupVerifiedBadge,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 10.5,
@@ -3344,7 +3347,13 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                           child: FilledButton(
                             onPressed: _verifying ? null : _approve,
                             child: Text(
-                              _verifying ? AppLocalizations.of(context)!.trackingPodApproving : AppLocalizations.of(context)!.trackingPodApprove,
+                              _verifying
+                                  ? AppLocalizations.of(
+                                      context,
+                                    )!.trackingPodApproving
+                                  : AppLocalizations.of(
+                                      context,
+                                    )!.trackingPodApprove,
                             ),
                           ),
                         ),
@@ -3401,7 +3410,9 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
               ),
               child: Text(
                 (widget.podRejectionReason ?? '').trim().isNotEmpty
-                    ? AppLocalizations.of(context)!.trackingPodRejectionWithReason(
+                    ? AppLocalizations.of(
+                        context,
+                      )!.trackingPodRejectionWithReason(
                         widget.podRejectionReason!.trim(),
                       )
                     : AppLocalizations.of(context)!.trackingPodRejection,
@@ -4446,9 +4457,7 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(
-                          context,
-                        )!.clientTrackingCancelTitle,
+                        AppLocalizations.of(context)!.clientTrackingCancelTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: 19,
                           fontWeight: FontWeight.w800,
@@ -4458,9 +4467,7 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        AppLocalizations.of(
-                          context,
-                        )!.trackingCancelWhyHint,
+                        AppLocalizations.of(context)!.trackingCancelWhyHint,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -5257,9 +5264,7 @@ class _LegacyClientBookingChatSheetState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.trackingChatSocketHint,
+                          AppLocalizations.of(context)!.trackingChatSocketHint,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -5289,9 +5294,7 @@ class _LegacyClientBookingChatSheetState
                     : _messages.isEmpty
                     ? Center(
                         child: Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.trackingChatNoMessages,
+                          AppLocalizations.of(context)!.trackingChatNoMessages,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textSecondary),
                         ),
@@ -5803,12 +5806,11 @@ class _BookingNegotiationSheetState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppLocalizations.of(context)!
-                                .trackingCurrentOffer(
-                                  request.amountText.isNotEmpty
-                                      ? request.amountText
-                                      : rupees(base),
-                                ),
+                            AppLocalizations.of(context)!.trackingCurrentOffer(
+                              request.amountText.isNotEmpty
+                                  ? request.amountText
+                                  : rupees(base),
+                            ),
                             style: Theme.of(dialogContext).textTheme.bodySmall,
                           ),
                           Slider(
@@ -6167,9 +6169,7 @@ class _BookingNegotiationSheetState
               ),
               const SizedBox(height: 6),
               Text(
-                AppLocalizations.of(
-                  context,
-                )!.trackingNegotiationOffersSubtitle,
+                AppLocalizations.of(context)!.trackingNegotiationOffersSubtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -6403,6 +6403,7 @@ extension on _BookingNegotiationSheetState {
 
   String _driverOfferSubtitle(ClientBookingOffer request) {
     final meta = <String>[
+      if (request.isPartLoad) 'Shared load',
       if (request.truckReg.isNotEmpty) request.truckReg,
       if (request.driverPhone.isNotEmpty) request.driverPhone,
     ].join(' · ');
@@ -6627,6 +6628,28 @@ class _NegotiationCardState extends State<_NegotiationCard> {
                         color: context.colors.textSecondary,
                       ),
                     ),
+                    if (widget.offer.isPartLoad) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          const _PartLoadOfferBadge(),
+                          if (widget.offer.truckCapacityTons != null)
+                            _PartLoadMetricChip(
+                              label: 'Truck',
+                              value:
+                                  '${widget.offer.truckCapacityTons!.toStringAsFixed(widget.offer.truckCapacityTons! % 1 == 0 ? 0 : 1)}t',
+                            ),
+                          if (widget.offer.truckSpareTons != null)
+                            _PartLoadMetricChip(
+                              label: 'Spare',
+                              value:
+                                  '${widget.offer.truckSpareTons!.toStringAsFixed(widget.offer.truckSpareTons! % 1 == 0 ? 0 : 1)}t',
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -6782,6 +6805,55 @@ class _NegotiationActionLayout extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class _PartLoadOfferBadge extends StatelessWidget {
+  const _PartLoadOfferBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: context.colors.brandFill,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: context.colors.brandBorder),
+      ),
+      child: Text(
+        'Part Truck',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF167247),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _PartLoadMetricChip extends StatelessWidget {
+  const _PartLoadMetricChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: context.colors.fillSubtle,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: context.colors.line),
+      ),
+      child: Text(
+        '$label $value',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.colors.textSecondary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
   }
 }
 

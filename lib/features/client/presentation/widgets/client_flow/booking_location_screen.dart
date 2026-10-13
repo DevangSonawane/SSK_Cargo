@@ -31,11 +31,6 @@ enum _BookingFlowStep {
 
 enum _TruckAction { continueBooking, negotiate }
 
-/// Part-Load sheet phases: idle (explainer + button) → searching (same
-/// loader UI as full truck) → candidates → pending/accepted (sheet closes,
-/// centered card). Declined returns to candidates.
-enum _PartLoadSheetPhase { idle, searching, candidates, pending, accepted }
-
 enum BookingSearchMode { truck, broker, partLoad }
 
 class _EligibleBroker {
@@ -200,24 +195,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _brokerDeclinedDialogOpen = false;
   Timer? _brokerOffersPollTimer;
   StreamSubscription<Map<String, dynamic>>? _brokerOfferSubscription;
-  // Part-Load in-sheet search (same searching UI as full truck: the sheet
-  // itself searches, then the sheet closes and a centered waiting/success
-  // card takes over — no separate page push).
-  _PartLoadSheetPhase _partLoadPhase = _PartLoadSheetPhase.idle;
-  List<PartLoadTruck> _partLoadTrucks = const [];
-  bool _partLoadError = false;
-  String? _partLoadRequestingId;
-  PartLoadJoinRequest? _partLoadRequest;
-  String _partLoadBookingId = '';
-  String _partLoadBookingNumber = '';
-  Timer? _partLoadPollTimer;
-  StreamSubscription<Map<String, dynamic>>? _partLoadSocketSub;
-
-  bool get _partLoadOverlayVisible =>
-      _isPartLoadSearchMode &&
-      (_partLoadPhase == _PartLoadSheetPhase.pending ||
-          _partLoadPhase == _PartLoadSheetPhase.accepted);
-
   BookingData _freshBookingDraft() {
     return BookingData(
       from: '',
@@ -306,8 +283,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _findTruckRequestSubscription?.cancel();
     _brokerOffersPollTimer?.cancel();
     _brokerOfferSubscription?.cancel();
-    _partLoadPollTimer?.cancel();
-    _partLoadSocketSub?.cancel();
     _findTruckRequestsLive.dispose();
     _findTruckActingLive.dispose();
     _searchingAgainLive.dispose();
@@ -932,6 +907,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         isScheduled: true,
         scheduledDate: scheduled,
         searchMode: resetMode,
+        truckCategory: resetMode == BookingSearchMode.partLoad
+            ? 'part'
+            : categoryForVehicleOption(_vehicle),
+        partTruckSizeCategory: resetMode == BookingSearchMode.partLoad
+            ? _draft.partTruckSizeCategory
+            : '',
       );
     });
   }
@@ -1003,12 +984,27 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (vehicles.isEmpty) return;
     final safeIndex = index.clamp(0, vehicles.length - 1).toInt();
     final vehicle = vehicles[safeIndex];
+    if (_isPartLoadSearchMode) {
+      final category = categoryForVehicleOption(vehicle);
+      if (category == 'part') return;
+      final active = _draft.partTruckSizeCategory == category;
+      setState(() {
+        _vehicleIndex = safeIndex;
+        _vehicle = vehicle;
+        _draft = _draft.copyWith(
+          truckCategory: 'part',
+          partTruckSizeCategory: active ? '' : category,
+        );
+      });
+      return;
+    }
     setState(() {
       _vehicleIndex = safeIndex;
       _vehicle = vehicle;
       _draft = _draft.copyWith(
         vehicle: vehicle,
         truckCategory: categoryForVehicleOption(vehicle),
+        partTruckSizeCategory: '',
         amount: _priceValue(vehicle.price),
         expressSurcharge: 0,
         expressInsuranceIncluded: false,
@@ -1064,9 +1060,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
     if (mode == BookingSearchMode.partLoad) {
-      // Part-Load has its own flow (no negotiation, no payment step here):
-      // create the part booking then open the standalone search screen.
-      unawaited(_startPartLoadSearch());
+      unawaited(_startFindTruckSearch());
       return;
     }
     setState(() {
@@ -1079,306 +1073,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       (_draft.searchMode ?? BookingSearchMode.truck) ==
           BookingSearchMode.partLoad &&
       !_draft.isScheduled;
-
-  /// Part-Load counterpart of [_startFindTruckSearch]: creates the booking
-  /// with truck_category=part + search_mode=part_load, then searches
-  /// **inside this sheet** — same searching UI as full truck (loader in
-  /// the sheet, then the sheet closes and a centered waiting/success card
-  /// takes over). No separate page push.
-  Future<void> _startPartLoadSearch() async {
-    if (_submitting) return;
-    if (_draft.isScheduled) {
-      // Book Later is always a full truck — reset off Part and continue.
-      setState(() {
-        _draft = _draft.copyWith(searchMode: BookingSearchMode.truck);
-        _step = _BookingFlowStep.payment;
-      });
-      return;
-    }
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.signInAgainToCreateBooking,
-          ),
-        ),
-      );
-      return;
-    }
-    final pickupLat = _draft.pickupLat;
-    final pickupLng = _draft.pickupLng;
-    final dropLat = _draft.dropLat;
-    final dropLng = _draft.dropLng;
-    if (pickupLat == null ||
-        pickupLng == null ||
-        dropLat == null ||
-        dropLng == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pickup and drop locations required.')),
-      );
-      return;
-    }
-    // Resume: a booking already exists (retry after decline) — don't
-    // recreate, just search again / pick up the existing request.
-    if (_partLoadBookingId.isNotEmpty) {
-      await _refreshPartLoadRequest(resume: true);
-      if (!mounted) return;
-      if (_partLoadRequest == null) {
-        await _fetchPartLoadCandidates();
-      }
-      return;
-    }
-    setState(() {
-      _submitting = true;
-      _partLoadPhase = _PartLoadSheetPhase.searching;
-      _partLoadError = false;
-    });
-    try {
-      final hasCoordinates = await _ensureFindTruckCoordinates();
-      if (!hasCoordinates) {
-        if (!mounted) return;
-        setState(() {
-          _submitting = false;
-          _partLoadPhase = _PartLoadSheetPhase.idle;
-        });
-        return;
-      }
-      final response = await ref
-          .read(apiClientProvider)
-          .createBooking(
-            accessToken: session.tokens.accessToken,
-            booking: _bookingPayload(),
-            idempotencyKey: _buildIdempotencyKey(),
-          );
-      final bookingId = _extractBookingId(response);
-      final bookingNumber = _extractBookingNumber(response);
-      if (!mounted) return;
-      setState(() => _submitting = false);
-      if (bookingId.isEmpty) {
-        setState(() => _partLoadPhase = _PartLoadSheetPhase.idle);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not create booking.')),
-        );
-        return;
-      }
-      _partLoadBookingId = bookingId;
-      _partLoadBookingNumber = bookingNumber.isNotEmpty
-          ? bookingNumber
-          : await _fetchLatestBookingNumber(session.tokens.accessToken);
-      // Resume check first (navigated away and back), else fresh search.
-      await _refreshPartLoadRequest(resume: true);
-      if (!mounted) return;
-      if (_partLoadRequest == null) {
-        await _fetchPartLoadCandidates();
-      }
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _submitting = false;
-        _partLoadPhase = _PartLoadSheetPhase.idle;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
-        ),
-      );
-    }
-  }
-
-  String get _partLoadToken =>
-      ref.read(authSessionProvider).valueOrNull?.tokens.accessToken ?? '';
-
-  Future<void> _fetchPartLoadCandidates() async {
-    if (!mounted) return;
-    setState(() {
-      _partLoadPhase = _PartLoadSheetPhase.searching;
-      _partLoadError = false;
-    });
-    try {
-      final trucks = await ref
-          .read(partLoadApiProvider)
-          .searchNearbyOnTrip(
-            accessToken: _partLoadToken,
-            pickupLat: _draft.pickupLat ?? 0,
-            pickupLng: _draft.pickupLng ?? 0,
-            dropLat: _draft.dropLat ?? 0,
-            dropLng: _draft.dropLng ?? 0,
-            weightTons: _draft.weight > 0 ? _draft.weight : 1.0,
-          );
-      if (!mounted) return;
-      setState(() {
-        _partLoadTrucks = trucks;
-        _partLoadPhase = _PartLoadSheetPhase.candidates;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _partLoadPhase = _PartLoadSheetPhase.candidates;
-        _partLoadError = true;
-      });
-    }
-  }
-
-  /// Resume/poll: 404 (no request yet) → null, sheet stays on candidates.
-  Future<void> _refreshPartLoadRequest({bool resume = false}) async {
-    if (_partLoadBookingId.isEmpty) return;
-    try {
-      final existing = await ref
-          .read(partLoadApiProvider)
-          .getRequestForBooking(
-            accessToken: _partLoadToken,
-            bookingId: _partLoadBookingId,
-          );
-      if (!mounted) return;
-      if (existing != null) {
-        _applyPartLoadUpdate(existing, silentDeclined: resume);
-      } else if (resume && mounted) {
-        setState(() => _partLoadRequest = null);
-      }
-    } catch (_) {
-      // Next poll/socket event retries.
-    }
-  }
-
-  void _applyPartLoadUpdate(
-    PartLoadJoinRequest req, {
-    bool silentDeclined = false,
-  }) {
-    if (!mounted) return;
-    setState(() => _partLoadRequest = req);
-    if (req.isAccepted) {
-      _stopPartLoadPolling();
-      // The fare is the driver's fixed price — never a quote.
-      final fare = double.tryParse(req.amount.trim()) ?? 0;
-      setState(() {
-        _partLoadPhase = _PartLoadSheetPhase.accepted;
-        if (fare > 0) _draft = _draft.copyWith(amount: fare);
-        _bookingCreated = true;
-        _bookingReference = _partLoadBookingNumber;
-        _activeBookingId = _partLoadBookingId;
-      });
-      _animatePartLoadSheet(0.16);
-    } else if (req.isDeclined) {
-      _stopPartLoadPolling();
-      if (!silentDeclined && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('That driver declined — pick another truck.'),
-          ),
-        );
-      }
-      setState(() {
-        _partLoadRequest = null;
-        _partLoadPhase = _PartLoadSheetPhase.candidates;
-      });
-      _animatePartLoadSheet(0.58);
-      _fetchPartLoadCandidates();
-    } else {
-      setState(() => _partLoadPhase = _PartLoadSheetPhase.pending);
-      _animatePartLoadSheet(0.16);
-      _startPartLoadPolling();
-    }
-  }
-
-  void _startPartLoadPolling() {
-    _partLoadPollTimer?.cancel();
-    _listenPartLoadSocket();
-    _partLoadPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _refreshPartLoadRequest();
-    });
-  }
-
-  void _stopPartLoadPolling() {
-    _partLoadPollTimer?.cancel();
-    _partLoadPollTimer = null;
-    _partLoadSocketSub?.cancel();
-    _partLoadSocketSub = null;
-  }
-
-  Future<void> _listenPartLoadSocket() async {
-    if (_partLoadSocketSub != null) return;
-    final token = _partLoadToken;
-    if (token.isEmpty) return;
-    await ref
-        .read(appSocketServiceProvider)
-        .ensureConnected(accessToken: token);
-    _partLoadSocketSub = ref
-        .read(appSocketServiceProvider)
-        .tripJoinRequestStream
-        .listen((payload) {
-          Map<String, dynamic> req = payload;
-          final data = payload['data'];
-          if (data is Map) {
-            final m = data.cast<String, dynamic>();
-            if (m['request'] is Map) {
-              req = (m['request'] as Map).cast<String, dynamic>();
-            }
-          } else if (payload['request'] is Map) {
-            req = (payload['request'] as Map).cast<String, dynamic>();
-          }
-          final bookingId = (req['bookingId'] ?? req['booking_id'] ?? '')
-              .toString();
-          if (bookingId.isNotEmpty && bookingId != _partLoadBookingId) return;
-          try {
-            _applyPartLoadUpdate(PartLoadJoinRequest.fromJson(req));
-          } catch (_) {
-            // Poll corrects malformed pushes.
-          }
-        });
-  }
-
-  Future<void> _requestPartLoadTruck(PartLoadTruck candidate) async {
-    if (_partLoadBookingId.isEmpty) return;
-    // Never send a request without a target trip — the backend would have
-    // nobody to deliver it to. Re-search instead.
-    if (candidate.currentTripId.trim().isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('That truck is no longer on a trip — pick another.'),
-        ),
-      );
-      await _fetchPartLoadCandidates();
-      return;
-    }
-    setState(() => _partLoadRequestingId = candidate.truckId);
-    try {
-      final req = await ref
-          .read(partLoadApiProvider)
-          .requestTruck(
-            accessToken: _partLoadToken,
-            bookingId: _partLoadBookingId,
-            targetTripId: candidate.currentTripId,
-          );
-      if (!mounted) return;
-      _applyPartLoadUpdate(req);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
-        ),
-      );
-      await _fetchPartLoadCandidates();
-    } finally {
-      if (mounted) setState(() => _partLoadRequestingId = null);
-    }
-  }
-
-  void _exitPartLoadTo(String location) {
-    final router = GoRouter.of(context);
-    final navigator = Navigator.of(context);
-    _stopPartLoadPolling();
-    if (navigator.canPop()) {
-      navigator.pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.go(location);
-      });
-      return;
-    }
-    router.go(location);
-  }
 
   /// Broker-mode counterpart of [_startFindTruckSearch]: creates the booking
   /// targeted at the selected broker, then enters the same live-update /
@@ -1524,7 +1218,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!_postNegotiationPayment) {
         return;
       }
-      _resetUnpaidPaymentBookingForRetry(searchMode: BookingSearchMode.truck);
+      _resetUnpaidPaymentBookingForRetry(
+        searchMode: _isPartLoadSearchMode
+            ? BookingSearchMode.partLoad
+            : BookingSearchMode.truck,
+      );
     }
     if (!_validateScheduledDate()) {
       return;
@@ -1550,8 +1248,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _findTruckDeclinedCount = 0;
       _paymentCompletionVisible = false;
       _draft = _draft.copyWith(
-        searchMode: BookingSearchMode.truck,
+        searchMode: _isPartLoadSearchMode
+            ? BookingSearchMode.partLoad
+            : BookingSearchMode.truck,
         selectedBrokerId: '',
+        truckCategory: _isPartLoadSearchMode
+            ? 'part'
+            : (_draft.truckCategory.isEmpty
+                  ? categoryForVehicleOption(_vehicle)
+                  : _draft.truckCategory),
       );
     });
     _startFindTruckZoomOutLoop();
@@ -3627,6 +3332,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       } else if (mode == BookingSearchMode.partLoad) ...{
         'truck_category': 'part',
         'search_mode': 'part_load',
+        if (_draft.partTruckSizeCategory.trim().isNotEmpty)
+          'part_truck_size_category': _draft.partTruckSizeCategory.trim(),
       } else if (mode == BookingSearchMode.truck) ...{
         'search_mode': 'truck',
         'search_radius_km': _draft.searchRadiusKm.clamp(0.5, 200).toDouble(),
@@ -4291,16 +3998,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   },
                 ),
               ),
-            // Part-Load pending/accepted: the sheet collapses to its
-            // grabber and a compact status bar floats just above it —
-            // never a fullscreen takeover, the map stays interactive.
-            if (_partLoadOverlayVisible)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.sizeOf(context).height * 0.20,
-                child: _buildPartLoadStatusBar(context),
-              ),
             if (!hideSearchPanel)
               Positioned.fill(
                 child: NotificationListener<DraggableScrollableNotification>(
@@ -4439,15 +4136,37 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     const SizedBox(height: 10),
                     _buildTruckBodyTypeSection(context),
                     const SizedBox(height: 14),
-                    // Home owns the Full / Part / Later choice (web BookTruck
-                    // step-1 pills), so no mode cards here — the sheet
-                    // follows the mode home passed in.
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
                       switchInCurve: Curves.easeOutCubic,
                       switchOutCurve: Curves.easeOutCubic,
                       child: _isPartLoadSearchMode
-                          ? _buildPartLoadSheetContent(context)
+                          ? Column(
+                              key: const ValueKey('part-load-find-truck'),
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildPartLoadOptions(context),
+                                const SizedBox(height: 12),
+                                FilledButton.icon(
+                                  onPressed: _startFindTruckSearch,
+                                  icon: const Icon(
+                                    AppIcons.search_rounded,
+                                    size: 19,
+                                  ),
+                                  label: const Text('Find Part Truck'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2FA56E),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
                           : brokerMode
                           ? Column(
                               key: const ValueKey('broker-mode-content'),
@@ -4632,6 +4351,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                     _draft = _draft.copyWith(
                                       searchMode: BookingSearchMode.truck,
                                       selectedBrokerId: '',
+                                      truckCategory: categoryForVehicleOption(
+                                        _vehicle,
+                                      ),
+                                      partTruckSizeCategory: '',
                                     );
                                   });
                                   _continueWithSearchMode();
@@ -4656,6 +4379,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       searchMode: BookingSearchMode.partLoad,
                                       selectedBrokerId: '',
                                       isScheduled: false,
+                                      truckCategory: 'part',
+                                      amount: 0,
                                     );
                                   });
                                   _continueWithSearchMode();
@@ -4768,8 +4493,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  /// Part-Load explainer shown instead of the radius slider: fixed price,
-  /// no negotiation, on-trip trucks only.
+  /// Part-Load explainer shown instead of the radius slider.
   Widget _buildPartLoadOptions(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -4790,7 +4514,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Shared truck — we find trucks already on-trip heading your way with enough spare space. Fixed price, no negotiation. The driver accepts or declines.',
+              'Shared truck — we broadcast to drivers who have Part Truck mode on. You can accept, counter, or decline offers just like Find Truck.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -4803,365 +4527,74 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  /// Part-Load sheet body — same searching UI as full truck: compact
-  /// route summary + explainer + button (idle), loader (searching), then
-  /// the candidate list. Pending/accepted leave the sheet for a centered
-  /// overlay (see [_partLoadOverlayVisible]).
-  Widget _buildPartLoadSheetContent(BuildContext context) {
-    switch (_partLoadPhase) {
-      case _PartLoadSheetPhase.searching:
-        return const Column(
-          key: ValueKey('partload-searching'),
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _BrokerLoadingCard(
-              message: 'Looking for trucks already heading your way...',
-            ),
-          ],
-        );
-      case _PartLoadSheetPhase.candidates:
-        if (_partLoadError) {
-          return Column(
-            key: const ValueKey('partload-error'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _BrokerEmptyCard(
-                icon: AppIcons.wifi_off_rounded,
-                title: "Couldn't load nearby trucks.",
-                message: 'Check your connection and try again.',
-                onRetry: _fetchPartLoadCandidates,
-              ),
-            ],
-          );
-        }
-        if (_partLoadTrucks.isEmpty) {
-          return Column(
-            key: const ValueKey('partload-empty'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _BrokerEmptyCard(
-                icon: AppIcons.local_shipping_rounded,
-                title: 'No trucks available to share right now',
-                message:
-                    'Try again in a few minutes, or go back and book a dedicated truck instead.',
-                onRetry: _fetchPartLoadCandidates,
-              ),
-            ],
-          );
-        }
-        return Column(
-          key: const ValueKey('partload-candidates'),
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _partLoadCountBanner(context, count: _partLoadTrucks.length),
-            const SizedBox(height: 10),
-            for (var i = 0; i < _partLoadTrucks.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              PartLoadCandidateTile(
-                truck: _partLoadTrucks[i],
-                requesting: _partLoadRequestingId == _partLoadTrucks[i].truckId,
-                onRequest: () => _requestPartLoadTruck(_partLoadTrucks[i]),
-              ),
-            ],
-          ],
-        );
-      case _PartLoadSheetPhase.pending:
-      case _PartLoadSheetPhase.accepted:
-        // Rendered as a centered overlay — the sheet stays hidden.
-        return const SizedBox.shrink(key: ValueKey('partload-overlay'));
-      case _PartLoadSheetPhase.idle:
-        return Column(
-          key: const ValueKey('partload-idle'),
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _BookingSummaryCard(
-              pickupTitle: _draft.from,
-              distanceText: _draft.distanceText,
-              dropValue: _draft.to,
-            ),
-            const SizedBox(height: 10),
-            _buildPartLoadOptions(context),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _submitting ? null : _startPartLoadSearch,
-              icon: const Icon(AppIcons.search_rounded, size: 19),
-              label: const Text('Find shared truck'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2FA56E),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ],
-        );
-    }
-  }
-
-  /// Verified-trucks banner — same sizing as the broker list header:
-  /// brandFill, radius 16, brandBorder, shield icon.
-  Widget _partLoadCountBanner(BuildContext context, {required int count}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.colors.brandFill,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.brandBorder),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            AppIcons.verified_user_rounded,
-            color: Color(0xFF2FA56E),
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '$count verified truck${count == 1 ? '' : 's'} with spare capacity',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: context.colors.textPrimary,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _animatePartLoadSheet(double extent) {
-    if (!_truckSearchSheetController.isAttached) return;
-    unawaited(
-      _truckSearchSheetController.animateTo(
-        extent,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      ),
-    );
-  }
-
-  /// Compact floating status bar docked just above the collapsed sheet —
-  /// small by design, the map stays fully interactive behind it.
-  Widget _buildPartLoadStatusBar(BuildContext context) {
-    final request = _partLoadRequest;
-    final accepted = _partLoadPhase == _PartLoadSheetPhase.accepted;
-    final title = accepted
-        ? 'Load Confirmed!'
-        : (request?.truckReg.isNotEmpty ?? false)
-        ? 'Waiting for ${(request!.driverName.isEmpty ? 'the driver' : request.driverName)} (${request.truckReg})'
-        : 'Waiting for the driver';
-    final subtitle = accepted
-        ? (_partLoadBookingNumber.isEmpty
-              ? 'Your load is confirmed.'
-              : _partLoadBookingNumber)
-        : (request?.driverTimedOut ?? false)
-        ? 'Driver timed out — waiting on their broker…'
-        : 'Updates automatically on response.';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceElevated.withValues(alpha: 0.97),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accepted ? context.colors.line : context.colors.brandBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: context.colors.brandFill,
-                  shape: BoxShape.circle,
-                ),
-                child: accepted
-                    ? const Icon(
-                        AppIcons.check_rounded,
-                        color: Color(0xFF2FA56E),
-                        size: 26,
-                      )
-                    : const Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 30,
-                            height: 30,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 3,
-                              color: Color(0xFF2FA56E),
-                            ),
-                          ),
-                          Icon(
-                            AppIcons.local_shipping_rounded,
-                            color: Color(0xFF2FA56E),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: context.colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.colors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (request?.amount.isNotEmpty ?? false) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '₹${request!.amount}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: context.colors.textPrimary,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (accepted) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => _exitPartLoadTo('/client/tracking'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('Track'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _exitPartLoadTo('/client/home'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Text(AppLocalizations.of(context)!.goToHome),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildTruckCategoryPicker(BuildContext context) {
-    // Part Truck has no size grid at all — nothing to size-pick.
-    if (_isPartLoadSearchMode) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: context.colors.brandFill,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.colors.brandBorder),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              AppIcons.inventory_2_rounded,
-              color: Color(0xFF2FA56E),
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Part Truck uses spare space on a running truck — no size to pick.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.colors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
     final pricingState = ref.watch(clientPricingProvider);
     final typesState = ref.watch(vehicleTypesProvider);
-    final vehicles = resolveVehicleOptions(
+    final allVehicles = resolveVehicleOptions(
       tripType: widget.tripType,
       pricing: pricingState.valueOrNull,
       isLoading: typesState.isLoading,
       vehicleTypes: typesState.valueOrNull,
     );
+    final partMode = _isPartLoadSearchMode;
+    final vehicles = partMode
+        ? allVehicles
+              .where((vehicle) => categoryForVehicleOption(vehicle) != 'part')
+              .toList(growable: false)
+        : allVehicles;
     final selectedIndex = vehicles.isEmpty
         ? 0
         : _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
 
-    return SizedBox(
-      height: 68,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cardWidth = min(190.0, constraints.maxWidth * 0.58);
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.symmetric(horizontal: 1),
-            itemCount: vehicles.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              return SizedBox(
-                width: cardWidth,
-                child: _ChooseTruckCard(
-                  vehicle: vehicles[index],
-                  selected: selectedIndex == index,
-                  onTap: () => _selectVehicleForSearchStep(index),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (partMode) ...[
+          Text(
+            'Preferred Truck Size (optional)',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: context.colors.textSecondary,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        SizedBox(
+          height: 68,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = min(190.0, constraints.maxWidth * 0.58);
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.symmetric(horizontal: 1),
+                itemCount: vehicles.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final vehicle = vehicles[index];
+                  final category = categoryForVehicleOption(vehicle);
+                  final selected = partMode
+                      ? _draft.partTruckSizeCategory == category
+                      : selectedIndex == index;
+                  return SizedBox(
+                    width: cardWidth,
+                    child: _ChooseTruckCard(
+                      vehicle: vehicle,
+                      selected: selected,
+                      onTap: () => _selectVehicleForSearchStep(
+                        allVehicles.indexWhere((v) => v.id == vehicle.id),
+                      ),
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 

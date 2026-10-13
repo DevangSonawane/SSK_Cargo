@@ -609,11 +609,14 @@ class ClientBookingOffer {
     required this.driverLng,
     required this.driverHeading,
     required this.driverTimedOut,
+    required this.isPartLoad,
     required this.createdAt,
     required this.raw,
     this.amountValue = 0,
     this.truckReg = '',
     this.driverPhone = '',
+    this.truckCapacityTons,
+    this.truckSpareTons,
     this.offerHistory = const [],
   });
 
@@ -728,6 +731,24 @@ class ClientBookingOffer {
         'driverTimedOut',
         'driver_timed_out',
       ]),
+      isPartLoad: _readBool(json, const [
+        'isPartLoad',
+        'is_part_load',
+        'partLoad',
+        'part_load',
+      ]),
+      truckCapacityTons: _readOptionalDouble(json, const [
+        'truckCapacityTons',
+        'truck_capacity_tons',
+        'capacityTons',
+        'capacity_tons',
+      ]),
+      truckSpareTons: _readOptionalDouble(json, const [
+        'truckSpareTons',
+        'truck_spare_tons',
+        'spareTons',
+        'spare_tons',
+      ]),
       createdAt: _parseDateTime(
         json['created_at'] ?? json['createdAt'] ?? json['updated_at'],
       ),
@@ -751,6 +772,9 @@ class ClientBookingOffer {
   final double? driverLng;
   final double? driverHeading;
   final bool driverTimedOut;
+  final bool isPartLoad;
+  final double? truckCapacityTons;
+  final double? truckSpareTons;
   final DateTime? createdAt;
   final List<ClientOfferHistoryEntry> offerHistory;
   final Map<String, dynamic> raw;
@@ -817,19 +841,11 @@ class ClientBrokerOffer {
     final broker = _asMap(json['broker']);
     return ClientBrokerOffer(
       id: _readString(json, const ['id', 'request_id', 'uuid']),
-      brokerId: _readString(json, const [
-        'broker_id',
-        'brokerId',
-        'broker',
-      ]),
+      brokerId: _readString(json, const ['broker_id', 'brokerId', 'broker']),
       brokerName:
           _readString(json, const ['broker_name', 'brokerName']).isNotEmpty
           ? _readString(json, const ['broker_name', 'brokerName'])
-          : _readString(broker, const [
-              'name',
-              'full_name',
-              'display_name',
-            ]),
+          : _readString(broker, const ['name', 'full_name', 'display_name']),
       amount:
           _readOptionalDouble(json, const [
             'amount',
@@ -887,10 +903,12 @@ class ClientBrokerOffer {
     _ => 0,
   };
 
-  bool get isDeclined =>
-      const {'declined', 'rejected', 'expired', 'cancelled'}.contains(
-        normalizedStatus,
-      );
+  bool get isDeclined => const {
+    'declined',
+    'rejected',
+    'expired',
+    'cancelled',
+  }.contains(normalizedStatus);
 
   bool get isCountered => normalizedStatus == 'countered';
 
