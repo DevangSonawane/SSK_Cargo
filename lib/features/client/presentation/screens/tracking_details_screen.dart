@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:ssk/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -805,6 +806,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
   }
 
+  void _openInvoicePreview() {
+    context.push('/client/tracking/invoice', extra: _shipment);
+  }
+
   Future<void> _downloadInvoice() async {
     final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
@@ -1022,7 +1027,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         context: context,
         builder: (dialogContext) {
           return StatefulBuilder(
-            builder: (context, setState) {
+            builder: (dialogChildContext, setDialogState) {
               return AlertDialog(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -1036,19 +1041,27 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: List.generate(5, (index) {
                         final rating = index + 1;
+                        final filled = rating <= stars;
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: InkResponse(
-                            onTap: () => setState(() => stars = rating),
+                            onTap: () =>
+                                setDialogState(() => stars = rating),
                             radius: 20,
                             child: SizedBox(
                               width: 34,
                               height: 38,
                               child: Icon(
-                                rating <= stars
-                                    ? AppIcons.star_rounded
-                                    : AppIcons.star_border_rounded,
-                                color: const Color(0xFFF5B301),
+                                // Web parity (BookingDetail.jsx): filled amber
+                                // vs gray. AppIcons star glyphs are all the
+                                // same Lucide outline, so Material's
+                                // filled/border pair is used instead.
+                                filled
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: filled
+                                    ? const Color(0xFFF5B301)
+                                    : AppColors.textTertiary,
                                 size: 28,
                               ),
                             ),
@@ -1483,7 +1496,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         child: SizedBox(
                                           height: 48,
                                           child: OutlinedButton.icon(
-                                            onPressed: _downloadInvoice,
+                                            onPressed: _openInvoicePreview,
                                             icon: const Icon(
                                               AppIcons.download_rounded,
                                               size: 18,

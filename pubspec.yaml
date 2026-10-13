@@ -54,6 +54,7 @@ dependencies:
   firebase_core: ^4.1.0
   firebase_messaging: ^16.1.0
   video_player: ^2.11.1
+  receipt_printer: ^1.0.2
 
 dev_dependencies:
   flutter_test:
