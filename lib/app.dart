@@ -37,6 +37,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   StreamSubscription<String?>? _unauthorizedSubscription;
   bool _handlingUnauthorized = false;
   bool _showingLoginAttemptAlert = false;
+  Future<bool>? _trackingConsentFuture;
+  bool _trackingConsentDeclined = false;
   OverlayEntry? _loginAttemptAlertEntry;
 
   /// Localizations for code that runs outside a widget `build`. Prefers the
@@ -198,12 +200,59 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      unawaited(_syncDriverTracking(restart: true));
+      unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
     }
   }
 
-  Future<void> _syncDriverTracking({bool restart = false}) async {
+  Future<bool> _ensureTrackingConsent(String userId) async {
+    final preferences = ref.read(sharedPreferencesProvider);
+    final key = 'driver_background_location_consent_v1_$userId';
+    if (preferences.getBool(key) == true) return true;
+    if (_trackingConsentDeclined) return false;
+    final pending = _trackingConsentFuture;
+    if (pending != null) return pending;
+    final dialogContext = ref.read(rootNavigatorKeyProvider).currentContext;
+    if (dialogContext == null || !dialogContext.mounted) return false;
+
+    final l10n = _l10n;
+    final consent =
+        showDialog<bool>(
+          context: dialogContext,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.driverTrackingDisclosureTitle),
+            content: Text(l10n.driverTrackingDisclosureBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.continueAction),
+              ),
+            ],
+          ),
+        ).then((accepted) async {
+          if (accepted == true) {
+            await preferences.setBool(key, true);
+            return true;
+          }
+          // Do not repeatedly prompt after the driver declines. Going online
+          // again or signing in again permits a fresh explanation.
+          _trackingConsentDeclined = true;
+          return false;
+        });
+    _trackingConsentFuture = consent;
+    try {
+      return await consent;
+    } finally {
+      _trackingConsentFuture = null;
+    }
+  }
+
+  Future<void> _syncDriverTracking() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     final tracker = ref.read(driverLocationTrackerProvider);
     final tripSession = ref.read(driverTripSessionProvider);
@@ -230,12 +279,24 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       return;
     }
 
-    final message = restart
-        ? await tracker.restartTracking()
-        : tracker.isRunning
-        ? null
-        : await tracker.startTracking(tripId: activeTripId);
-    if (message != null) {
+    // Native location services must start while an activity is visible.
+    // An already-running stream continues when the app is backgrounded.
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    if (!await _ensureTrackingConsent(session.user.id) || !mounted) return;
+    final currentSession = ref.read(authSessionProvider).valueOrNull;
+    if (currentSession?.user.id != session.user.id ||
+        currentSession?.user.role.trim().toLowerCase() != 'driver' ||
+        !ref.read(driverTrackingEnabledProvider) ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    final currentTrip =
+        ref.read(driverTripSessionProvider)?.tripId ??
+        ref.read(driverActiveTripIdProvider);
+    final message = await tracker.startTracking(tripId: currentTrip);
+    if (message != null && mounted) {
       _showTrackingMessage(message);
     }
   }
@@ -380,7 +441,14 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
         content: Text(message),
         action: SnackBarAction(
           label: _l10n.appTrackingSettingsAction,
-          onPressed: () => Geolocator.openLocationSettings(),
+          onPressed: () async {
+            final permission = await Geolocator.checkPermission();
+            if (permission == LocationPermission.deniedForever) {
+              await Geolocator.openAppSettings();
+            } else {
+              await Geolocator.openLocationSettings();
+            }
+          },
         ),
       ),
     );
@@ -405,10 +473,12 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       if (previousSession?.user.id == nextSession?.user.id) {
         return;
       }
+      _trackingConsentDeclined = false;
       unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
     });
     ref.listen<bool>(driverTrackingEnabledProvider, (previous, next) {
+      if (next) _trackingConsentDeclined = false;
       if (previous == next) {
         return;
       }

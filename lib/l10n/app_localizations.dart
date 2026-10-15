@@ -13750,6 +13750,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ongoing'**
   String get tripSummaryOngoing;
+
+  /// No description provided for @driverTrackingDisclosureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share driver location'**
+  String get driverTrackingDisclosureTitle;
+
+  /// No description provided for @driverTrackingDisclosureBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.'**
+  String get driverTrackingDisclosureBody;
 }
 
 class _AppLocalizationsDelegate

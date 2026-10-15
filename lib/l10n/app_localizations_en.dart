@@ -7581,4 +7581,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tripSummaryOngoing => 'Ongoing';
+
+  @override
+  String get driverTrackingDisclosureTitle => 'Share driver location';
+
+  @override
+  String get driverTrackingDisclosureBody =>
+      'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.';
 }

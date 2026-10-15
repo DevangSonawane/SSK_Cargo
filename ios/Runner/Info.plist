@@ -27,13 +27,17 @@
 	<key>GIDServerClientID</key>
 	<string>567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library so you can choose a profile picture.</string>
+	<string>Select profile photos, verification documents, and proof-of-delivery photos or videos to upload.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Use the camera to photograph verification documents and capture proof-of-delivery photos or videos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record audio when you capture a proof-of-delivery video.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs your location to share live driver updates with brokers and clients.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs background location access so driver tracking can continue while a trip is active.</string>
+	<string>Share your live driver location with brokers and clients while you are online or on an active trip, including when the app is in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs background location access so driver tracking can continue while a trip is active.</string>
+	<string>Share your live driver location with brokers and clients while you are online or on an active trip, including when the app is in the background.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>CFBundleURLTypes</key>

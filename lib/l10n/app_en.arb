@@ -2894,5 +2894,7 @@
   "gpsLastSeen": "Last seen {time}",
   "gpsCachedPosition": "Cached position",
   "gpsNoLocationYet": "No location yet",
-  "tripSummaryOngoing": "Ongoing"
+  "tripSummaryOngoing": "Ongoing",
+  "driverTrackingDisclosureTitle": "Share driver location",
+  "driverTrackingDisclosureBody": "SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access."
 }

@@ -7578,4 +7578,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get tripSummaryOngoing => 'जारी';
+
+  @override
+  String get driverTrackingDisclosureTitle => 'ड्राइवर की लोकेशन साझा करें';
+
+  @override
+  String get driverTrackingDisclosureBody =>
+      'SSK आपके ऑनलाइन रहने या सक्रिय ट्रिप के दौरान ब्रोकर और ग्राहकों के साथ ड्राइवर की उपलब्धता और लाइव ट्रिप ट्रैकिंग साझा करने के लिए आपकी लोकेशन लेता है, तब भी जब ऐप बैकग्राउंड में हो या स्क्रीन लॉक हो। ऑफलाइन होने और कोई सक्रिय ट्रिप न होने पर ट्रैकिंग बंद हो जाती है। लोकेशन की अनुमति देने के लिए जारी रखें।';
 }

@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,59 +25,94 @@ class DriverLocationTracker {
 
   StreamSubscription<Position>? _subscription;
   String? _activeTripId;
+  Future<String?>? _pendingStart;
+  int _generation = 0;
   Position? _lastPublishedPosition;
   DateTime? _lastPublishedAt;
 
   bool get isRunning => _subscription != null;
   String? get activeTripId => _activeTripId;
 
-  Future<String?> startTracking({String? tripId}) async {
+  Future<String?> startTracking({String? tripId}) {
     _activeTripId = tripId;
+    if (_subscription != null) return Future.value(null);
+    final pending = _pendingStart;
+    if (pending != null) return pending;
 
+    final generation = _generation;
+    late final Future<String?> start;
+    start = _startTracking(generation).whenComplete(() {
+      if (identical(_pendingStart, start)) _pendingStart = null;
+    });
+    _pendingStart = start;
+    return start;
+  }
+
+  bool _canPublish(int generation) {
+    if (generation != _generation) return false;
     final session = _ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      return _l10n
-          .driverTrackingSignInAgainBeforeEnablingLocation;
-    }
+    return session != null &&
+        session.user.role.trim().toLowerCase() == 'driver';
+  }
 
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return _l10n.driverTrackingEnableLocationServices;
-    }
+  Future<String?> _startTracking(int generation) async {
+    try {
+      if (!_canPublish(generation)) {
+        return _l10n.driverTrackingSignInAgainBeforeEnablingLocation;
+      }
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return _l10n.driverTrackingEnableLocationServices;
+      }
+      if (!_canPublish(generation)) return null;
 
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      final requested = await Geolocator.requestPermission();
-      if (requested == LocationPermission.denied ||
-          requested == LocationPermission.deniedForever) {
+      var permission = await Geolocator.checkPermission();
+      if (!_canPublish(generation)) return null;
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (!_canPublish(generation)) return null;
+      if (permission == LocationPermission.deniedForever) {
+        return _l10n.driverTrackingLocationPermissionDeniedForever;
+      }
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
         return _l10n.driverTrackingLocationPermissionRequired;
       }
-    } else if (permission == LocationPermission.deniedForever) {
-      return _l10n.driverTrackingLocationPermissionDeniedForever;
-    }
 
-    if (_subscription != null) {
-      return null;
-    }
+      // Permission dialogs and GPS checks can outlive the visible activity.
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+        return null;
+      }
 
-    final settings = _trackingSettings();
-    await _publishCurrentLocation(settings);
-
-    try {
+      final settings = _trackingSettings();
+      // Start the native background stream before waiting for a GPS fix.
+      // A slow fix must not delay Android's foreground service startup.
       _subscription = Geolocator.getPositionStream(locationSettings: settings)
           .listen(
             (position) {
-              unawaited(_sendPosition(position));
+              if (_canPublish(generation)) {
+                unawaited(_sendPosition(position, generation: generation));
+              }
             },
-            onError: (error, stackTrace) {
+            onError: (Object error, StackTrace stackTrace) {
               developer.log(
                 'Driver location stream error',
                 name: 'SSK.Location',
                 error: error,
-                stackTrace: stackTrace is StackTrace ? stackTrace : null,
+                stackTrace: stackTrace,
               );
+              if (generation == _generation) {
+                unawaited(stopTracking());
+              }
             },
+            onDone: () {
+              if (generation == _generation) _subscription = null;
+            },
+            cancelOnError: true,
           );
+      unawaited(_publishCurrentLocation(settings, generation: generation));
+      return null;
     } catch (error, stackTrace) {
       developer.log(
         'Unable to start driver location stream',
@@ -84,18 +120,29 @@ class DriverLocationTracker {
         error: error,
         stackTrace: stackTrace,
       );
+      if (generation != _generation) return null;
       return _l10n.driverTrackingUnableToStartLiveTracking;
     }
-
-    return null;
   }
 
-  Future<void> _publishCurrentLocation(LocationSettings settings) async {
+  Future<void> _publishCurrentLocation(
+    LocationSettings settings, {
+    required int generation,
+  }) async {
     try {
       final currentPosition = await Geolocator.getCurrentPosition(
-        locationSettings: settings,
+        locationSettings: LocationSettings(
+          accuracy: settings.accuracy,
+          timeLimit: const Duration(seconds: 20),
+        ),
       );
-      await _sendPosition(currentPosition, force: true);
+      if (_canPublish(generation)) {
+        await _sendPosition(
+          currentPosition,
+          generation: generation,
+          force: true,
+        );
+      }
     } catch (error, stackTrace) {
       developer.log(
         'Initial driver location lookup failed',
@@ -107,11 +154,14 @@ class DriverLocationTracker {
   }
 
   Future<void> stopTracking() async {
+    _generation++;
+    _pendingStart = null;
+    final subscription = _subscription;
+    _subscription = null;
     _activeTripId = null;
     _lastPublishedPosition = null;
     _lastPublishedAt = null;
-    await _subscription?.cancel();
-    _subscription = null;
+    await subscription?.cancel();
   }
 
   Future<String?> restartTracking() async {
@@ -143,7 +193,7 @@ class DriverLocationTracker {
     }
 
     final settings = _trackingSettings();
-    await _publishCurrentLocation(settings);
+    await _publishCurrentLocation(settings, generation: _generation);
     return null;
   }
 
@@ -186,7 +236,12 @@ class DriverLocationTracker {
     }
   }
 
-  Future<void> _sendPosition(Position position, {bool force = false}) async {
+  Future<void> _sendPosition(
+    Position position, {
+    required int generation,
+    bool force = false,
+  }) async {
+    if (!_canPublish(generation)) return;
     if (!force && !_shouldPublishPosition(position)) {
       return;
     }
@@ -208,6 +263,7 @@ class DriverLocationTracker {
             lat: position.latitude,
             lng: position.longitude,
           );
+      if (!_canPublish(generation)) return;
       _lastPublishedPosition = position;
       _lastPublishedAt = DateTime.now();
     } catch (error, stackTrace) {
@@ -219,6 +275,7 @@ class DriverLocationTracker {
       );
     }
 
+    if (!_canPublish(generation)) return;
     final tripId = _activeTripId;
     if (tripId == null || tripId.isEmpty) {
       developer.log(

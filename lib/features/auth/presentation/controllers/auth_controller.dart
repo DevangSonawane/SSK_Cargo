@@ -37,7 +37,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     );
     // Prefetch GPS in the background so client booking / map screens open
     // instantly. Non-blocking — never delays navigation.
-    unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+    // Drivers see the background tracking disclosure before any GPS prompt.
+    if (session.user.role.trim().toLowerCase() != 'driver') {
+      unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+    }
   }
 
   void debugSetSession(AuthSession session) {
@@ -64,7 +67,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       unawaited(
         _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
-      unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+      // Drivers see the background tracking disclosure before any GPS prompt.
+      if (session.user.role.trim().toLowerCase() != 'driver') {
+        unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+      }
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -92,7 +98,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       unawaited(
         _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
-      unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+      // Drivers see the background tracking disclosure before any GPS prompt.
+      if (session.user.role.trim().toLowerCase() != 'driver') {
+        unawaited(_ref.read(userLocationProvider.notifier).prefetch());
+      }
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -168,10 +177,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       if (tokensJson is! Map<String, dynamic>) return false;
       final tokens = AuthTokens.fromJson(tokensJson);
       if (tokens.accessToken.isEmpty) return false;
-      final refreshed = AuthSession(
-        user: currentSession!.user,
-        tokens: tokens,
-      );
+      final refreshed = AuthSession(user: currentSession!.user, tokens: tokens);
       state = AsyncData<AuthSession?>(refreshed);
       unawaited(
         _ref

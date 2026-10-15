@@ -380,6 +380,7 @@ class DriverRequestFeedController
   Timer? _pollTimer;
   String? _accessToken;
   AuthSession? _currentSession;
+  int _refreshSequence = 0;
   ProviderSubscription<AsyncValue<AuthSession?>>? _authSubscription;
 
   Future<void> _syncSession(AuthSession? session) async {
@@ -453,18 +454,23 @@ class DriverRequestFeedController
     if (session == null || !mounted || _accessToken != accessToken) {
       return;
     }
+    final sequence = ++_refreshSequence;
 
     try {
       final response = await _ref
           .read(apiClientProvider)
           .getDriverRequests(accessToken: accessToken, page: 1, limit: 20);
       final requests = DriverRequestPage.fromJson(response).requests;
-      if (!mounted || _accessToken != accessToken) {
+      if (!mounted ||
+          _accessToken != accessToken ||
+          sequence != _refreshSequence) {
         return;
       }
       state = AsyncData<List<DriverRequestItem>>(requests);
     } catch (error, stackTrace) {
-      if (!mounted || _accessToken != accessToken) {
+      if (!mounted ||
+          _accessToken != accessToken ||
+          sequence != _refreshSequence) {
         return;
       }
       if (state.valueOrNull == null) {
@@ -474,6 +480,12 @@ class DriverRequestFeedController
   }
 
   void _handleSocketPayload(Map<String, dynamic> payload) {
+    final session = _currentSession;
+    if (!mounted ||
+        session == null ||
+        session.user.role.trim().toLowerCase() != 'driver') {
+      return;
+    }
     final requestPayload = _requestPayloadMap(payload);
     final incoming = DriverRequestItem.fromMap(requestPayload);
     if (incoming.id.isEmpty || !mounted) {
@@ -481,6 +493,12 @@ class DriverRequestFeedController
     }
 
     final current = state.valueOrNull ?? const <DriverRequestItem>[];
+    if (!current.any((request) => request.id == incoming.id)) {
+      // Socket delivery alone does not establish that a new offer is still
+      // eligible. Use the same server list as refresh before showing it.
+      unawaited(_refreshFromServer(session.tokens.accessToken));
+      return;
+    }
     final next = _mergeRequest(current, incoming, requestPayload);
     state = AsyncData<List<DriverRequestItem>>(next);
   }

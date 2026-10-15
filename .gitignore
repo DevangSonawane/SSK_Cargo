@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local store screenshot tooling and generated assets
+/goldie/.tooling/
+/goldie/client/out/
+/goldie/driver/out/
+/goldie/exports/
+/goldie/art/
