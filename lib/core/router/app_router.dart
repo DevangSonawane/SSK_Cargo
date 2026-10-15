@@ -432,6 +432,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/chats/direct/:threadId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: '',
+            threadId: state.pathParameters['threadId'] ?? '',
+            audience: ChatAudience.client,
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/chats/:bookingId',
         pageBuilder: (context, state) => NoTransitionPage(
           child: ChatDetailScreen(

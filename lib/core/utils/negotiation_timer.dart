@@ -1,4 +1,4 @@
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 Duration? negotiationWindowRemaining({
   required DateTime? anchorAt,

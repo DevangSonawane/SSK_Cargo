@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/fcm_message_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 
 final clientNotificationsProvider =
     FutureProvider.autoDispose<List<ClientNotification>>((ref) async {
+      ref.watch(notificationRevisionProvider);
       final session = ref.watch(authSessionProvider).valueOrNull;
       if (session == null) {
         throw StateError('No active session');

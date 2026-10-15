@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:ssk/core/services/google_places_service.dart';
-import 'package:ssk/core/theme/app_icons.dart';
-import 'package:ssk/core/theme/app_tokens.dart';
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:gadidost/core/services/google_places_service.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_tokens.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 /// A compact Google Maps card that geocodes the pickup and drop-off addresses,
 /// draws the driving route between them and optionally overlays a

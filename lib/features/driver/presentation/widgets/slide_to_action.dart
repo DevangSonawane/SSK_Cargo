@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ssk/core/theme/app_icons.dart';
-import 'package:ssk/core/theme/app_tokens.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_tokens.dart';
 
 /// Minimal-light "slide to action" pill (Swiggy-partner style).
 ///

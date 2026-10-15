@@ -9,7 +9,7 @@ import '../network/api_client.dart';
 import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_tokens.dart';
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 /// Document keys, matching the backend's `verification_results` and the web
 /// client's `REQUIRED` map (Onboarding.jsx).

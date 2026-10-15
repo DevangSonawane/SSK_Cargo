@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 import 'core/router/app_router.dart';
 import 'core/network/api_client.dart';
@@ -14,6 +17,9 @@ import 'core/providers/app_providers.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/app_socket_service.dart';
+import 'core/services/fcm_message_service.dart';
+import 'core/services/local_push_presenter.dart';
+import 'core/services/notification_destination_resolver.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
 import 'core/providers/driver_tracking_state_provider.dart';
 import 'core/theme/app_theme.dart';
@@ -34,12 +40,20 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatMessageSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatEscalatedSubscription;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _tripJoinRequestSubscription;
   StreamSubscription<String?>? _unauthorizedSubscription;
   bool _handlingUnauthorized = false;
   bool _showingLoginAttemptAlert = false;
   Future<bool>? _trackingConsentFuture;
   bool _trackingConsentDeclined = false;
   OverlayEntry? _loginAttemptAlertEntry;
+  late final FcmMessageService _pushMessages;
+  late final GoRouter _pushRouter;
+  late final PushPresenter _pushPresenter;
+  final RecentAlertDedup _pushDedup = RecentAlertDedup();
+  bool _pushStateScheduled = false;
 
   /// Localizations for code that runs outside a widget `build`. Prefers the
   /// messenger's context (which sits under the localizations delegates) and
@@ -56,6 +70,21 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _pushRouter = ref.read(appRouterProvider);
+    _pushPresenter = ref.read(pushPresenterProvider);
+    unawaited(_pushPresenter.init(onTap: _handleLocalPushTap));
+    _pushMessages = FcmMessageService(
+      source: ref.read(fcmMessageSourceProvider),
+      resolve: NotificationDestinationResolver(
+        ref.read(apiClientProvider),
+      ).resolve,
+      navigate: _openPushDestination,
+      present: _presentForegroundPush,
+      notificationsChanged: _refreshNotificationHistory,
+    );
+    _pushRouter.routerDelegate.addListener(_schedulePushState);
+    unawaited(_pushMessages.start());
+    _schedulePushState();
     _loginAttemptAlertSubscription = ref
         .read(appSocketServiceProvider)
         .loginAttemptAlertStream
@@ -67,6 +96,18 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     _chatEscalatedSubscription = socketService.chatEscalatedStream.listen(
       _handleChatEscalated,
     );
+    // Foreground has no system tray; driver/job pushes are also suppressed
+    // in FcmMessageService (socket owns presentation), so toast here on the
+    // created event or the user sees nothing until they open the list.
+    _driverRequestSubscription = socketService.driverRequestStream.listen(
+      _handleNewBookingRequest,
+    );
+    _jobRequestSubscription = socketService.jobRequestStream.listen(
+      _handleNewBookingRequest,
+    );
+    _tripJoinRequestSubscription = socketService.tripJoinRequestStream.listen(
+      _handleNewBookingRequest,
+    );
     // Any authenticated call coming back 401 means the session died
     // server-side (admin/broker reset, all-devices logout, expiry).
     _unauthorizedSubscription = unauthorizedStream.listen((message) {
@@ -77,6 +118,119 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
     });
+  }
+
+  void _refreshNotificationHistory() {
+    if (!mounted) return;
+    ref.read(notificationRevisionProvider.notifier).state++;
+  }
+
+  void _schedulePushState() {
+    if (!mounted || _pushStateScheduled) return;
+    _pushStateScheduled = true;
+    // Login sets auth before its own context.go; wait for that navigation and
+    // the navigator's first frame so it cannot overwrite a cold-start tap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pushStateScheduled = false;
+      if (!mounted) return;
+      final auth = ref.read(authSessionProvider);
+      final path = _pushRouter.state.uri.path;
+      final ready =
+          !auth.isLoading &&
+          !_handlingUnauthorized &&
+          !{'/splash', '/login', '/signup'}.contains(path) &&
+          ref.read(rootNavigatorKeyProvider).currentState != null &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+      _pushMessages.setSession(auth.valueOrNull, navigationReady: ready);
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  /// Foreground FCM -> real system notification (tray/heads-up/banner).
+  /// The OS shows nothing on its own while the app is open, so without this
+  /// every trip/payment/booking/kyc/dispute/incident push would be invisible
+  /// until the user opens the bell. Same-row doubles with the socket channel
+  /// are collapsed via [_pushDedup] (web FcmBridge seen-request parity).
+  void _presentForegroundPush(RemoteMessage message) {
+    if (!mounted) return;
+    if (ref.read(authSessionProvider).valueOrNull == null) return;
+    final intent = NotificationIntent(message.data);
+    if (!_pushDedup.noteShown(pushCorrelationKey(intent.data))) {
+      _refreshNotificationHistory();
+      return;
+    }
+    _refreshNotificationHistory();
+    final title =
+        message.notification?.title ??
+        message.data['title']?.toString() ??
+        '';
+    final body =
+        message.notification?.body ?? message.data['body']?.toString() ?? '';
+    if (title.isEmpty && body.isEmpty) return;
+    unawaited(
+      _pushPresenter.showSystem(
+        title: title,
+        body: body,
+        payload: intent.data,
+        chat: intent.value('thread_id').isNotEmpty,
+      ),
+    );
+  }
+
+  /// Tap on a system notification shown while the app is alive — same
+  /// lifetime/queueing as an FCM tray tap (waits for login + navigation).
+  void _handleLocalPushTap(Map<String, dynamic> data) {
+    if (!mounted || data.isEmpty) return;
+    if (ref.read(authSessionProvider).valueOrNull == null) return;
+    _pushMessages.receiveLocalTap(data);
+  }
+
+  void _openPushDestination(
+    NotificationDestination destination,
+    NotificationIntent intent,
+  ) {
+    if (!mounted) return;
+    if (!notificationDestinationIsOpen(
+      destination,
+      _pushRouter.state.uri.path,
+      _pushRouter.state.extra,
+    )) {
+      unawaited(
+        _pushRouter
+            .push<void>(destination.location, extra: destination.extra)
+            .catchError((Object error) {
+              developer.log(
+                'Push navigation failed (${error.runtimeType})',
+                name: 'SSK.Push',
+              );
+            }),
+      );
+    }
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session != null && intent.notificationId.isNotEmpty) {
+      unawaited(_markPushRead(intent.notificationId, session));
+    }
+  }
+
+  Future<void> _markPushRead(String id, AuthSession session) async {
+    try {
+      await ref
+          .read(apiClientProvider)
+          .markNotificationRead(
+            accessToken: session.tokens.accessToken,
+            id: id,
+          );
+      if (mounted &&
+          ref.read(authSessionProvider).valueOrNull?.user.id ==
+              session.user.id) {
+        _refreshNotificationHistory();
+      }
+    } catch (error) {
+      developer.log(
+        'Push mark-read failed (${error.runtimeType})',
+        name: 'SSK.Push',
+      );
+    }
   }
 
   Future<void> _refreshChatUnreadCount() async {
@@ -110,6 +264,10 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     // stops loops from in-flight calls racing the logout.
     if (ref.read(authSessionProvider).valueOrNull == null) return;
     _handlingUnauthorized = true;
+    _pushMessages.setSession(
+      ref.read(authSessionProvider).valueOrNull,
+      navigationReady: false,
+    );
     try {
       // Web parity (SessionExpiredModal): the access token expiring is
       // routine — silently refresh first and keep the user exactly where
@@ -137,6 +295,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       }
     } finally {
       _handlingUnauthorized = false;
+      _schedulePushState();
     }
   }
 
@@ -145,10 +304,144 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     final l10n = _l10n;
     final senderFallback = l10n.appChatSupportFallback;
     final text = _chatPreview(payload['message']?.toString() ?? '');
+    if (text.isEmpty) return;
     final title = l10n.appNewMessageFrom(
       payload['senderName']?.toString() ?? senderFallback,
     );
-    _showChatMessage(title: title, message: text);
+    final threadId =
+        payload['threadId']?.toString() ??
+        payload['thread_id']?.toString() ??
+        '';
+    final sender =
+        payload['senderId']?.toString() ??
+        payload['sender_id']?.toString() ??
+        '';
+    if (!_pushDedup.noteShown(
+      'thread:$threadId:$sender:$text'.trim(),
+    )) {
+      return;
+    }
+    unawaited(
+      _pushPresenter.showSystem(
+        title: title,
+        body: text,
+        payload: {
+          if (threadId.trim().isNotEmpty) 'thread_id': threadId.trim(),
+          'message': text,
+          if (sender.trim().isNotEmpty) 'senderId': sender.trim(),
+        },
+        chat: true,
+      ),
+    );
+  }
+
+  void _handleNewBookingRequest(Map<String, dynamic> payload) {
+    if (!mounted) return;
+    if (ref.read(authSessionProvider).valueOrNull == null) return;
+    // Server rooms already scope delivery (driver/job rooms, trip parties),
+    // so any created/updated event here is meant for this user regardless of
+    // role — client haggling, driver offers, broker assignments alike. Shown
+    // as a real system notification, deduped against the FCM channel.
+    final event = payload['socketEvent']?.toString() ?? '';
+    final created =
+        event == 'driver-request-created' ||
+        event == 'job-request-created' ||
+        event == 'trip-join-request-created';
+    final updated =
+        event == 'driver-request-updated' ||
+        event == 'job-request-updated' ||
+        event == 'trip-join-request-updated';
+    if (!created && !updated) return;
+    final booking = payload['bookingNumber']?.toString().trim() ?? '';
+    final reference = _requestRef(payload);
+    final id = booking.isNotEmpty ? booking : reference;
+    if (event.startsWith('trip-join-request')) {
+      final joinId = payload['id']?.toString().trim() ?? '';
+      final routeData = {
+        if (joinId.isNotEmpty) 'trip_join_request_id': joinId,
+      };
+      if (!_pushDedup.noteShown(pushCorrelationKey(routeData))) {
+        _refreshNotificationHistory();
+        return;
+      }
+      _refreshNotificationHistory();
+      unawaited(
+        _pushPresenter.showSystem(
+          title: created ? 'New Trip Request' : 'Trip Request Update',
+          body: id.isEmpty ? 'A trip request changed.' : id,
+          payload: routeData,
+        ),
+      );
+      return;
+    }
+    final requestId = payload['id']?.toString().trim() ?? '';
+    final routeKey = event.startsWith('job-request')
+        ? 'job_request_id'
+        : 'driver_request_id';
+    final routeData = {
+      if (requestId.isNotEmpty) routeKey: requestId,
+      if (booking.isNotEmpty) 'booking_id': booking,
+    };
+    if (!_pushDedup.noteShown(pushCorrelationKey(routeData))) {
+      _refreshNotificationHistory();
+      return;
+    }
+    _refreshNotificationHistory();
+    if (created) {
+      final client = payload['clientName']?.toString().trim() ?? '';
+      final amount = payload['amount']?.toString().trim() ?? '';
+      final detail = [
+        id,
+        client,
+        amount.isEmpty ? '' : '₹$amount',
+      ].where((part) => part.isNotEmpty).join(' · ');
+      unawaited(
+        _pushPresenter.showSystem(
+          title: 'New Booking Request',
+          body: detail.isEmpty ? 'A new request arrived.' : detail,
+          payload: routeData,
+        ),
+      );
+    } else {
+      final status = _requestStatus(payload);
+      unawaited(
+        _pushPresenter.showSystem(
+          title: 'Request $status',
+          body: id.isEmpty ? 'A request changed.' : '$id · $status',
+          payload: routeData,
+        ),
+      );
+    }
+  }
+
+  String _requestRef(Map<String, dynamic> payload) {
+    for (final key in [
+      'booking_number',
+      'bookingId',
+      'booking_id',
+      'tripId',
+      'trip_id',
+      'id',
+    ]) {
+      final value = payload[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty && value.toLowerCase() != 'null') return value;
+    }
+    return '';
+  }
+
+  String _requestStatus(Map<String, dynamic> payload) {
+    if (payload['driverTimedOut'] == true ||
+        payload['driver_timed_out'] == true) {
+      return 'Expired';
+    }
+    final status = (payload['status']?.toString() ?? '').trim().toLowerCase();
+    return switch (status) {
+      'accepted' || 'confirmed' => 'Accepted',
+      'declined' || 'cancelled' || 'canceled' || 'rejected' => 'Declined',
+      'expired' || 'timed_out' || 'timeout' => 'Expired',
+      '' => 'Updated',
+      _ => status.length > 24 ? 'Updated' : 'Updated: $status',
+    };
   }
 
   void _handleChatEscalated(Map<String, dynamic> payload) {
@@ -159,9 +452,18 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     final suffix = booking == null || booking.isEmpty
         ? ''
         : l10n.appNewChatBookingSuffix(booking);
-    _showChatMessage(
-      title: l10n.appNewChatRequestTitle,
-      message: '${l10n.appNewChatRequestFrom(byName)}$suffix',
+    final message = '${l10n.appNewChatRequestFrom(byName)}$suffix';
+    if (!_pushDedup.noteShown('escalated:$booking:$byName')) return;
+    unawaited(
+      _pushPresenter.showSystem(
+        title: l10n.appNewChatRequestTitle,
+        body: message,
+        payload: {
+          if (booking != null && booking.isNotEmpty) 'booking_id': booking,
+          'message': message,
+        },
+        chat: true,
+      ),
     );
   }
 
@@ -179,26 +481,14 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     return '${normalized.substring(0, 80)}...';
   }
 
-  void _showChatMessage({required String title, required String message}) {
-    if (!mounted || message.isEmpty) return;
-    _messengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
-          ],
-        ),
-        duration: const Duration(seconds: 4),
-      ),
-    );
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    _pushMessages.setSession(
+      ref.read(authSessionProvider).valueOrNull,
+      navigationReady: false,
+    );
+    _schedulePushState();
     if (state == AppLifecycleState.resumed) {
       unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
@@ -456,9 +746,14 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _pushRouter.routerDelegate.removeListener(_schedulePushState);
+    _pushMessages.dispose();
     _loginAttemptAlertSubscription?.cancel();
     _chatMessageSubscription?.cancel();
     _chatEscalatedSubscription?.cancel();
+    _driverRequestSubscription?.cancel();
+    _jobRequestSubscription?.cancel();
+    _tripJoinRequestSubscription?.cancel();
     _unauthorizedSubscription?.cancel();
     _loginAttemptAlertEntry?.remove();
     WidgetsBinding.instance.removeObserver(this);
@@ -468,6 +763,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<AuthSession?>>(authSessionProvider, (previous, next) {
+      // Invalidate any model resolution immediately at an auth boundary.
+      _pushMessages.setSession(next.valueOrNull, navigationReady: false);
+      _schedulePushState();
       final previousSession = previous?.valueOrNull;
       final nextSession = next.valueOrNull;
       if (previousSession?.user.id == nextSession?.user.id) {

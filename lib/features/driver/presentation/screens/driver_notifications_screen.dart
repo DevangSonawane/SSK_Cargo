@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/fcm_message_service.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -15,6 +16,7 @@ enum _DriverNotificationFilter { all, trips, chat, system }
 
 final _driverNotificationsProvider =
     FutureProvider.autoDispose<List<ClientNotification>>((ref) async {
+      ref.watch(notificationRevisionProvider);
       final session = ref.watch(authSessionProvider).valueOrNull;
       if (session == null) throw StateError('No active session');
 

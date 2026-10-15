@@ -1,21 +1,23 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
-import 'package:ssk/core/theme/app_tokens.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/fcm_message_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 enum _NotificationTab { all, operations, system, financial }
 
 final _brokerNotificationsProvider =
     FutureProvider.autoDispose<List<ClientNotification>>((ref) async {
+      ref.watch(notificationRevisionProvider);
       final session = ref.watch(authSessionProvider).valueOrNull;
       if (session == null) throw StateError('No active session');
       final response = await ref

@@ -1,4 +1,4 @@
-name: ssk
+name: gadidost
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -51,10 +51,12 @@ dependencies:
   url_launcher: ^6.3.1
   socket_io_client: ^2.0.3
   razorpay_flutter: ^1.4.6
-  firebase_core: ^4.1.0
-  firebase_messaging: ^16.1.0
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
+  permission_handler: ^12.0.1
   video_player: ^2.11.1
   receipt_printer: ^1.0.2
+  flutter_local_notifications: ^22.3.2
 
 dev_dependencies:
   flutter_test:
@@ -119,6 +121,8 @@ flutter:
     - "assets/client/test.png"
     - "assets/client/home_page_photo.png"
     - "assets/client/homepage.png"
+    - "assets/client/booklaters.png"
+    - "assets/client/part-truck.png"
     - "assets/package.png"
     - "assets/earnings/wallets.png"
 

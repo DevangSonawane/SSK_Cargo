@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 
 class SskProfileAvatar extends StatelessWidget {
   const SskProfileAvatar({

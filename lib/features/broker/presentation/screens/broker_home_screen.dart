@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +12,7 @@ import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
-import 'package:ssk/l10n/app_localizations.dart';
+import 'package:gadidost/l10n/app_localizations.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
   const BrokerHomeScreen({super.key});

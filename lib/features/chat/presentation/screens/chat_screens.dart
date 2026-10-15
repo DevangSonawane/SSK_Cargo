@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 

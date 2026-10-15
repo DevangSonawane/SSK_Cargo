@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '420579105285',
     projectId: 'gadidosti-68f19',
     storageBucket: 'gadidosti-68f19.firebasestorage.app',
-    iosBundleId: 'com.example.ssk',
+    iosBundleId: 'com.example.gadidost',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '420579105285',
     projectId: 'gadidosti-68f19',
     storageBucket: 'gadidosti-68f19.firebasestorage.app',
-    iosBundleId: 'com.example.ssk',
+    iosBundleId: 'com.example.gadidost',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

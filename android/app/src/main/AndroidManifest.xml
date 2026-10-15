@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
-        android:label="ssk"
+        android:label="GadiDost"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data

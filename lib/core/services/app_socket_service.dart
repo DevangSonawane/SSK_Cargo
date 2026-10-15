@@ -143,6 +143,7 @@ class AppSocketService {
       );
       final event = _parseDriverRequestPayload(payload);
       if (event != null && !_driverRequestController.isClosed) {
+        event['socketEvent'] = eventName;
         _driverRequestController.add(event);
       }
     }
@@ -154,6 +155,7 @@ class AppSocketService {
       );
       final event = _parseDriverRequestPayload(payload);
       if (event != null && !_jobRequestController.isClosed) {
+        event['socketEvent'] = eventName;
         _jobRequestController.add(event);
       }
     }
@@ -207,6 +209,7 @@ class AppSocketService {
       );
       final event = _parseMapPayload(payload);
       if (event != null && !_tripJoinRequestController.isClosed) {
+        event['socketEvent'] = eventName;
         _tripJoinRequestController.add(event);
       }
     }

@@ -4,11 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:ssk/core/network/api_client.dart';
-import 'package:ssk/core/services/app_socket_service.dart';
-import 'package:ssk/features/auth/data/auth_models.dart';
-import 'package:ssk/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ssk/features/driver/data/driver_request_models.dart';
+import 'package:gadidost/core/network/api_client.dart';
+import 'package:gadidost/core/services/app_socket_service.dart';
+import 'package:gadidost/features/auth/data/auth_models.dart';
+import 'package:gadidost/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/features/driver/data/driver_request_models.dart';
 
 Map<String, dynamic> _page(List<Map<String, dynamic>> requests) => {
   'data': {'requests': requests},

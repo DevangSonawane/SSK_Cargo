@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
-import 'package:ssk/core/theme/app_tokens.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 
 Future<bool> showFakePaymentCheckout({

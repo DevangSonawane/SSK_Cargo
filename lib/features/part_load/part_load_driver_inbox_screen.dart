@@ -14,7 +14,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 
 import '../../core/services/app_socket_service.dart';
 import '../../core/theme/app_tokens.dart';

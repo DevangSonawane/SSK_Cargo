@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_tokens.dart';
+import 'package:gadidost/core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Liquid-glass Pending / Completed switcher with count badges

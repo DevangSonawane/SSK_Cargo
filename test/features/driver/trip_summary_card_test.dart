@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ssk/features/driver/data/driver_dashboard_models.dart';
-import 'package:ssk/features/driver/presentation/widgets/trip_summary_card.dart';
+import 'package:gadidost/features/driver/data/driver_dashboard_models.dart';
+import 'package:gadidost/features/driver/presentation/widgets/trip_summary_card.dart';
 
 DriverTripSummary _fakeTrip({
   String status = 'delivered',

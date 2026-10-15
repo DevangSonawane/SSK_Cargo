@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ssk/features/driver/presentation/widgets/history_segment_bar.dart';
+import 'package:gadidost/features/driver/presentation/widgets/history_segment_bar.dart';
 
 void main() {
   testWidgets('HistorySegmentBar renders labels with counts', (tester) async {

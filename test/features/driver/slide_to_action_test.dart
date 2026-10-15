@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ssk/features/driver/presentation/widgets/slide_to_action.dart';
+import 'package:gadidost/features/driver/presentation/widgets/slide_to_action.dart';
 
 void main() {
   testWidgets('SlideToAction renders track, thumb and label', (tester) async {

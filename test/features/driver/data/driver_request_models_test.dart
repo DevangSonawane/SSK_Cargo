@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ssk/features/driver/data/driver_request_models.dart';
-import 'package:ssk/features/driver/data/driver_trip_handoff_utils.dart';
+import 'package:gadidost/features/driver/data/driver_request_models.dart';
+import 'package:gadidost/features/driver/data/driver_trip_handoff_utils.dart';
 
 void main() {
   group('DriverRequestPage', () {

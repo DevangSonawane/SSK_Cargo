@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ssk/features/auth/data/auth_models.dart';
+import 'package:gadidost/features/auth/data/auth_models.dart';
 
 void main() {
   group('SskUser', () {

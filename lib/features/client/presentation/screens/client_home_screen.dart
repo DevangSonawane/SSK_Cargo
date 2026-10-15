@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -99,13 +99,46 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgAsset = switch (_mode) {
+      _HomeMode.full => 'assets/client/home_page_photo.png',
+      _HomeMode.part => 'assets/client/part-truck.png',
+      _HomeMode.later => 'assets/client/booklaters.png',
+    };
     return Stack(
+      fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: Image.asset(
-            'assets/client/home_page_photo.png',
-            fit: BoxFit.cover,
-            alignment: const Alignment(0, -0.18),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 380),
+            switchInCurve: Curves.easeInOutCubic,
+            switchOutCurve: Curves.easeInOutCubic,
+            transitionBuilder: (child, animation) {
+              final fade = FadeTransition(opacity: animation, child: child);
+              final scale = ScaleTransition(
+                scale: Tween<double>(begin: 1.06, end: 1.0).animate(animation),
+                child: fade,
+              );
+              return scale;
+            },
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ...previousChildren,
+                  currentChild ?? const SizedBox.shrink(),
+                ],
+              );
+            },
+            child: SizedBox.expand(
+              key: ValueKey(bgAsset),
+              child: Image.asset(
+                bgAsset,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, -0.18),
+              ),
+            ),
           ),
         ),
         Positioned.fill(
@@ -148,9 +181,28 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 ),
                 const SizedBox(height: 14),
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeOutCubic,
+                  duration: const Duration(milliseconds: 320),
+                  switchInCurve: Curves.fastOutSlowIn,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    final fade = FadeTransition(opacity: animation, child: child);
+                    final slide = SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0, 0.06),
+                            end: Offset.zero,
+                          ).animate(animation),
+                      child: fade,
+                    );
+                    return slide;
+                  },
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
+                      ...previousChildren,
+                      currentChild ?? const SizedBox.shrink(),
+                    ],
+                  ),
                   child: switch (_mode) {
                     _HomeMode.full => _FullHeroCard(
                         key: const ValueKey('home-full'),
@@ -184,6 +236,9 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
 /// step 1 (rounded-full group, exact lucide icons Zap / PackagePlus /
 /// CalendarClock, no images). Home owns the choice; the choose-trucks
 /// sheet follows it.
+///
+/// Fluid gliding thumb (same feel as the bottom bar / history segment bar —
+/// AnimatedPositioned, no backdrop blur / liquid glass here).
 class _ModeHeader extends StatelessWidget {
   const _ModeHeader({required this.mode, required this.onChanged});
 
@@ -193,6 +248,17 @@ class _ModeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final selectedIndex = switch (mode) {
+      _HomeMode.full => 0,
+      _HomeMode.part => 1,
+      _HomeMode.later => 2,
+    };
+    final entries = [
+      (label: l10n.tripTypeFullTruck, icon: AppIcons.flash_on_rounded, mode: _HomeMode.full),
+      (label: l10n.tripTypePartTruck, icon: AppIcons.package_plus_rounded, mode: _HomeMode.part),
+      (label: l10n.checkoutBookLater, icon: AppIcons.calendar_clock_rounded, mode: _HomeMode.later),
+    ];
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(4),
@@ -200,35 +266,53 @@ class _ModeHeader extends StatelessWidget {
         color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ModePill(
-              label: l10n.tripTypeFullTruck,
-              icon: AppIcons.flash_on_rounded,
-              selected: mode == _HomeMode.full,
-              onTap: () => onChanged(_HomeMode.full),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _ModePill(
-              label: l10n.tripTypePartTruck,
-              icon: AppIcons.package_plus_rounded,
-              selected: mode == _HomeMode.part,
-              onTap: () => onChanged(_HomeMode.part),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _ModePill(
-              label: l10n.checkoutBookLater,
-              icon: AppIcons.calendar_clock_rounded,
-              selected: mode == _HomeMode.later,
-              onTap: () => onChanged(_HomeMode.later),
-            ),
-          ),
-        ],
+      child: SizedBox(
+        height: 38,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final segmentWidth = constraints.maxWidth / 3;
+            return Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeInOutCubic,
+                  left: selectedIndex * segmentWidth,
+                  top: 0,
+                  bottom: 0,
+                  width: segmentWidth,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2FA56E),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF2FA56E,
+                          ).withValues(alpha: 0.28),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    for (var i = 0; i < entries.length; i++)
+                      Expanded(
+                        child: _ModePill(
+                          label: entries[i].label,
+                          icon: entries[i].icon,
+                          selected: i == selectedIndex,
+                          onTap: () => onChanged(entries[i].mode),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -249,39 +333,39 @@ class _ModePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = selected ? Colors.white : context.colors.textSecondary;
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
       borderRadius: BorderRadius.circular(999),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2FA56E) : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
+      child: SizedBox(
+        height: 38,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: selected ? Colors.white : context.colors.textSecondary,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Icon(icon, key: ValueKey(selected), size: 14, color: color),
             ),
             const SizedBox(width: 6),
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : context.colors.textSecondary,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                style:
+                    Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ) ??
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -299,19 +383,17 @@ class _HeroCardShell extends StatelessWidget {
   const _HeroCardShell({
     required this.buttonLabel,
     required this.onTap,
-    this.buttonEnabled = true,
     required this.children,
   });
 
   final String buttonLabel;
   final VoidCallback onTap;
-  final bool buttonEnabled;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: buttonEnabled ? onTap : null,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
@@ -337,11 +419,10 @@ class _HeroCardShell extends StatelessWidget {
               width: double.infinity,
               height: 52,
               child: FilledButton(
-                onPressed: buttonEnabled ? onTap : null,
+                onPressed: onTap,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF2FA56E),
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFD8E1ED),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
@@ -366,7 +447,6 @@ class _HeroCardShell extends StatelessWidget {
 
 class _RouteRows extends StatelessWidget {
   const _RouteRows();
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -476,7 +556,6 @@ class _LaterHeroCard extends StatelessWidget {
     return _HeroCardShell(
       buttonLabel: l10n.checkoutBookLater,
       onTap: onTap,
-      buttonEnabled: scheduled != null,
       children: [
         InkWell(
           onTap: onPickSchedule,

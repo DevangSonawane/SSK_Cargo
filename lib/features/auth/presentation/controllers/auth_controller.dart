@@ -11,6 +11,8 @@ import '../../data/auth_models.dart';
 
 final authSessionProvider =
     StateNotifierProvider<AuthController, AsyncValue<AuthSession?>>((ref) {
+      final pushService = ref.read(clientPushNotificationServiceProvider);
+      ref.onDispose(() => unawaited(pushService.clearForSession()));
       return AuthController(ref, ref.read(apiClientProvider));
     });
 
@@ -24,10 +26,12 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
 
   final Ref _ref;
   final SskApiClient _apiClient;
+  int _sessionRevision = 0;
 
   AuthSession? get session => state.valueOrNull;
 
   void bootstrapSession(AuthSession session) {
+    ++_sessionRevision;
     state = AsyncData<AuthSession?>(session);
     unawaited(
       _ref.read(clientPushNotificationServiceProvider).syncForSession(session),
@@ -54,9 +58,16 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String email,
     required String password,
   }) async {
+    final revision = ++_sessionRevision;
+    unawaited(
+      _ref.read(clientPushNotificationServiceProvider).clearForSession(),
+    );
     state = const AsyncLoading<AuthSession?>();
     try {
       final response = await _apiClient.login(email: email, password: password);
+      if (!mounted || revision != _sessionRevision) {
+        throw StateError('Sign-in superseded by a session change');
+      }
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
       unawaited(
@@ -73,7 +84,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
       return session;
     } catch (error, stackTrace) {
-      state = AsyncError<AuthSession?>(error, stackTrace);
+      if (mounted && revision == _sessionRevision) {
+        state = AsyncError<AuthSession?>(error, stackTrace);
+      }
       rethrow;
     }
   }
@@ -82,12 +95,19 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String idToken,
     required String role,
   }) async {
+    final revision = ++_sessionRevision;
+    unawaited(
+      _ref.read(clientPushNotificationServiceProvider).clearForSession(),
+    );
     state = const AsyncLoading<AuthSession?>();
     try {
       final response = await _apiClient.googleLogin(
         idToken: idToken,
         role: role,
       );
+      if (!mounted || revision != _sessionRevision) {
+        throw StateError('Sign-in superseded by a session change');
+      }
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
       unawaited(
@@ -104,7 +124,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
       return session;
     } catch (error, stackTrace) {
-      state = AsyncError<AuthSession?>(error, stackTrace);
+      if (mounted && revision == _sessionRevision) {
+        state = AsyncError<AuthSession?>(error, stackTrace);
+      }
       rethrow;
     }
   }
@@ -126,15 +148,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   }
 
   Future<void> logout({bool allDevices = false}) async {
+    final revision = ++_sessionRevision;
     final currentSession = session;
+    await _ref.read(clientPushNotificationServiceProvider).clearForSession();
     if (currentSession != null) {
-      try {
-        await _ref
-            .read(clientPushNotificationServiceProvider)
-            .clearForSession(currentSession);
-      } catch (_) {
-        // Clear local state even if push token cleanup fails.
-      }
       try {
         await _apiClient.logout(
           refreshToken: currentSession.tokens.refreshToken,
@@ -144,12 +161,17 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         // Clear local state even if the server already expired the token.
       }
     }
+    if (!mounted || revision != _sessionRevision) return;
     _ref.read(appSocketServiceProvider).reset();
     _ref.read(userLocationProvider.notifier).clear();
     state = const AsyncValue.data(null);
   }
 
   Future<void> forceLocalLogout() async {
+    ++_sessionRevision;
+    unawaited(
+      _ref.read(clientPushNotificationServiceProvider).clearForSession(),
+    );
     _ref.read(appSocketServiceProvider).reset();
     _ref.read(userLocationProvider.notifier).clear();
     _ref.read(driverOnlineProvider.notifier).state = false;
@@ -164,6 +186,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   /// session left in place so the user keeps their place while re-logging
   /// in inline. Returns true when the session was refreshed.
   Future<bool> refreshTokens() async {
+    final revision = _sessionRevision;
     final currentSession = session;
     final refreshToken = currentSession?.tokens.refreshToken ?? '';
     if (refreshToken.isEmpty) return false;
@@ -171,6 +194,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       final response = await _apiClient.refreshSession(
         refreshToken: refreshToken,
       );
+      if (!mounted || revision != _sessionRevision) return false;
       final data = response['data'];
       final map = data is Map<String, dynamic> ? data : response;
       final tokensJson = map['tokens'];
@@ -179,6 +203,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       if (tokens.accessToken.isEmpty) return false;
       final refreshed = AuthSession(user: currentSession!.user, tokens: tokens);
       state = AsyncData<AuthSession?>(refreshed);
+      _ref.read(clientPushNotificationServiceProvider).updateSession(refreshed);
       unawaited(
         _ref
             .read(appSocketServiceProvider)

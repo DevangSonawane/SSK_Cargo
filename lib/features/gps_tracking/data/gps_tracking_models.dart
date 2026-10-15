@@ -1,7 +1,7 @@
 import '../../../l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
-import 'package:ssk/core/theme/app_icons.dart';
+import 'package:gadidost/core/theme/app_icons.dart';
 
 class GpsTrackerDevice {
   const GpsTrackerDevice({
