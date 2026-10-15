@@ -189,7 +189,14 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     subtitle: l10n.brokerHelpSubtitle,
                     icon: AppIcons.support_agent_rounded,
                     accent: AppColors.brand,
-                    onTap: () {},
+                    onTap: () => context.push('/broker/help-support'),
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.deleteAccount,
+                    subtitle: l10n.deleteAccountSubtitle,
+                    icon: AppIcons.delete_outline_rounded,
+                    accent: AppColors.dangerIcon,
+                    onTap: () => context.push('/delete-account'),
                   ),
                   _ProfileMenuTile(
                     title: l10n.logout,

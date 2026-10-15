@@ -511,6 +511,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get helpSupport => 'मदद और सपोर्ट';
 
   @override
+  String get brokerSupportLoadError =>
+      'सहायता की जानकारी लोड नहीं हो सकी। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get brokerSupportLinkError =>
+      'यह लिंक नहीं खुल सका। कृपया फिर से कोशिश करें।';
+
+  @override
   String get termsPrivacy => 'नियम और गोपनीयता';
 
   @override
@@ -1379,6 +1387,46 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get delete => 'डिलीट';
+
+  @override
+  String get deleteAccount => 'अकाउंट हटाएं';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'अपने अकाउंट को स्थायी रूप से हटाने का अनुरोध करें';
+
+  @override
+  String get deleteAccountTitle => 'अकाउंट हटाएं';
+
+  @override
+  String get deleteAccountFormSubtitle =>
+      'अपने अकाउंट की जानकारी देखें और हटाने के अनुरोध की पुष्टि करें।';
+
+  @override
+  String get deleteAccountWarning =>
+      'इससे आपका अकाउंट और उसका सारा डेटा स्थायी रूप से हटाने का अनुरोध जाएगा। हमारी टीम इसे सत्यापित करके पूरा करेगी — इसे वापस नहीं किया जा सकता।';
+
+  @override
+  String get deleteAccountReasonHint =>
+      'बताएं कि आप क्यों जा रहे हैं (वैकल्पिक)';
+
+  @override
+  String get deleteAccountConfirmTitle => 'क्या अपना अकाउंट हटाएं?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'आपका हटाने का अनुरोध हमारी टीम को भेजा जाएगा। स्वीकृत होने तक आपका अकाउंट सक्रिय रहेगा।';
+
+  @override
+  String get deleteAccountSuccessTitle => 'अनुरोध भेजा गया';
+
+  @override
+  String get deleteAccountSuccessBody =>
+      'आपके अकाउंट हटाने का अनुरोध मिल गया है। हमारी टीम इसे सत्यापित करके पूरा करने के लिए संपर्क करेगी।';
+
+  @override
+  String get deleteAccountNoSession =>
+      'अपना अकाउंट हटाने के लिए फिर से साइन इन करें।';
 
   @override
   String get signInAgainToDeleteDriver =>

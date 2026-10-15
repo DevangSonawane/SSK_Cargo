@@ -45,6 +45,24 @@ class SskApiClient {
     return _request(() => _dio.get<Map<String, dynamic>>('/api/health'));
   }
 
+  /// Public support content shared with the broker React app.
+  Future<Map<String, dynamic>> getBrokerSupportPage() async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/legal-pages/broker/contact_support',
+      ),
+    );
+  }
+
+  /// Public support content shared with the driver React app.
+  Future<Map<String, dynamic>> getDriverSupportPage() async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/legal-pages/driver/contact_support',
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -578,6 +596,26 @@ class SskApiClient {
       () => _dio.delete<Map<String, dynamic>>(
         '/api/users/device-token',
         data: {'token': token},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Authenticated account-deletion request for the signed-in user (any role).
+  /// Name/email/phone/audience come from the verified account server-side —
+  /// never user input — so only an optional reason is sent.
+  Future<Map<String, dynamic>> requestAccountDeletion({
+    required String accessToken,
+    String? reason,
+  }) async {
+    developer.log('POST /api/account-deletion-requests/me', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/account-deletion-requests/me',
+        data: {
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+        },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

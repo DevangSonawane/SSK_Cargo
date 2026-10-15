@@ -285,6 +285,19 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 16),
               _ProfileSection(
+                title: l10n.support,
+                children: [
+                  _ProfileMenuTile(
+                    title: l10n.helpSupport,
+                    subtitle: l10n.brokerHelpSubtitle,
+                    icon: AppIcons.support_agent_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/help-support'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
                 title: l10n.security,
                 children: [
                   _ProfileMenuTile(
@@ -292,6 +305,13 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     subtitle: l10n.driverChangePasswordSubtitle,
                     icon: AppIcons.lock_outline_rounded,
                     onTap: () => context.push('/change-password'),
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.deleteAccount,
+                    subtitle: l10n.deleteAccountSubtitle,
+                    icon: AppIcons.delete_outline_rounded,
+                    accent: AppColors.dangerIcon,
+                    onTap: () => context.push('/delete-account'),
                   ),
                   _ProfileMenuTile(
                     title: l10n.logout,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
+import '../../features/auth/presentation/screens/delete_account_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
@@ -23,6 +24,7 @@ import '../../features/broker/presentation/screens/broker_history_detail_screen.
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
+import '../../features/broker/presentation/screens/broker_help_support_screen.dart';
 import '../../features/broker/presentation/screens/broker_driver_requests_screen.dart';
 import '../../features/broker/presentation/screens/broker_earnings_screen.dart';
 import '../../features/broker/presentation/screens/broker_request_detail_screen.dart';
@@ -57,6 +59,7 @@ import '../../features/driver/presentation/screens/driver_thank_you_screen.dart'
 import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
 import '../../features/driver/presentation/screens/driver_notifications_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
+import '../../features/driver/presentation/screens/driver_help_support_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
 import '../../features/driver/presentation/screens/driver_rider_screen.dart';
 import '../../features/driver/presentation/screens/driver_shell.dart';
@@ -164,6 +167,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final token = state.pathParameters['token'] ?? '';
           return NoTransitionPage(child: PublicTrackingScreen(token: token));
         },
+      ),
+      GoRoute(
+        path: '/driver/help-support',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _lightFlow(const DriverHelpSupportScreen())),
       ),
       GoRoute(
         path: '/driver/profile',
@@ -323,6 +331,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             NoTransitionPage(child: _lightFlow(const ManageAccountScreen())),
       ),
       GoRoute(
+        path: '/delete-account',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _lightFlow(const DeleteAccountScreen())),
+      ),
+      GoRoute(
         path: '/broker/kyc-registration',
         pageBuilder: (context, state) => NoTransitionPage(
           child: _lightFlow(const BrokerKycRegistrationScreen()),
@@ -333,6 +346,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => NoTransitionPage(
           child: _lightFlow(const BrokerNotificationsScreen()),
         ),
+      ),
+      GoRoute(
+        path: '/broker/help-support',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _lightFlow(const BrokerHelpSupportScreen())),
       ),
       GoRoute(
         path: '/broker/settings',

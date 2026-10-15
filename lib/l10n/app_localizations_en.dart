@@ -510,6 +510,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpSupport => 'Help & Support';
 
   @override
+  String get brokerSupportLoadError =>
+      'Could not load support information. Please try again.';
+
+  @override
+  String get brokerSupportLinkError =>
+      'Could not open this link. Please try again.';
+
+  @override
   String get termsPrivacy => 'Terms & Privacy';
 
   @override
@@ -1379,6 +1387,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get delete => 'Delete';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Request permanent deletion of your account';
+
+  @override
+  String get deleteAccountTitle => 'Delete Account';
+
+  @override
+  String get deleteAccountFormSubtitle =>
+      'Review your account details and confirm your deletion request.';
+
+  @override
+  String get deleteAccountWarning =>
+      'This requests permanent deletion of your account and all its data. Our team will verify and complete it — this cannot be undone.';
+
+  @override
+  String get deleteAccountReasonHint =>
+      'Tell us why you are leaving (optional)';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'Your deletion request will be sent to our team. Your account stays active until it is approved.';
+
+  @override
+  String get deleteAccountSuccessTitle => 'Request submitted';
+
+  @override
+  String get deleteAccountSuccessBody =>
+      'Your account deletion request has been received. Our team will follow up to verify and complete it.';
+
+  @override
+  String get deleteAccountNoSession =>
+      'Please sign in again to delete your account.';
 
   @override
   String get signInAgainToDeleteDriver =>

@@ -1039,6 +1039,18 @@ abstract class AppLocalizations {
   /// **'Help & Support'**
   String get helpSupport;
 
+  /// No description provided for @brokerSupportLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load support information. Please try again.'**
+  String get brokerSupportLoadError;
+
+  /// No description provided for @brokerSupportLinkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this link. Please try again.'**
+  String get brokerSupportLinkError;
+
   /// No description provided for @termsPrivacy.
   ///
   /// In en, this message translates to:
@@ -2610,6 +2622,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request permanent deletion of your account'**
+  String get deleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountFormSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your account details and confirm your deletion request.'**
+  String get deleteAccountFormSubtitle;
+
+  /// No description provided for @deleteAccountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This requests permanent deletion of your account and all its data. Our team will verify and complete it — this cannot be undone.'**
+  String get deleteAccountWarning;
+
+  /// No description provided for @deleteAccountReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us why you are leaving (optional)'**
+  String get deleteAccountReasonHint;
+
+  /// No description provided for @deleteAccountConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountConfirmTitle;
+
+  /// No description provided for @deleteAccountConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your deletion request will be sent to our team. Your account stays active until it is approved.'**
+  String get deleteAccountConfirmBody;
+
+  /// No description provided for @deleteAccountSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request submitted'**
+  String get deleteAccountSuccessTitle;
+
+  /// No description provided for @deleteAccountSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account deletion request has been received. Our team will follow up to verify and complete it.'**
+  String get deleteAccountSuccessBody;
+
+  /// No description provided for @deleteAccountNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to delete your account.'**
+  String get deleteAccountNoSession;
 
   /// No description provided for @signInAgainToDeleteDriver.
   ///
