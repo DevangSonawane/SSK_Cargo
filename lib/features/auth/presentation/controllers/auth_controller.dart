@@ -30,9 +30,38 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
 
   AuthSession? get session => state.valueOrNull;
 
+  /// A Flutter driver being locally "online" is not enough for the backend's
+  /// nearby-driver matching. Mirror the web driver's login behavior by making
+  /// the driver available server-side as soon as a driver session starts.
+  ///
+  /// Location tracking remains subject to the driver's consent and device GPS
+  /// permission; the app-level tracking listener starts that flow separately.
+  /// Availability is deliberately best-effort so a transient failure never
+  /// prevents authentication or navigation.
+  void _activateDriverForBookings(AuthSession session) {
+    if (session.user.role.trim().toLowerCase() != 'driver') {
+      return;
+    }
+
+    _ref.read(driverOnlineProvider.notifier).state = true;
+    unawaited(_setDriverAvailable(session.tokens.accessToken));
+  }
+
+  Future<void> _setDriverAvailable(String accessToken) async {
+    try {
+      await _apiClient.updateDriverStatus(
+        accessToken: accessToken,
+        status: 'available',
+      );
+    } catch (_) {
+      // The location tracker and the user's Online toggle will retry this.
+    }
+  }
+
   void bootstrapSession(AuthSession session) {
     ++_sessionRevision;
     state = AsyncData<AuthSession?>(session);
+    _activateDriverForBookings(session);
     unawaited(
       _ref.read(clientPushNotificationServiceProvider).syncForSession(session),
     );
@@ -70,6 +99,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
+      _activateDriverForBookings(session);
       unawaited(
         _ref
             .read(clientPushNotificationServiceProvider)
@@ -110,6 +140,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
+      _activateDriverForBookings(session);
       unawaited(
         _ref
             .read(clientPushNotificationServiceProvider)

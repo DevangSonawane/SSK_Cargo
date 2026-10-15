@@ -38,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     developer.log(
-      'Initializing Google Sign-In for package=com.example.gadidost',
+      'Initializing Google Sign-In for package=com.gadidost.play',
       name: 'SSK.Auth',
     );
     _googleSignInInitialization = _googleSignIn.initialize(

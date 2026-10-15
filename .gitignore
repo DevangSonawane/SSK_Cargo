@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android Play Store upload signing key (never commit these files)
+/android/key.properties
+/android/upload-keystore.jks
+
 # Local store screenshot tooling and generated assets
 /goldie/.tooling/
 /goldie/client/out/

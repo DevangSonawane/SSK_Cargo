@@ -52,12 +52,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCyYepaMwZLax5eJGeygMVhT76bJUsnpRY',
-    appId: '1:420579105285:android:1d35eae383d64d0e4c9a6c',
+    appId: '1:420579105285:android:f1d1a711513e448a4c9a6c',
     messagingSenderId: '420579105285',
     projectId: 'gadidosti-68f19',
     storageBucket: 'gadidosti-68f19.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCkoF1wOA49S9DNsDSKfSPmm45JnAwxrNU',
     appId: '1:420579105285:ios:6601a9f5fa2d74d94c9a6c',

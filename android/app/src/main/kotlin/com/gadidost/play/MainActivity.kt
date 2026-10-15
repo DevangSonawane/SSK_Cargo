@@ -1,4 +1,4 @@
-package com.example.ssk
+package com.gadidost.play
 
 import android.content.Intent
 import android.content.ContentValues
