@@ -108,6 +108,7 @@ flutter:
     - assets/earning.png
     - assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png
     - assets/IMG_1750.PNG
+    - "assets/Delivering Trust Across Miles.png"
     - assets/truck/truck-marker.png
     - assets/google_logo.svg
     - assets/apple_logo.svg
@@ -120,6 +121,7 @@ flutter:
     - assets/images/
     - assets/selectionscreen/
     - "assets/client/test.png"
+    - "assets/client/Smart Logistics Booking at Gadidost.png"
     - "assets/client/home_page_photo.png"
     - "assets/client/homepage.png"
     - "assets/client/booklaters.png"

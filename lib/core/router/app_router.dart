@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/delete_account_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/role_login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_geofences_screen.dart';
@@ -107,8 +108,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: LoginScreen(expectedRole: AppRole.client),
+        ),
+      ),
+      GoRoute(
+        path: '/role-login',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: LoginScreen()),
+            const NoTransitionPage(child: RoleLoginScreen()),
+      ),
+      GoRoute(
+        path: '/broker/login',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: LoginScreen(expectedRole: AppRole.broker),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/login',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: LoginScreen(expectedRole: AppRole.driver),
+        ),
       ),
       GoRoute(
         path: '/gps/dashboard',

@@ -25,6 +25,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   bool _kycApproved = false;
   bool _loadingKyc = true;
   bool _openingBrokerChat = false;
+  bool _isLoggingOut = false;
   String? _activeUserId;
   bool _sessionSyncQueued = false;
 
@@ -48,6 +49,17 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       await ref.read(driverDashboardProvider.future);
     } catch (_) {
       // Errors surface through the watcher; the refresh still ends.
+    }
+  }
+
+  Future<void> _logout() async {
+    if (_isLoggingOut) return;
+    setState(() => _isLoggingOut = true);
+    try {
+      await ref.read(authSessionProvider.notifier).logout();
+      if (mounted) context.go('/role-login');
+    } finally {
+      if (mounted) setState(() => _isLoggingOut = false);
     }
   }
 
@@ -318,12 +330,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     subtitle: l10n.logoutSubtitle,
                     icon: AppIcons.logout_rounded,
                     accent: AppColors.dangerIcon,
-                    onTap: () async {
-                      await ref.read(authSessionProvider.notifier).logout();
-                      if (context.mounted) {
-                        context.go('/login');
-                      }
-                    },
+                    onTap: _isLoggingOut ? () {} : _logout,
                   ),
                 ],
               ),

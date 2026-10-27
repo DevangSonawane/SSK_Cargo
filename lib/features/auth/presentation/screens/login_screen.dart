@@ -15,7 +15,9 @@ import '../../../../core/providers/app_providers.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, required this.expectedRole});
+
+  final AppRole expectedRole;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -37,6 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(selectedRoleProvider.notifier).state = widget.expectedRole;
     developer.log(
       'Initializing Google Sign-In for package=com.gadidost.play',
       name: 'SSK.Auth',
@@ -78,6 +81,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .login(email: email, password: password);
 
       final role = appRoleFromApiRole(session.user.role);
+      if (role != widget.expectedRole) {
+        await ref.read(authSessionProvider.notifier).forceLocalLogout();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This account is registered as ${session.user.role}. Please use the ${widget.expectedRole.name} login.',
+            ),
+            backgroundColor: const Color(0xFFE23A4B),
+          ),
+        );
+        return;
+      }
       ref.read(selectedRoleProvider.notifier).state = role;
       ref.read(authExpiredMessageProvider.notifier).state = null;
       if (role == AppRole.client) {
@@ -141,9 +157,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final session = await ref
           .read(authSessionProvider.notifier)
-          .loginWithGoogle(idToken: idToken, role: 'client');
+          .loginWithGoogle(idToken: idToken, role: widget.expectedRole.name);
 
       final role = appRoleFromApiRole(session.user.role);
+      if (role != widget.expectedRole) {
+        await ref.read(authSessionProvider.notifier).forceLocalLogout();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This account is registered as ${session.user.role}. Please use the ${widget.expectedRole.name} login.',
+            ),
+            backgroundColor: const Color(0xFFE23A4B),
+          ),
+        );
+        return;
+      }
       ref.read(selectedRoleProvider.notifier).state = role;
       ref.read(authExpiredMessageProvider.notifier).state = null;
       if (role == AppRole.client) {
@@ -216,12 +245,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final expiredMessage = ref.watch(authExpiredMessageProvider);
     final l10n = AppLocalizations.of(context)!;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    // These are the original role-specific login backgrounds from the
+    // historical client / broker / driver login screens.
+    final backgroundImage = switch (widget.expectedRole) {
+      AppRole.broker => 'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png',
+      AppRole.driver => 'assets/driverloginscreen.png',
+      _ => 'assets/IMG_1750.PNG',
+    };
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/IMG_1750.PNG',
+            backgroundImage,
             fit: BoxFit.cover,
             alignment: Alignment.center,
             errorBuilder: (context, error, stackTrace) {
@@ -244,6 +281,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SafeArea(
             child: Column(
               children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => context.go('/role-login'),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF1B2A3A),
+                    ),
+                    tooltip: 'Back',
+                  ),
+                ),
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -520,42 +568,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 18),
-                                  Center(
-                                    child: Wrap(
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
-                                      spacing: 6,
-                                      children: [
-                                        Text(
-                                          l10n.dontHaveAccount,
-                                          style: const TextStyle(
-                                            color: Color(0xFF1B2A3A),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              context.go('/signup'),
-                                          style: TextButton.styleFrom(
-                                            padding: EdgeInsets.zero,
-                                            minimumSize: Size.zero,
-                                            tapTargetSize: MaterialTapTargetSize
-                                                .shrinkWrap,
-                                            foregroundColor: const Color(
-                                              0xFF2FA56E,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            l10n.createAccount,
+                                  if (widget.expectedRole ==
+                                      AppRole.client) ...[
+                                    const SizedBox(height: 18),
+                                    Center(
+                                      child: Wrap(
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        spacing: 6,
+                                        children: [
+                                          Text(
+                                            l10n.dontHaveAccount,
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF1B2A3A),
+                                              fontWeight: FontWeight.w500,
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                          TextButton(
+                                            onPressed: () =>
+                                                context.go('/signup'),
+                                            style: TextButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              foregroundColor: const Color(
+                                                0xFF2FA56E,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              l10n.createAccount,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -565,54 +617,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 430),
-                      child: Container(
-                        height: 52,
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.66),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.14),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: TextButton(
-                            onPressed: _openRegister,
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF2FA56E),
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              l10n.registerAsBrokerDriver,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                if (!keyboardVisible)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: widget.expectedRole == AppRole.client
+                        // Keep the same reserved footer height as the other
+                        // roles, so the centered login card does not move.
+                        ? const SizedBox(height: 52)
+                        : Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 430),
+                              child: Container(
+                                height: 52,
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.66),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      blurRadius: 14,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: _openRegister,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF2FA56E),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      l10n.registerAsBrokerDriver,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -874,8 +936,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
                   label: 'New password',
                   icon: AppIcons.lock_rounded,
                   suffixIcon: IconButton(
-                    onPressed: () =>
-                        setState(() => _obscureNew = !_obscureNew),
+                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
                     icon: Icon(
                       _obscureNew
                           ? AppIcons.visibility_off_outlined

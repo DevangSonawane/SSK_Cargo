@@ -41,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
-    context.go('/login');
+    context.go('/role-login');
   }
 
   @override
@@ -194,7 +194,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: double.infinity,
                       height: 52,
                       child: OutlinedButton(
-                        onPressed: () => context.go('/login'),
+                        onPressed: () => context.go('/role-login'),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           elevation: 0,

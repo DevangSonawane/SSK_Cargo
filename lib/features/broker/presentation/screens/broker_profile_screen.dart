@@ -24,6 +24,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
   bool _loadingKyc = true;
   String? _activeUserId;
   bool _sessionSyncQueued = false;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -67,6 +68,17 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     if (!mounted) return;
     setState(() => _loadingKyc = true);
     await _loadKycStatus();
+  }
+
+  Future<void> _logout() async {
+    if (_isLoggingOut) return;
+    setState(() => _isLoggingOut = true);
+    try {
+      await ref.read(authSessionProvider.notifier).logout();
+      if (mounted) context.go('/role-login');
+    } finally {
+      if (mounted) setState(() => _isLoggingOut = false);
+    }
   }
 
   void _syncKycStateForSession(String? userId) {
@@ -203,10 +215,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     subtitle: l10n.logoutSubtitle,
                     icon: AppIcons.logout_rounded,
                     accent: AppColors.dangerIcon,
-                    onTap: () async {
-                      await ref.read(authSessionProvider.notifier).logout();
-                      if (context.mounted) context.go('/login');
-                    },
+                    onTap: _isLoggingOut ? () {} : _logout,
                   ),
                 ],
               ),
