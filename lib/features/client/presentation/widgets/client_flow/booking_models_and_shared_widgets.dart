@@ -11,6 +11,8 @@ class BookingData {
     this.pickupLng,
     this.dropLat,
     this.dropLng,
+    this.pickupPincode = '',
+    this.dropPincode = '',
     this.loadingStops = const [],
     this.unloadingStops = const [],
     this.material = '',
@@ -51,6 +53,18 @@ class BookingData {
   final double? pickupLng;
   final double? dropLat;
   final double? dropLng;
+
+  /// Pincodes captured from the address-picker (Google `postal_code`
+  /// component), or '' when the user picked a whole city / a map point with
+  /// no resolvable pincode. Sent as `pickup_pincode`/`drop_pincode` — the
+  /// geofence whitelist checks both this at booking create and the earlier
+  /// validate-location call. Web parity: BookTruck.jsx `pickupPincode`,
+  /// which also resets to null whenever the address text is hand-edited (a
+  /// typed address can no longer be assumed to match the old pincode).
+  final String pickupPincode;
+
+  /// See [pickupPincode].
+  final String dropPincode;
   final List<BookingStop> loadingStops;
   final List<BookingStop> unloadingStops;
   final String material;
@@ -108,6 +122,10 @@ class BookingData {
     double? pickupLng,
     double? dropLat,
     double? dropLng,
+    String? pickupPincode,
+    bool clearPickupPincode = false,
+    String? dropPincode,
+    bool clearDropPincode = false,
     List<BookingStop>? loadingStops,
     List<BookingStop>? unloadingStops,
     String? material,
@@ -148,6 +166,10 @@ class BookingData {
       pickupLng: pickupLng ?? this.pickupLng,
       dropLat: dropLat ?? this.dropLat,
       dropLng: dropLng ?? this.dropLng,
+      pickupPincode: clearPickupPincode
+          ? ''
+          : (pickupPincode ?? this.pickupPincode),
+      dropPincode: clearDropPincode ? '' : (dropPincode ?? this.dropPincode),
       loadingStops: loadingStops ?? this.loadingStops,
       unloadingStops: unloadingStops ?? this.unloadingStops,
       material: material ?? this.material,
@@ -339,6 +361,7 @@ enum PaymentMethod {
   emi,
   payLater,
   advance,
+  wallet,
   toBeBilled,
 }
 
@@ -355,6 +378,7 @@ extension PaymentMethodLabel on PaymentMethod {
       PaymentMethod.emi => 'EMI',
       PaymentMethod.payLater => 'To Pay',
       PaymentMethod.advance => 'Advance',
+      PaymentMethod.wallet => 'Pay from Wallet',
       PaymentMethod.toBeBilled => 'To Be Billed',
     };
   }

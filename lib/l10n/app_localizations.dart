@@ -13840,6 +13840,486 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.'**
   String get driverTrackingDisclosureBody;
+
+  /// No description provided for @coreDigilockerGstLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GST'**
+  String get coreDigilockerGstLabel;
+
+  /// No description provided for @coreDigilockerGstExampleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'27ABCDE1234F1Z5'**
+  String get coreDigilockerGstExampleHint;
+
+  /// No description provided for @coreDigilockerGstFillFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in your GST number first'**
+  String get coreDigilockerGstFillFirst;
+
+  /// No description provided for @coreDigilockerVerifyGst.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify GST'**
+  String get coreDigilockerVerifyGst;
+
+  /// No description provided for @coreDigilockerGstInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid GSTIN (e.g. 27ABCDE1234F1Z5)'**
+  String get coreDigilockerGstInvalid;
+
+  /// No description provided for @coreDigilockerBusinessGstNote.
+  ///
+  /// In en, this message translates to:
+  /// **'GST has no DigiLocker document — it is checked directly against government records.'**
+  String get coreDigilockerBusinessGstNote;
+
+  /// No description provided for @clientVerificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your account'**
+  String get clientVerificationTitle;
+
+  /// No description provided for @clientVerificationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your PAN, Aadhaar and GST details — new bookings stay locked until you do.'**
+  String get clientVerificationSubtitle;
+
+  /// No description provided for @clientVerificationAadhaarPanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar & PAN'**
+  String get clientVerificationAadhaarPanTitle;
+
+  /// No description provided for @clientVerificationAadhaarPanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified together through DigiLocker'**
+  String get clientVerificationAadhaarPanSubtitle;
+
+  /// No description provided for @clientVerificationGstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GST'**
+  String get clientVerificationGstTitle;
+
+  /// No description provided for @clientVerificationGstSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked against government records'**
+  String get clientVerificationGstSubtitle;
+
+  /// No description provided for @clientVerificationDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified'**
+  String get clientVerificationDoneTitle;
+
+  /// No description provided for @clientVerificationDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'PAN, Aadhaar and GST are all confirmed. You\'re all set to book, track shipments and manage payments.'**
+  String get clientVerificationDoneBody;
+
+  /// No description provided for @clientVerificationBookNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a Truck'**
+  String get clientVerificationBookNow;
+
+  /// No description provided for @clientVerificationCheckNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Check status'**
+  String get clientVerificationCheckNow;
+
+  /// No description provided for @clientVerificationStatusLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your verification status.'**
+  String get clientVerificationStatusLoadFailed;
+
+  /// No description provided for @clientVerificationBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification required'**
+  String get clientVerificationBlockedTitle;
+
+  /// No description provided for @clientVerificationBlockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every client must verify PAN, Aadhaar and GST before creating a booking. Complete your verification to continue to this section.'**
+  String get clientVerificationBlockedBody;
+
+  /// No description provided for @clientVerificationBlockedWalletBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every client must verify PAN, Aadhaar and GST before using the wallet. Complete your verification to continue.'**
+  String get clientVerificationBlockedWalletBody;
+
+  /// No description provided for @clientVerificationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Now'**
+  String get clientVerificationAction;
+
+  /// No description provided for @clientVerificationBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get clientVerificationBackHome;
+
+  /// No description provided for @clientVerificationNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get clientVerificationNotNow;
+
+  /// No description provided for @clientBookingPostpaidNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Postpaid booking — no payment needed now. This booking will be added to your bill.'**
+  String get clientBookingPostpaidNote;
+
+  /// No description provided for @clientWalletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get clientWalletTitle;
+
+  /// No description provided for @clientWalletBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Balance'**
+  String get clientWalletBalanceLabel;
+
+  /// No description provided for @clientWalletLastRecharged.
+  ///
+  /// In en, this message translates to:
+  /// **'Last recharged {date}'**
+  String clientWalletLastRecharged(Object date);
+
+  /// No description provided for @clientWalletLastRechargedNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge to pay for bookings instantly'**
+  String get clientWalletLastRechargedNever;
+
+  /// No description provided for @clientWalletRechargeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge Wallet'**
+  String get clientWalletRechargeButton;
+
+  /// No description provided for @clientWalletRechargeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet Recharge'**
+  String get clientWalletRechargeTitle;
+
+  /// No description provided for @clientWalletRechargeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge instantly to pay for bookings straight from your balance.'**
+  String get clientWalletRechargeSubtitle;
+
+  /// No description provided for @clientWalletMinRecharge.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum recharge is ₹100'**
+  String get clientWalletMinRecharge;
+
+  /// No description provided for @clientWalletContinueAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge ₹{amount}'**
+  String clientWalletContinueAmount(Object amount);
+
+  /// No description provided for @clientWalletTransactionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction History'**
+  String get clientWalletTransactionsLabel;
+
+  /// No description provided for @clientWalletEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get clientWalletEmpty;
+
+  /// No description provided for @clientWalletEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge your wallet to start paying for bookings instantly.'**
+  String get clientWalletEmptyHint;
+
+  /// No description provided for @clientWalletLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your wallet'**
+  String get clientWalletLoadFailed;
+
+  /// No description provided for @clientWalletRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get clientWalletRetry;
+
+  /// No description provided for @clientWalletRecharged.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet recharged successfully'**
+  String get clientWalletRecharged;
+
+  /// No description provided for @clientWalletTotalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} transactions'**
+  String clientWalletTotalCount(Object count);
+
+  /// No description provided for @walletTxBookingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Payment'**
+  String get walletTxBookingPayment;
+
+  /// No description provided for @walletTxWalletRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get walletTxWalletRefund;
+
+  /// No description provided for @payFromWalletOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay from Wallet'**
+  String get payFromWalletOption;
+
+  /// No description provided for @payFromWalletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet balance ₹{amount}'**
+  String payFromWalletBalance(Object amount);
+
+  /// No description provided for @payFromWalletChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet balance…'**
+  String get payFromWalletChecking;
+
+  /// No description provided for @payFromWalletInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet balance ₹{amount} — less than the amount due'**
+  String payFromWalletInsufficient(Object amount);
+
+  /// No description provided for @payFromWalletWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Paying from wallet…'**
+  String get payFromWalletWorking;
+
+  /// No description provided for @payFromWalletDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking paid from wallet'**
+  String get payFromWalletDone;
+
+  /// No description provided for @earningsWalletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get earningsWalletTitle;
+
+  /// No description provided for @earningsWalletBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Owed To You'**
+  String get earningsWalletBalanceLabel;
+
+  /// No description provided for @earningsWalletBalanceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Credited automatically when a trip completes. Paid out by the admin.'**
+  String get earningsWalletBalanceNote;
+
+  /// No description provided for @earningsWalletHistoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction History'**
+  String get earningsWalletHistoryLabel;
+
+  /// No description provided for @earningsWalletEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get earningsWalletEmptyHint;
+
+  /// No description provided for @earningsWalletTotalEarnedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total earned'**
+  String get earningsWalletTotalEarnedLabel;
+
+  /// No description provided for @earningsWalletTotalPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total paid out'**
+  String get earningsWalletTotalPaidLabel;
+
+  /// No description provided for @walletTxEarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip Earning'**
+  String get walletTxEarning;
+
+  /// No description provided for @walletTxPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout Received'**
+  String get walletTxPayout;
+
+  /// No description provided for @walletTxEarningNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Credited automatically on trip completion'**
+  String get walletTxEarningNote;
+
+  /// No description provided for @clientBillsNavLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'My Bills'**
+  String get clientBillsNavLabel;
+
+  /// No description provided for @clientBillsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Bills'**
+  String get clientBillsTitle;
+
+  /// No description provided for @clientBillsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your monthly account — bookings postpaid here are billed together'**
+  String get clientBillsSubtitle;
+
+  /// No description provided for @clientBillsOutstandingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding Balance'**
+  String get clientBillsOutstandingLabel;
+
+  /// No description provided for @clientBillsCreditLimitSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'of ₹{limit} credit limit'**
+  String clientBillsCreditLimitSuffix(Object limit);
+
+  /// No description provided for @clientBillsHistoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill History'**
+  String get clientBillsHistoryLabel;
+
+  /// No description provided for @clientBillsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No bills yet'**
+  String get clientBillsEmpty;
+
+  /// No description provided for @clientBillsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be billed monthly or early once you reach your credit limit.'**
+  String get clientBillsEmptyHint;
+
+  /// No description provided for @billStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get billStatusPending;
+
+  /// No description provided for @billStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get billStatusPaid;
+
+  /// No description provided for @billTriggerMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly billing'**
+  String get billTriggerMonthly;
+
+  /// No description provided for @billTriggerCreditLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit reached'**
+  String get billTriggerCreditLimit;
+
+  /// No description provided for @clientBillsPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Now'**
+  String get clientBillsPayNow;
+
+  /// No description provided for @clientBillsDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill Details'**
+  String get clientBillsDetailTitle;
+
+  /// No description provided for @clientBillsItemsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings on this bill'**
+  String get clientBillsItemsLabel;
+
+  /// No description provided for @clientBillsBookingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bookings'**
+  String clientBillsBookingCount(Object count);
+
+  /// No description provided for @clientBillsPayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Bill'**
+  String get clientBillsPayTitle;
+
+  /// No description provided for @clientBillsPayNowWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening payment…'**
+  String get clientBillsPayNowWorking;
+
+  /// No description provided for @clientBillsPaidSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill paid successfully'**
+  String get clientBillsPaidSuccess;
+
+  /// No description provided for @clientBillsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your bills'**
+  String get clientBillsLoadFailed;
+
+  /// No description provided for @clientPaidBookingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get clientPaidBookingLabel;
+
+  /// No description provided for @clientBookingCreditLimitReachedFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached your credit limit. Please clear your outstanding bill in My Bills before booking again.'**
+  String get clientBookingCreditLimitReachedFallback;
 }
 
 class _AppLocalizationsDelegate

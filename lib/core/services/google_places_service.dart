@@ -26,6 +26,7 @@ class GooglePlaceSelection {
     required this.latitude,
     required this.longitude,
     this.city = '',
+    this.pincode = '',
   });
 
   final String placeId;
@@ -33,6 +34,12 @@ class GooglePlaceSelection {
   final double? latitude;
   final double? longitude;
   final String city;
+
+  /// Indian postal code parsed from the address components, when Google
+  /// returned one. Empty when the selection is a whole city / plus-code-only
+  /// reverse-geocode result — the geofence pincode whitelist treats that the
+  /// same as the web client (the field is simply omitted from the request).
+  final String pincode;
 }
 
 class GooglePlacesService {
@@ -147,15 +154,33 @@ class GooglePlacesService {
 
     final data = response.data ?? const <String, dynamic>{};
     final location = _asMap(data['location']);
-    final city = _extractCityFromAddressComponents(
-      _asList(data['addressComponents']),
-    );
+    final components = _asList(data['addressComponents']);
+    final city = _extractCityFromAddressComponents(components);
+    var pincode = extractPincodeFromAddressComponents(components);
+    // Places v1 sometimes resolves a broad locality without postal code.
+    // The coordinates are still precise enough for the geocoding endpoint to
+    // recover it, so enrich the selection before it reaches booking state.
+    if (pincode.isEmpty &&
+        _readDouble(location, const ['latitude']) != null &&
+        _readDouble(location, const ['longitude']) != null) {
+      try {
+        final resolved = await reverseGeocodeSelection(
+          latitude: _readDouble(location, const ['latitude'])!,
+          longitude: _readDouble(location, const ['longitude'])!,
+        );
+        pincode = resolved.pincode;
+      } catch (_) {
+        // A direct Place selection remains valid; final validation explains
+        // when Google truly cannot resolve a pincode for it.
+      }
+    }
     return GooglePlaceSelection(
       placeId: _readString(data, const ['id', 'placeId']),
       formattedAddress: _readString(data, const ['formattedAddress']),
       latitude: _readDouble(location, const ['latitude']),
       longitude: _readDouble(location, const ['longitude']),
       city: city,
+      pincode: pincode,
     );
   }
 
@@ -197,15 +222,31 @@ class GooglePlacesService {
 
     final geometry = _asMap(first['geometry']);
     final location = _asMap(geometry['location']);
-    final city = _extractCityFromAddressComponents(
-      _asList(first['address_components']),
-    );
+    // A city/plus-code result often comes first and has no postal code even
+    // though a later precise result for the same query does. Keep the first
+    // result's canonical address/coordinates, but scan the nearby results
+    // for the postal code (same strategy as reverse geocoding map taps).
+    String pincode = '';
+    String city = '';
+    for (final raw in results.take(5)) {
+      final candidate = raw is Map<String, dynamic> ? raw : _asMap(raw);
+      if (candidate.isEmpty) continue;
+      final components = _asList(candidate['address_components']);
+      if (pincode.isEmpty) {
+        pincode = extractPincodeFromAddressComponents(components);
+      }
+      if (city.isEmpty) {
+        city = _extractCityFromAddressComponents(components);
+      }
+      if (pincode.isNotEmpty && city.isNotEmpty) break;
+    }
     return GooglePlaceSelection(
       placeId: _readString(first, const ['place_id']),
       formattedAddress: _readString(first, const ['formatted_address']),
       latitude: _readDouble(location, const ['lat']),
       longitude: _readDouble(location, const ['lng']),
       city: city,
+      pincode: pincode,
     );
   }
 
@@ -213,8 +254,35 @@ class GooglePlacesService {
     required double latitude,
     required double longitude,
   }) async {
+    final selection = await reverseGeocodeSelection(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    return selection.formattedAddress;
+  }
+
+  /// Full reverse-geocode resolution for map taps / "use my location": the
+  /// address AND the postal code, when Google can resolve one for the point.
+  ///
+  /// Unlike [reverseGeocode] (web parity: reads only `results[0]`), this
+  /// walks a few results before giving up on the pincode — tap-the-map points
+  /// often resolve to a Google Plus Code as the *first* result, and Plus Code
+  /// entries don't carry a `postal_code` component the way a named street
+  /// address does. Skipping ahead to the next result avoids wrongly reporting
+  /// a perfectly serviceable point as pincode-less when every result is a
+  /// Plus Code, this still returns an empty pincode and the backend's
+  /// `PINCODE_REQUIRED` message invites the user to pick a precise address.
+  Future<GooglePlaceSelection> reverseGeocodeSelection({
+    required double latitude,
+    required double longitude,
+  }) async {
     if (googleMapsApiKey.isEmpty) {
-      return '';
+      return const GooglePlaceSelection(
+        placeId: '',
+        formattedAddress: '',
+        latitude: null,
+        longitude: null,
+      );
     }
 
     final response = await _geocodeDio.get<Map<String, dynamic>>(
@@ -228,15 +296,49 @@ class GooglePlacesService {
     final data = response.data ?? const <String, dynamic>{};
     final results = data['results'];
     if (results is! List || results.isEmpty) {
-      return '';
+      return const GooglePlaceSelection(
+        placeId: '',
+        formattedAddress: '',
+        latitude: null,
+        longitude: null,
+      );
     }
 
-    final first = results.first;
-    if (first is! Map<String, dynamic>) {
-      return '';
+    String formattedAddress = '';
+    String pincode = '';
+    String city = '';
+    const maxScanned = 5;
+    for (final raw in results.take(maxScanned)) {
+      final candidate = raw is Map<String, dynamic> ? raw : _asMap(raw);
+      if (candidate.isEmpty) {
+        continue;
+      }
+      final address = _readString(candidate, const ['formatted_address']);
+      if (address.isNotEmpty && formattedAddress.isEmpty) {
+        formattedAddress = address;
+      }
+      final components = _asList(candidate['address_components']);
+      if (pincode.isEmpty) {
+        pincode = extractPincodeFromAddressComponents(components);
+      }
+      if (city.isEmpty) {
+        city = _extractCityFromAddressComponents(components);
+      }
+      if (formattedAddress.isNotEmpty &&
+          pincode.isNotEmpty &&
+          city.isNotEmpty) {
+        break;
+      }
     }
 
-    return _readString(first, const ['formatted_address']);
+    return GooglePlaceSelection(
+      placeId: '',
+      formattedAddress: formattedAddress,
+      latitude: latitude,
+      longitude: longitude,
+      city: city,
+      pincode: pincode,
+    );
   }
 
   Future<List<LatLng>> fetchDrivingRoute({
@@ -391,6 +493,31 @@ String _extractCityFromAddressComponents(
     }
   }
 
+  return '';
+}
+
+/// The `postal_code` component's value, or '' — used by the geofence
+/// pincode-whitelist booking checks (web BookTruck.jsx parity). Public so the
+/// reverse-geocode result scan can share the same extraction.
+String extractPincodeFromAddressComponents(
+  List<Map<String, dynamic>> components,
+) {
+  for (final component in components) {
+    final types = _asListOfString(component['types']);
+    if (types.contains('postal_code')) {
+      final longText = _readString(component, const ['longText', 'long_name']);
+      if (longText.isNotEmpty) {
+        return longText;
+      }
+      final shortText = _readString(component, const [
+        'shortText',
+        'short_name',
+      ]);
+      if (shortText.isNotEmpty) {
+        return shortText;
+      }
+    }
+  }
   return '';
 }
 

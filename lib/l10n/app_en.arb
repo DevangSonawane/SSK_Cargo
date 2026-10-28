@@ -2909,5 +2909,120 @@
   "gpsNoLocationYet": "No location yet",
   "tripSummaryOngoing": "Ongoing",
   "driverTrackingDisclosureTitle": "Share driver location",
-  "driverTrackingDisclosureBody": "SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access."
+  "driverTrackingDisclosureBody": "SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.",
+  "coreDigilockerGstLabel": "GST",
+  "coreDigilockerGstExampleHint": "27ABCDE1234F1Z5",
+  "coreDigilockerGstFillFirst": "Fill in your GST number first",
+  "coreDigilockerVerifyGst": "Verify GST",
+  "coreDigilockerGstInvalid": "Enter a valid GSTIN (e.g. 27ABCDE1234F1Z5)",
+  "coreDigilockerBusinessGstNote": "GST has no DigiLocker document — it is checked directly against government records.",
+  "clientVerificationTitle": "Verify your account",
+  "clientVerificationSubtitle": "Verify your PAN, Aadhaar and GST details — new bookings stay locked until you do.",
+  "clientVerificationAadhaarPanTitle": "Aadhaar & PAN",
+  "clientVerificationAadhaarPanSubtitle": "Verified together through DigiLocker",
+  "clientVerificationGstTitle": "GST",
+  "clientVerificationGstSubtitle": "Checked against government records",
+  "clientVerificationDoneTitle": "You're verified",
+  "clientVerificationDoneBody": "PAN, Aadhaar and GST are all confirmed. You're all set to book, track shipments and manage payments.",
+  "clientVerificationBookNow": "Book a Truck",
+  "clientVerificationCheckNow": "Check status",
+  "clientVerificationStatusLoadFailed": "Could not load your verification status.",
+  "clientVerificationBlockedTitle": "Verification required",
+  "clientVerificationBlockedBody": "Every client must verify PAN, Aadhaar and GST before creating a booking. Complete your verification to continue to this section.",
+  "clientVerificationBlockedWalletBody": "Every client must verify PAN, Aadhaar and GST before using the wallet. Complete your verification to continue.",
+  "clientVerificationAction": "Verify Now",
+  "clientVerificationBackHome": "Back to Home",
+  "clientVerificationNotNow": "Not now",
+  "clientBookingPostpaidNote": "Postpaid booking — no payment needed now. This booking will be added to your bill.",
+  "clientWalletTitle": "Wallet",
+  "clientWalletBalanceLabel": "Available Balance",
+  "clientWalletLastRecharged": "Last recharged {date}",
+  "@clientWalletLastRecharged": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "clientWalletLastRechargedNever": "Recharge to pay for bookings instantly",
+  "clientWalletRechargeButton": "Recharge Wallet",
+  "clientWalletRechargeTitle": "Wallet Recharge",
+  "clientWalletRechargeSubtitle": "Recharge instantly to pay for bookings straight from your balance.",
+  "clientWalletMinRecharge": "Minimum recharge is ₹100",
+  "clientWalletContinueAmount": "Recharge ₹{amount}",
+  "@clientWalletContinueAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "clientWalletTransactionsLabel": "Transaction History",
+  "clientWalletEmpty": "No transactions yet",
+  "clientWalletEmptyHint": "Recharge your wallet to start paying for bookings instantly.",
+  "clientWalletLoadFailed": "Could not load your wallet",
+  "clientWalletRetry": "Retry",
+  "clientWalletRecharged": "Wallet recharged successfully",
+  "clientWalletTotalCount": "{count} transactions",
+  "@clientWalletTotalCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "walletTxBookingPayment": "Booking Payment",
+  "walletTxWalletRefund": "Refund",
+  "payFromWalletOption": "Pay from Wallet",
+  "payFromWalletBalance": "Wallet balance ₹{amount}",
+  "@payFromWalletBalance": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payFromWalletChecking": "Wallet balance…",
+  "payFromWalletInsufficient": "Wallet balance ₹{amount} — less than the amount due",
+  "@payFromWalletInsufficient": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payFromWalletWorking": "Paying from wallet…",
+  "payFromWalletDone": "Booking paid from wallet",
+  "earningsWalletTitle": "Wallet",
+  "earningsWalletBalanceLabel": "Balance Owed To You",
+  "earningsWalletBalanceNote": "Credited automatically when a trip completes. Paid out by the admin.",
+  "earningsWalletHistoryLabel": "Transaction History",
+  "earningsWalletEmptyHint": "No transactions yet",
+  "earningsWalletTotalEarnedLabel": "Total earned",
+  "earningsWalletTotalPaidLabel": "Total paid out",
+  "walletTxEarning": "Trip Earning",
+  "walletTxPayout": "Payout Received",
+  "walletTxEarningNote": "Credited automatically on trip completion",
+  "clientBillsNavLabel": "My Bills",
+  "clientBillsTitle": "My Bills",
+  "clientBillsSubtitle": "Your monthly account — bookings postpaid here are billed together",
+  "clientBillsOutstandingLabel": "Outstanding Balance",
+  "clientBillsCreditLimitSuffix": "of ₹{limit} credit limit",
+  "@clientBillsCreditLimitSuffix": {
+    "placeholders": {
+      "limit": {}
+    }
+  },
+  "clientBillsHistoryLabel": "Bill History",
+  "clientBillsEmpty": "No bills yet",
+  "clientBillsEmptyHint": "You'll be billed monthly or early once you reach your credit limit.",
+  "billStatusPending": "Pending",
+  "billStatusPaid": "Paid",
+  "billTriggerMonthly": "Monthly billing",
+  "billTriggerCreditLimit": "Credit limit reached",
+  "clientBillsPayNow": "Pay Now",
+  "clientBillsDetailTitle": "Bill Details",
+  "clientBillsItemsLabel": "Bookings on this bill",
+  "clientBillsBookingCount": "{count} bookings",
+  "@clientBillsBookingCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "clientBillsPayTitle": "Pay Bill",
+  "clientBillsPayNowWorking": "Opening payment…",
+  "clientBillsPaidSuccess": "Bill paid successfully",
+  "clientBillsLoadFailed": "Could not load your bills",
+  "clientPaidBookingLabel": "Amount",
+  "clientBookingCreditLimitReachedFallback": "You've reached your credit limit. Please clear your outstanding bill in My Bills before booking again."
 }

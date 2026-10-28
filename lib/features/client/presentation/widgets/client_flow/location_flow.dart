@@ -214,6 +214,10 @@ class _LocationDetailsScreenState
         latitude: address.latitude,
         longitude: address.longitude,
         city: address.city,
+        // A city-level saved shortcut can never satisfy an active pincode
+        // whitelist on its own — no pincode is asserted here (web parity:
+        // the saved-address chip resets the pincode to null entirely).
+        pincode: '',
       ),
     );
   }
@@ -369,6 +373,11 @@ class _LocationDetailsScreenState
           latitude: selection.latitude,
           longitude: selection.longitude,
           city: selection.city,
+          // Geofencing: capture the postal_code component of the precise
+          // address right here, same as lat/lng (web PlacesAutocompleteInput
+          // selectPrediction). Null if Google gave none — e.g. whole-city
+          // results — which is passed to the whitelist verbatim.
+          pincode: selection.pincode,
         ),
       );
       setState(() {
@@ -1100,14 +1109,14 @@ class _MapLocationPickerScreenState
       _resolving = true;
     });
     try {
-      final address = await ref
+      final resolved = await ref
           .read(googlePlacesServiceProvider)
-          .reverseGeocode(
+          .reverseGeocodeSelection(
             latitude: _center.latitude,
             longitude: _center.longitude,
           );
       if (!mounted) return;
-      if (address.isEmpty) {
+      if (resolved.formattedAddress.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -1120,9 +1129,14 @@ class _MapLocationPickerScreenState
       Navigator.of(context).pop(
         GooglePlaceSelection(
           placeId: '',
-          formattedAddress: address,
+          formattedAddress: resolved.formattedAddress,
           latitude: _center.latitude,
           longitude: _center.longitude,
+          city: resolved.city,
+          // Map-picked points reach the whitelist too (see
+          // GooglePlacesService.reverseGeocodeSelection for why a Plus Code
+          // first result may legitimately leave this empty).
+          pincode: resolved.pincode,
         ),
       );
     } catch (error) {

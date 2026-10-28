@@ -395,11 +395,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _resolvingCurrentLocation = true;
     });
     try {
-      final address = await ref
+      final resolved = await ref
           .read(googlePlacesServiceProvider)
-          .reverseGeocode(latitude: point.latitude, longitude: point.longitude);
+          .reverseGeocodeSelection(
+            latitude: point.latitude,
+            longitude: point.longitude,
+          );
       if (!mounted) return;
-      if (address.isEmpty) {
+      if (resolved.formattedAddress.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -409,6 +412,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         );
         return;
       }
+      final address = resolved.formattedAddress;
 
       setState(() {
         if (_mapPinTarget == _MapPinTarget.pickup) {
@@ -417,6 +421,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             pickupLat: point.latitude,
             pickupLng: point.longitude,
             city: _deriveCityFromLocation(address, ''),
+            // Tap-the-map points often reverse geocode to a Google Plus Code
+            // without any postal_code component — an empty pincode and the
+            // server's PINCODE_REQUIRED guidance is the honest outcome.
+            // (_resolveMissingPincodes retries with later results at
+            // continue-time, scanning past Plus-Code entries.)
+            pickupPincode: resolved.pincode,
+            clearPickupPincode: true,
           );
           _fromController.text = address;
           _mapPinTarget = _MapPinTarget.drop;
@@ -425,6 +436,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             to: address,
             dropLat: point.latitude,
             dropLng: point.longitude,
+            dropPincode: resolved.pincode,
+            clearDropPincode: true,
           );
           _toController.text = address;
         }
@@ -790,28 +803,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (pickup == null || !mounted) {
       return;
     }
-    setState(() {
-      _draft = _draft.copyWith(
-        from: pickup.formattedAddress,
-        pickupLat: pickup.latitude,
-        pickupLng: pickup.longitude,
-        city: pickup.city.isNotEmpty ? pickup.city : _draft.city,
-      );
-      _fromController.text = pickup.formattedAddress;
-    });
+    _applyDraftPickup(pickup);
 
     final drop = await _openLocationDetailsScreen(_LocationFieldKind.drop);
     if (drop == null || !mounted) {
       return;
     }
-    setState(() {
-      _draft = _draft.copyWith(
-        to: drop.formattedAddress,
-        dropLat: drop.latitude,
-        dropLng: drop.longitude,
-      );
-      _toController.text = drop.formattedAddress;
-    });
+    _applyDraftDrop(drop);
 
     if (mounted) {
       await _resolveDistanceAndContinue();
@@ -1135,6 +1133,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         return;
       }
 
+      await _ensurePrecisePincodes();
       final bookingPayload = _bookingPayload();
       debugPrint(
         'SSK.ClientBooking BrokerSearch payload '
@@ -1273,6 +1272,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         return;
       }
 
+      await _ensurePrecisePincodes();
       final bookingPayload = _bookingPayload();
       debugPrint(
         'SSK.ClientBooking FindTruck payload '
@@ -2485,7 +2485,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_resolvingDistance) {
       return;
     }
-    final l10n = AppLocalizations.of(context)!;
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -2516,6 +2515,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     try {
       await _resolveTypedCoordinates(pickup: pickup, drop: drop);
+      // Best-effort pincode enrichment right before the earliest geofence
+      // check (validate-location). The same two codes come back from both
+      // this and the final /api/bookings call — identical helper server-side.
+      await _resolveMissingPincodes();
       await _refreshBrokerRoute();
       final resolvedTripType = _resolveTripTypeFromLocations(pickup, drop);
       final city = resolvedTripType == TripType.intraCity
@@ -2536,7 +2539,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
       }
 
-      final validation = await ref
+      // Geofence whitelisting rides on the same endpoint the intra-city
+      // "both in the same city" check uses (web BookTruck.jsx
+      // handleValidateLocation). Pincodes are sent only when resolved — a
+      // whitelist without them answers PINCODE_REQUIRED, whose message
+      // already names the offending end. A failure throws [ApiException]
+      // straight to this method's caller for a verbatim-message snackbar;
+      // PINCODE_REQUIRED / PINCODE_NOT_SERVICEABLE must never be swallowed
+      // by generic validation text.
+      await ref
           .read(apiClientProvider)
           .validateBookingLocation(
             accessToken: session.tokens.accessToken,
@@ -2548,13 +2559,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             city: resolvedTripType == TripType.intraCity
                 ? (city.isNotEmpty ? city : _draft.city)
                 : null,
+            pickupPincode: _draft.pickupPincode,
+            dropPincode: _draft.dropPincode,
           );
-      if (validation['success'] == false) {
-        throw ApiException(
-          (validation['message'] ?? l10n.clientBookingLocationValidationFailed)
-              .toString(),
-        );
-      }
 
       final response = await ref
           .read(apiClientProvider)
@@ -2635,6 +2642,117 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  /// Replaces a picked/typed selection's draft fields — AND keeps the
+  /// captured pincode in lockstep, since the pincode came from the *old*
+  /// selection and can never be trusted for new address text (web parity:
+  /// editing either location resets that end's pincode; an empty
+  /// [GooglePlaceSelection.pincode] therefore clears it).
+  void _applyDraftPickup(GooglePlaceSelection selection) {
+    setState(() {
+      _draft = _draft.copyWith(
+        from: selection.formattedAddress,
+        pickupLat: selection.latitude,
+        pickupLng: selection.longitude,
+        city: selection.city.isNotEmpty ? selection.city : _draft.city,
+        pickupPincode: selection.pincode,
+      );
+      if (selection.formattedAddress.isNotEmpty) {
+        _fromController.text = selection.formattedAddress;
+      }
+    });
+  }
+
+  /// See [_applyDraftPickup].
+  void _applyDraftDrop(GooglePlaceSelection selection) {
+    setState(() {
+      _draft = _draft.copyWith(
+        to: selection.formattedAddress,
+        dropLat: selection.latitude,
+        dropLng: selection.longitude,
+        dropPincode: selection.pincode,
+      );
+      if (selection.formattedAddress.isNotEmpty) {
+        _toController.text = selection.formattedAddress;
+      }
+    });
+  }
+
+  /// The geofence whitelist reads a pincode off both ends before the
+  /// validate-location call. For points we have coordinates for but whose
+  /// selection never resolved a pincode (a map tap that landed on a Plus
+  /// Code result, the cached current-location fix), best-effort reverse
+  /// geocode just that end and scan past Plus-Code entries for one carrying
+  /// a `postal_code`. Results without one stay empty — the server then
+  /// answers `PINCODE_REQUIRED` with guidance the user can act on.
+  Future<void> _resolveMissingPincodes() async {
+    if (_draft.pickupPincode.trim().isEmpty && _draft.pickupLat != null) {
+      try {
+        final selection = await ref
+            .read(googlePlacesServiceProvider)
+            .reverseGeocodeSelection(
+              latitude: _draft.pickupLat!,
+              longitude: _draft.pickupLng!,
+            );
+        if (mounted && selection.pincode.trim().isNotEmpty) {
+          setState(() {
+            _draft = _draft.copyWith(pickupPincode: selection.pincode);
+          });
+        }
+      } catch (_) {
+        // No pincode is a fine outcome; the server reports it precisely.
+      }
+    }
+    if (_draft.dropPincode.trim().isEmpty && _draft.dropLat != null) {
+      try {
+        final selection = await ref
+            .read(googlePlacesServiceProvider)
+            .reverseGeocodeSelection(
+              latitude: _draft.dropLat!,
+              longitude: _draft.dropLng!,
+            );
+        if (mounted && selection.pincode.trim().isNotEmpty) {
+          setState(() {
+            _draft = _draft.copyWith(dropPincode: selection.pincode);
+          });
+        }
+      } catch (_) {
+        // Same as above — optional enrichment only.
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+  }
+
+  Future<void> _ensurePrecisePincodes() async {
+    await _resolveMissingPincodes();
+    if (!mounted) return;
+    final service = ref.read(googlePlacesServiceProvider);
+    GooglePlaceSelection? pickup;
+    GooglePlaceSelection? drop;
+    try {
+      if (_draft.pickupPincode.trim().isEmpty &&
+          _draft.from.trim().isNotEmpty) {
+        pickup = await service.geocodeAddress(address: _draft.from);
+      }
+      if (_draft.dropPincode.trim().isEmpty && _draft.to.trim().isNotEmpty) {
+        drop = await service.geocodeAddress(address: _draft.to);
+      }
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    if ((pickup?.pincode ?? '').isNotEmpty ||
+        (drop?.pincode ?? '').isNotEmpty) {
+      setState(() {
+        _draft = _draft.copyWith(
+          pickupPincode: pickup?.pincode ?? _draft.pickupPincode,
+          dropPincode: drop?.pincode ?? _draft.dropPincode,
+        );
+      });
+    }
+  }
+
   Future<void> _resolveTypedCoordinates({
     required String pickup,
     required String drop,
@@ -2672,6 +2790,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           city: pickupSelection.city.isNotEmpty
               ? pickupSelection.city
               : _draft.city,
+          // Typed/renamed text invalidates the previously captured pincode
+          // — the fresh geocode result is the only trustworthy source.
+          pickupPincode: pickupSelection.pincode,
+          clearPickupPincode: true,
         );
         if (pickupSelection.formattedAddress.isNotEmpty) {
           _fromController.text = pickupSelection.formattedAddress;
@@ -2687,6 +2809,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               : drop,
           dropLat: dropSelection.latitude,
           dropLng: dropSelection.longitude,
+          dropPincode: dropSelection.pincode,
+          clearDropPincode: true,
         );
         if (dropSelection.formattedAddress.isNotEmpty) {
           _toController.text = dropSelection.formattedAddress;
@@ -2710,6 +2834,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           pickupLat: cached.latitude,
           pickupLng: cached.longitude,
           city: city.isNotEmpty ? city : _draft.city,
+          // The cached fix carries no pincode; clear any stale one and let
+          // the continue-time _resolveMissingPincodes best-effort refill it.
+          clearPickupPincode: true,
         );
         _fromController.text = cached.address;
       });
@@ -2756,12 +2883,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ),
       );
       final service = ref.read(googlePlacesServiceProvider);
-      final address = await service.reverseGeocode(
+      final resolved = await service.reverseGeocodeSelection(
         latitude: position.latitude,
         longitude: position.longitude,
       );
       if (!mounted) return;
 
+      final address = resolved.formattedAddress;
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2780,6 +2908,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           pickupLat: position.latitude,
           pickupLng: position.longitude,
           city: city.isNotEmpty ? city : _draft.city,
+          pickupPincode: resolved.pincode,
+          clearPickupPincode: true,
         );
         _fromController.text = address;
       });
@@ -3094,6 +3224,29 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    // Postpaid accounts never choose a payment method. The booking endpoint
+    // has already marked this booking `to_be_billed`; this fresh account read
+    // avoids relying on a stale login payload when an admin changes billing.
+    try {
+      final account = await ref
+          .read(apiClientProvider)
+          .getBillsAccount(accessToken: session.tokens.accessToken);
+      final data = account['data'] is Map
+          ? (account['data'] as Map).cast<String, dynamic>()
+          : account;
+      if (data['billing_type'] == 'postpaid') {
+        if (!mounted) return;
+        setState(() {
+          _submitting = false;
+          _bookingCreated = true;
+        });
+        await _showBookingCompleteAndRedirect();
+        return;
+      }
+    } catch (_) {
+      // The create endpoint remains authoritative for postpaid enforcement.
+    }
+
     final selectedMethod = _selectedPaymentMethod;
     setState(() {
       _submitting = true;
@@ -3126,6 +3279,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         setState(() {
           _submitting = false;
         });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return;
+    }
+    if (selectedMethod == PaymentMethod.wallet) {
+      try {
+        await ref
+            .read(apiClientProvider)
+            .payBookingFromWallet(
+              accessToken: session.tokens.accessToken,
+              bookingId: bookingId,
+              payType: 'full',
+            );
+        if (!mounted) return;
+        setState(() {
+          _submitting = false;
+          _bookingCreated = true;
+        });
+        await _showBookingCompleteAndRedirect();
+      } on ApiException catch (error) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.message)));
@@ -3289,9 +3466,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'pickup_location': _draft.from,
       'pickup_lat': _draft.pickupLat ?? 0,
       'pickup_lng': _draft.pickupLng ?? 0,
+      // Geofence pincode whitelist — omitted wholesale (web parity) when the
+      // user only picked a city-level place or a map point that reverse
+      // geocoded without a postal_code component. The final booking-create
+      // check is the real lock; validate-location was just early UX.
+      if (_draft.pickupPincode.trim().isNotEmpty)
+        'pickup_pincode': _draft.pickupPincode.trim(),
       'drop_location': _draft.to,
       'drop_lat': _draft.dropLat ?? 0,
       'drop_lng': _draft.dropLng ?? 0,
+      if (_draft.dropPincode.trim().isNotEmpty)
+        'drop_pincode': _draft.dropPincode.trim(),
       if (_draft.loadingStops.isNotEmpty)
         'add_loading_location': _draft.loadingStops
             .map((stop) => stop.toPayload())
@@ -5043,15 +5228,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             if (selection == null || !mounted) {
               return;
             }
-            setState(() {
-              _draft = _draft.copyWith(
-                from: selection.formattedAddress,
-                pickupLat: selection.latitude,
-                pickupLng: selection.longitude,
-                city: selection.city.isNotEmpty ? selection.city : _draft.city,
-              );
-              _fromController.text = selection.formattedAddress;
-            });
+            _applyDraftPickup(selection);
           },
           onDropTap: () async {
             final selection = await _openLocationDetailsScreen(
@@ -5060,14 +5237,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             if (selection == null || !mounted) {
               return;
             }
-            setState(() {
-              _draft = _draft.copyWith(
-                to: selection.formattedAddress,
-                dropLat: selection.latitude,
-                dropLng: selection.longitude,
-              );
-              _toController.text = selection.formattedAddress;
-            });
+            _applyDraftDrop(selection);
           },
         ),
         const SizedBox(height: 14),
@@ -5094,15 +5264,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             if (selection == null || !mounted) {
               return;
             }
-            setState(() {
-              _draft = _draft.copyWith(
-                from: selection.formattedAddress,
-                pickupLat: selection.latitude,
-                pickupLng: selection.longitude,
-                city: selection.city.isNotEmpty ? selection.city : _draft.city,
-              );
-              _fromController.text = selection.formattedAddress;
-            });
+            _applyDraftPickup(selection);
           },
         ),
         const SizedBox(height: 12),
@@ -5672,6 +5834,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   onTap: () => setState(
                                     () => _selectedPaymentMethod =
                                         PaymentMethod.advance,
+                                  ),
+                                ),
+                                _CheckoutMethodCard(
+                                  title: 'Pay from Wallet',
+                                  subtitle: 'Use wallet balance',
+                                  icon: AppIcons.account_balance_wallet_rounded,
+                                  selected:
+                                      selectedMethod == PaymentMethod.wallet,
+                                  enabled: true,
+                                  onTap: () => setState(
+                                    () => _selectedPaymentMethod =
+                                        PaymentMethod.wallet,
                                   ),
                                 ),
                                 _CheckoutMethodCard(

@@ -227,7 +227,10 @@ class _VehicleOptionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _displayPriceLabel(AppLocalizations.of(context)!, option.price),
+                  _displayPriceLabel(
+                    AppLocalizations.of(context)!,
+                    option.price,
+                  ),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -270,13 +273,14 @@ class ClientBottomBar extends StatelessWidget {
     final items = <_ClientNavItem>[
       _ClientNavItem(label: l10n.navHome, icon: LucideIcons.house),
       _ClientNavItem(label: l10n.navActivity, icon: LucideIcons.map),
+      _ClientNavItem(label: 'Wallet', icon: LucideIcons.wallet),
       _ClientNavItem(label: l10n.navProfile, icon: LucideIcons.user),
     ];
 
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(72, 0, 72, 12),
+        padding: const EdgeInsets.fromLTRB(30, 0, 30, 12),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(999),
           child: BackdropFilter(

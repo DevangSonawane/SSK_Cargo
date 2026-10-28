@@ -166,7 +166,9 @@ class _BrokerOfferNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshBrokerOfferFailed;
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientNegotiationRefreshBrokerOfferFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -1105,7 +1107,9 @@ class _BrokerNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshRequestFailed;
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientNegotiationRefreshRequestFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -1125,6 +1129,25 @@ class _BrokerNegotiationSheetState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       return;
+    }
+
+    try {
+      final account = await ref
+          .read(apiClientProvider)
+          .getBillsAccount(accessToken: session.tokens.accessToken);
+      final data = account['data'] is Map
+          ? (account['data'] as Map).cast<String, dynamic>()
+          : account;
+      if (data['billing_type'] == 'postpaid') {
+        if (!mounted) return;
+        setState(() {
+          _paymentSubmitting = false;
+          _stage = _DirectNegotiationStage.confirmed;
+        });
+        return;
+      }
+    } catch (_) {
+      // Booking creation is the server-enforced credit-limit backstop.
     }
 
     setState(() {
@@ -1329,6 +1352,29 @@ class _BrokerNegotiationSheetState
       }
       return;
     }
+    if (selectedMethod == PaymentMethod.wallet) {
+      try {
+        await ref
+            .read(apiClientProvider)
+            .payBookingFromWallet(
+              accessToken: session.tokens.accessToken,
+              bookingId: bookingId,
+              payType: 'full',
+            );
+        if (!mounted) return;
+        setState(() {
+          _paymentSubmitting = false;
+          _stage = _DirectNegotiationStage.confirmed;
+        });
+      } on ApiException catch (error) {
+        if (mounted)
+          setState(() {
+            _paymentSubmitting = false;
+            _errorMessage = error.message;
+          });
+      }
+      return;
+    }
 
     final payType = selectedMethod == PaymentMethod.advance
         ? 'advance'
@@ -1450,11 +1496,11 @@ class _BrokerNegotiationSheetState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                   request == null
-                       ? l10n.negotiationLiveUpdatesAppearHere
-                       : request.isCountered
-                       ? l10n.fareChangeAmount(request.amountText)
-                       : l10n.negotiationCurrentAmount(request.amountText),
+                  request == null
+                      ? l10n.negotiationLiveUpdatesAppearHere
+                      : request.isCountered
+                      ? l10n.fareChangeAmount(request.amountText)
+                      : l10n.negotiationCurrentAmount(request.amountText),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
                   ),
@@ -1482,7 +1528,9 @@ class _BrokerNegotiationSheetState
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            l10n.negotiationHistoryCount(request.offerHistory.length),
+                            l10n.negotiationHistoryCount(
+                              request.offerHistory.length,
+                            ),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: context.colors.textSecondary),
                           ),
@@ -1497,7 +1545,9 @@ class _BrokerNegotiationSheetState
                         child: Text(
                           l10n.negotiationHistoryEntryOffered(
                             entry.displayByWith(l10n),
-                            entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
+                            entry.amount.toStringAsFixed(
+                              entry.amount % 1 == 0 ? 0 : 2,
+                            ),
                           ),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: context.colors.textSecondary),
@@ -1521,7 +1571,9 @@ class _BrokerNegotiationSheetState
         if (request?.isActionableByClient == true) ...[
           const SizedBox(height: 16),
           _NegotiationActionButtons(
-            acceptLabel: request!.isClientTurnToConfirm ? l10n.negotiationConfirm : l10n.negotiationAccept,
+            acceptLabel: request!.isClientTurnToConfirm
+                ? l10n.negotiationConfirm
+                : l10n.negotiationAccept,
             canCounter: request.isCountered,
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
@@ -1850,7 +1902,9 @@ class _FindTruckNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = AppLocalizations.of(context)!.clientNegotiationRefreshDriverOfferFailed;
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientNegotiationRefreshDriverOfferFailed;
       });
     } finally {
       if (mounted && !silent) {
@@ -2213,7 +2267,9 @@ class _FindTruckNegotiationSheetState
                             ),
                             const SizedBox(width: 2),
                             Text(
-                               l10n.negotiationHistoryCount(request.offerHistory.length),
+                              l10n.negotiationHistoryCount(
+                                request.offerHistory.length,
+                              ),
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     color: context.colors.textSecondary,
@@ -2230,7 +2286,9 @@ class _FindTruckNegotiationSheetState
                           child: Text(
                             l10n.negotiationHistoryEntryOffered(
                               entry.displayByWith(l10n),
-                              entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
+                              entry.amount.toStringAsFixed(
+                                entry.amount % 1 == 0 ? 0 : 2,
+                              ),
                             ),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: context.colors.textSecondary),
@@ -2251,9 +2309,9 @@ class _FindTruckNegotiationSheetState
                   const SizedBox(height: 16),
                   if (canAct)
                     _NegotiationActionButtons(
-                    acceptLabel: request.isClientTurnToConfirm
-                        ? l10n.negotiationConfirm
-                        : l10n.negotiationAccept,
+                      acceptLabel: request.isClientTurnToConfirm
+                          ? l10n.negotiationConfirm
+                          : l10n.negotiationAccept,
                       canCounter: request.isCountered,
                       isBusy: _busy,
                       onAccept: _acceptRequest,
@@ -2783,11 +2841,11 @@ class _NegotiationActionButtons extends StatelessWidget {
                     minimumSize: const Size.fromHeight(50),
                     shape: buttonShape,
                   ),
-                                    child: Text(
-                                      l10n.changeFare,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                  child: Text(
+                    l10n.changeFare,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/providers/user_location_provider.dart';
+import '../../../../core/providers/client_kyc_gate_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/client_booking_models.dart';
@@ -28,6 +29,7 @@ enum _HomeMode { full, part, later }
 class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   _HomeMode _mode = _HomeMode.full;
   DateTime? _scheduled;
+  bool _kycStatusResolved = false;
 
   @override
   void initState() {
@@ -37,11 +39,17 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(userLocationProvider.notifier).prefetch();
+        ref.read(clientKycGateProvider.notifier).ensureLoaded().whenComplete(
+          () {
+            if (mounted) setState(() => _kycStatusResolved = true);
+          },
+        );
       }
     });
   }
 
   Future<void> _openBookingLocation() async {
+    if (_kycStatusResolved && !ref.read(clientKycGateProvider).verified) return;
     HapticFeedback.lightImpact();
     if (_mode == _HomeMode.later && _scheduled == null) {
       await _pickScheduledDateTime();
@@ -79,6 +87,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   }
 
   Future<void> _bookAgain(ClientBooking booking) async {
+    if (_kycStatusResolved && !ref.read(clientKycGateProvider).verified) return;
     final pickup = booking.pickupLocation.trim();
     final drop = booking.dropoffLocation.trim();
     if (pickup.isEmpty || drop.isEmpty) return;
@@ -163,6 +172,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bookingLocked =
+        _kycStatusResolved && !ref.watch(clientKycGateProvider).verified;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgAsset = switch (_mode) {
       _HomeMode.full => 'assets/client/home_page_photo.png',
@@ -281,31 +292,43 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                       currentChild ?? const SizedBox.shrink(),
                     ],
                   ),
-                  child: switch (_mode) {
-                    _HomeMode.full => _FullHeroCard(
-                      key: const ValueKey('home-full'),
-                      onTap: _openBookingLocation,
+                  child: Opacity(
+                    opacity: bookingLocked ? 0.42 : 1,
+                    child: IgnorePointer(
+                      ignoring: bookingLocked,
+                      child: switch (_mode) {
+                        _HomeMode.full => _FullHeroCard(
+                          key: const ValueKey('home-full'),
+                          onTap: _openBookingLocation,
+                        ),
+                        _HomeMode.part => _PartHeroCard(
+                          key: const ValueKey('home-part'),
+                          onTap: _openBookingLocation,
+                        ),
+                        _HomeMode.later => _LaterHeroCard(
+                          key: const ValueKey('home-later'),
+                          scheduled: _scheduled,
+                          scheduledLabel: _scheduled == null
+                              ? null
+                              : _formatScheduled(_scheduled!),
+                          onPickSchedule: _pickScheduledDateTime,
+                          onTap: _openBookingLocation,
+                        ),
+                      },
                     ),
-                    _HomeMode.part => _PartHeroCard(
-                      key: const ValueKey('home-part'),
-                      onTap: _openBookingLocation,
-                    ),
-                    _HomeMode.later => _LaterHeroCard(
-                      key: const ValueKey('home-later'),
-                      scheduled: _scheduled,
-                      scheduledLabel: _scheduled == null
-                          ? null
-                          : _formatScheduled(_scheduled!),
-                      onPickSchedule: _pickScheduledDateTime,
-                      onTap: _openBookingLocation,
-                    ),
-                  },
+                  ),
                 ),
                 if (recentBookings?.isNotEmpty == true) ...[
                   const SizedBox(height: 22),
-                  _PreviousTripSection(
-                    bookings: recentBookings!,
-                    onBookAgain: _bookAgain,
+                  Opacity(
+                    opacity: bookingLocked ? 0.42 : 1,
+                    child: IgnorePointer(
+                      ignoring: bookingLocked,
+                      child: _PreviousTripSection(
+                        bookings: recentBookings!,
+                        onBookAgain: _bookAgain,
+                      ),
+                    ),
                   ),
                 ],
               ],

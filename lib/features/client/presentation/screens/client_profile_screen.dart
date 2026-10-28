@@ -8,6 +8,7 @@ import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
@@ -21,12 +22,32 @@ class ClientProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
+  bool _postpaid = false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshProfile();
+      _loadBillingType();
     });
+  }
+
+  Future<void> _loadBillingType() async {
+    final token = ref.read(authSessionProvider).valueOrNull?.tokens.accessToken;
+    if (token == null || token.isEmpty) return;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBillsAccount(accessToken: token);
+      final data = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : response;
+      if (mounted) {
+        setState(() => _postpaid = data['billing_type'] == 'postpaid');
+      }
+    } catch (_) {
+      // Prepaid is the safe UX fallback; booking creation remains server-gated.
+    }
   }
 
   Future<void> _refreshProfile() async {
@@ -99,6 +120,24 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                     _ProfileSection(
                       title: l10n.shipments,
                       children: [
+                        _ProfileMenuTile(
+                          icon: AppIcons.verified_user_outlined,
+                          title: 'Account verification',
+                          onTap: () => context.push('/client/verification'),
+                        ),
+                        _ProfileMenuTile(
+                          icon: AppIcons.account_balance_wallet_rounded,
+                          title: 'Wallet',
+                          onTap: () => context.go('/client/wallet'),
+                        ),
+                        _ProfileMenuTile(
+                          icon: AppIcons.receipt_long_outlined,
+                          title: 'My Bills',
+                          subtitle: _postpaid
+                              ? 'Postpaid account statements'
+                              : 'View billing account',
+                          onTap: () => context.push('/client/bills'),
+                        ),
                         _ProfileMenuTile(
                           icon: AppIcons.inventory_2_outlined,
                           title: l10n.myBookings,

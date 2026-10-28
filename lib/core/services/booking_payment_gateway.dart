@@ -15,6 +15,134 @@ class BookingPaymentGateway {
   final SskApiClient _apiClient;
   final String merchantName;
 
+  /// Uses the identical trusted Razorpay round-trip for wallet top-ups and
+  /// postpaid bills. The server verification callback is deliberately the
+  /// only point at which either balance/bill state changes.
+  Future<Map<String, dynamic>> payWalletRecharge({
+    required String accessToken,
+    required double amount,
+    BuildContext? context,
+  }) => _payGeneric(
+    accessToken: accessToken,
+    context: context,
+    description: 'Wallet recharge',
+    create: () => _apiClient.createWalletRechargeOrder(
+      accessToken: accessToken,
+      amount: amount,
+    ),
+    verify: (orderId, mode, paymentId, signature) =>
+        _apiClient.verifyWalletRecharge(
+          accessToken: accessToken,
+          orderId: orderId,
+          paymentMode: mode,
+          razorpayPaymentId: paymentId,
+          razorpaySignature: signature,
+        ),
+  );
+
+  Future<Map<String, dynamic>> payBill({
+    required String accessToken,
+    required String billId,
+    BuildContext? context,
+  }) => _payGeneric(
+    accessToken: accessToken,
+    context: context,
+    description: 'Bill payment',
+    create: () => _apiClient.createBillPaymentOrder(
+      accessToken: accessToken,
+      billId: billId,
+    ),
+    verify: (orderId, mode, paymentId, signature) =>
+        _apiClient.verifyBillPayment(
+          accessToken: accessToken,
+          billId: billId,
+          orderId: orderId,
+          paymentMode: mode,
+          razorpayPaymentId: paymentId,
+          razorpaySignature: signature,
+        ),
+  );
+
+  Future<Map<String, dynamic>> _payGeneric({
+    required String accessToken,
+    required String description,
+    required Future<Map<String, dynamic>> Function() create,
+    required Future<Map<String, dynamic>> Function(
+      String orderId,
+      String mode,
+      String? paymentId,
+      String? signature,
+    )
+    verify,
+    BuildContext? context,
+  }) async {
+    final order = _extractOrder(await create());
+    final orderId = _readString(order, const ['orderId', 'order_id']);
+    final provider = _readString(order, const ['provider']).toLowerCase();
+    if (orderId.isEmpty)
+      throw const ApiException('Payment order is missing an order id.');
+    if (provider != 'razorpay') {
+      if (context != null && context.mounted) {
+        final completed = await showFakePaymentCheckout(
+          context: context,
+          amount: _readDouble(order, const ['amount']),
+          description: description,
+        );
+        if (!completed) throw const ApiException('Payment cancelled.');
+      }
+      return verify(orderId, provider.isEmpty ? 'fake' : provider, null, null);
+    }
+    final key = _readString(order, const ['keyId', 'key_id']);
+    final amount = _readDouble(order, const ['amount']);
+    if (key.isEmpty || amount <= 0)
+      throw const ApiException('Payment order is invalid.');
+    final result = Completer<Map<String, dynamic>>();
+    final razorpay = Razorpay();
+    razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, (
+      PaymentSuccessResponse response,
+    ) async {
+      try {
+        final id = response.paymentId?.trim() ?? '';
+        final signature = response.signature?.trim() ?? '';
+        if (id.isEmpty || signature.isEmpty)
+          throw const ApiException(
+            'Payment gateway did not return verification details.',
+          );
+        if (!result.isCompleted)
+          result.complete(await verify(orderId, 'razorpay', id, signature));
+      } catch (e, st) {
+        if (!result.isCompleted) result.completeError(_normalizeError(e), st);
+      }
+    });
+    razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, (
+      PaymentFailureResponse response,
+    ) {
+      if (!result.isCompleted)
+        result.completeError(
+          ApiException(
+            response.message ?? 'Payment failed.',
+            statusCode: response.code,
+          ),
+        );
+    });
+    try {
+      razorpay.open({
+        'key': key,
+        'amount': (amount * 100).round(),
+        'currency': _readString(order, const ['currency']).isEmpty
+            ? 'INR'
+            : _readString(order, const ['currency']),
+        'order_id': orderId,
+        'name': merchantName,
+        'description': description,
+        'theme': {'color': '#1976FF'},
+      });
+      return await result.future;
+    } finally {
+      razorpay.clear();
+    }
+  }
+
   Future<Map<String, dynamic>> payBooking({
     required String accessToken,
     required String bookingId,

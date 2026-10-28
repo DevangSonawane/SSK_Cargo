@@ -80,6 +80,9 @@ import '../../features/client/presentation/screens/client_tracking_screen.dart';
 import '../../features/client/presentation/screens/public_tracking_screen.dart';
 import '../../features/client/presentation/screens/tracking_details_screen.dart';
 import '../../features/client/presentation/screens/client_invoice_preview_screen.dart';
+import '../../features/client/presentation/screens/client_finance_screens.dart';
+import '../../features/client/presentation/screens/client_verification_screen.dart';
+import '../widgets/client_verification_gate.dart';
 import '../../features/client/presentation/widgets/client_flow_widgets.dart';
 import '../../features/chat/data/chat_models.dart';
 import '../../features/chat/presentation/screens/chat_screens.dart';
@@ -94,6 +97,7 @@ BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
 }
 
 Widget _lightFlow(Widget child) => Theme(data: AppTheme.light, child: child);
+Widget _clientGated(Widget child) => ClientVerificationGate(child: child);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = ref.read(rootNavigatorKeyProvider);
@@ -189,8 +193,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/driver/help-support',
-        pageBuilder: (context, state) =>
-            NoTransitionPage(child: _lightFlow(const DriverHelpSupportScreen())),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const DriverHelpSupportScreen()),
+        ),
       ),
       GoRoute(
         path: '/driver/profile',
@@ -368,8 +373,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/broker/help-support',
-        pageBuilder: (context, state) =>
-            NoTransitionPage(child: _lightFlow(const BrokerHelpSupportScreen())),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerHelpSupportScreen()),
+        ),
       ),
       GoRoute(
         path: '/broker/settings',
@@ -401,54 +407,84 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             NoTransitionPage(child: _lightFlow(const BrokerAnalyticsScreen())),
       ),
       GoRoute(
+        path: '/client/verification',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientVerificationScreen()),
+      ),
+      GoRoute(
+        path: '/client/bills',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _clientGated(const ClientBillsScreen())),
+      ),
+      GoRoute(
+        path: '/driver/wallet',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _lightFlow(const EarningsWalletScreen())),
+      ),
+      GoRoute(
+        path: '/broker/wallet',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: _lightFlow(const EarningsWalletScreen())),
+      ),
+      GoRoute(
         path: '/client/settings',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientSettingsScreen()),
+            NoTransitionPage(child: _clientGated(const ClientSettingsScreen())),
       ),
       GoRoute(
         path: '/client/monthly-hiring',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientMonthlyHiringScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientMonthlyHiringScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/monthly-hiring/new',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientMonthlyHiringFormScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientMonthlyHiringFormScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/saved-addresses',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientSavedAddressesScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientSavedAddressesScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/saved-addresses/new',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: ClientSavedAddressEditorScreen(initialAddress: state.extra),
+          child: _clientGated(
+            ClientSavedAddressEditorScreen(initialAddress: state.extra),
+          ),
         ),
       ),
       GoRoute(
         path: '/client/saved-addresses/:id/edit',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: ClientSavedAddressEditorScreen(
-            addressId: state.pathParameters['id'],
-            initialAddress: state.extra,
+          child: _clientGated(
+            ClientSavedAddressEditorScreen(
+              addressId: state.pathParameters['id'],
+              initialAddress: state.extra,
+            ),
           ),
         ),
       ),
       GoRoute(
         path: '/client/payment-methods',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientPaymentMethodsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientPaymentMethodsScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/payment-methods/add',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientPaymentMethodAddScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientPaymentMethodAddScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/notifications',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ClientNotificationsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _clientGated(const ClientNotificationsScreen()),
+        ),
       ),
       GoRoute(
         path: '/client/help-support',
@@ -733,6 +769,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/client/tracking',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: ClientTrackingScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/client/wallet',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ClientWalletScreen()),
               ),
             ],
           ),

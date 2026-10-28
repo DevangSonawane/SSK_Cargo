@@ -20,6 +20,7 @@ class _CheckoutChoiceCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final fullSelected =
         selectedMethod != PaymentMethod.advance &&
+        selectedMethod != PaymentMethod.wallet &&
         selectedMethod != PaymentMethod.payLater &&
         selectedMethod != PaymentMethod.toBeBilled;
     final advanceSubtitle = advanceAmount == null
@@ -57,6 +58,13 @@ class _CheckoutChoiceCard extends StatelessWidget {
             selected: selectedMethod == PaymentMethod.advance,
             enabled: advanceAmount != null && !loadingAdvanceAmount,
             onTap: () => onSelect(PaymentMethod.advance),
+          ),
+          _CheckoutChoiceTile(
+            title: 'Pay from Wallet',
+            subtitle: 'Use your available wallet balance',
+            icon: AppIcons.account_balance_wallet_rounded,
+            selected: selectedMethod == PaymentMethod.wallet,
+            onTap: () => onSelect(PaymentMethod.wallet),
           ),
           _CheckoutChoiceTile(
             title: l10n.toPay,

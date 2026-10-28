@@ -252,6 +252,13 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     onTap: () => context.go('/driver/earnings'),
                   ),
                   _ProfileMenuTile(
+                    title: 'Wallet',
+                    subtitle: 'Trip earnings and payouts',
+                    icon: AppIcons.account_balance_wallet_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/wallet'),
+                  ),
+                  _ProfileMenuTile(
                     title: 'Monthly Hiring',
                     subtitle:
                         'List your truck for monthly hire and manage listings',

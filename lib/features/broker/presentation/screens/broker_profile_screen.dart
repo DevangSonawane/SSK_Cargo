@@ -161,6 +161,13 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     onTap: () => context.push('/broker/earnings'),
                   ),
                   _ProfileMenuTile(
+                    title: 'Wallet',
+                    subtitle: 'Trip earnings and payouts',
+                    icon: AppIcons.account_balance_wallet_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/broker/wallet'),
+                  ),
+                  _ProfileMenuTile(
                     title: 'Monthly Hiring',
                     subtitle:
                         'List trucks for monthly hire and manage listings',

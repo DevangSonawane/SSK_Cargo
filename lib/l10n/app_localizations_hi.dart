@@ -7633,4 +7633,274 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get driverTrackingDisclosureBody =>
       'SSK आपके ऑनलाइन रहने या सक्रिय ट्रिप के दौरान ब्रोकर और ग्राहकों के साथ ड्राइवर की उपलब्धता और लाइव ट्रिप ट्रैकिंग साझा करने के लिए आपकी लोकेशन लेता है, तब भी जब ऐप बैकग्राउंड में हो या स्क्रीन लॉक हो। ऑफलाइन होने और कोई सक्रिय ट्रिप न होने पर ट्रैकिंग बंद हो जाती है। लोकेशन की अनुमति देने के लिए जारी रखें।';
+
+  @override
+  String get coreDigilockerGstLabel => 'GST';
+
+  @override
+  String get coreDigilockerGstExampleHint => '27ABCDE1234F1Z5';
+
+  @override
+  String get coreDigilockerGstFillFirst => 'पहले अपना GST नंबर भरें';
+
+  @override
+  String get coreDigilockerVerifyGst => 'GST सत्यापित करें';
+
+  @override
+  String get coreDigilockerGstInvalid =>
+      'मान्य GSTIN दर्ज करें (जैसे 27ABCDE1234F1Z5)';
+
+  @override
+  String get coreDigilockerBusinessGstNote =>
+      'GST का कोई DigiLocker दस्तावेज़ नहीं है — इसे सीधे सरकारी रिकॉर्ड से जाँचा जाता है।';
+
+  @override
+  String get clientVerificationTitle => 'अपना खाता सत्यापित करें';
+
+  @override
+  String get clientVerificationSubtitle =>
+      'अपने PAN, आधार और GST विवरण सत्यापित करें — यह पूरा होने तक नई बुकिंग लॉक रहेगी।';
+
+  @override
+  String get clientVerificationAadhaarPanTitle => 'आधार और PAN';
+
+  @override
+  String get clientVerificationAadhaarPanSubtitle =>
+      'DigiLocker से एक साथ सत्यापित';
+
+  @override
+  String get clientVerificationGstTitle => 'GST';
+
+  @override
+  String get clientVerificationGstSubtitle => 'सरकारी रिकॉर्ड से जाँचा जाता है';
+
+  @override
+  String get clientVerificationDoneTitle => 'आप सत्यापित हैं';
+
+  @override
+  String get clientVerificationDoneBody =>
+      'PAN, आधार और GST सभी की पुष्टि हो गई है। अब आप बुकिंग, शिपमेंट ट्रैकिंग और भुगतान कर सकते हैं।';
+
+  @override
+  String get clientVerificationBookNow => 'ट्रक बुक करें';
+
+  @override
+  String get clientVerificationCheckNow => 'स्थिति जाँचें';
+
+  @override
+  String get clientVerificationStatusLoadFailed =>
+      'सत्यापन स्थिति लोड नहीं हो सकी।';
+
+  @override
+  String get clientVerificationBlockedTitle => 'सत्यापन आवश्यक';
+
+  @override
+  String get clientVerificationBlockedBody =>
+      'बुकिंग करने से पहले हर क्लाइंट को PAN, आधार और GST सत्यापित करना होगा। इस अनुभाग तक जाने के लिए अपना सत्यापन पूरा करें।';
+
+  @override
+  String get clientVerificationBlockedWalletBody =>
+      'वॉलेट इस्तेमाल करने से पहले हर क्लाइंट को PAN, आधार और GST सत्यापित करना होगा। जारी रखने के लिए अपना सत्यापन पूरा करें।';
+
+  @override
+  String get clientVerificationAction => 'अभी सत्यापित करें';
+
+  @override
+  String get clientVerificationBackHome => 'होम पर जाएँ';
+
+  @override
+  String get clientVerificationNotNow => 'अभी नहीं';
+
+  @override
+  String get clientBookingPostpaidNote =>
+      'पोस्टपेड बुकिंग — अभी भुगतान ज़रूरी नहीं। यह बुकिंग आपके बिल में जोड़ी जाएगी।';
+
+  @override
+  String get clientWalletTitle => 'वॉलेट';
+
+  @override
+  String get clientWalletBalanceLabel => 'उपलब्ध बैलेंस';
+
+  @override
+  String clientWalletLastRecharged(Object date) {
+    return 'आखिरी रिचार्ज $date';
+  }
+
+  @override
+  String get clientWalletLastRechargedNever =>
+      'बुकिंग का तुरंत भुगतान के लिए रिचार्ज करें';
+
+  @override
+  String get clientWalletRechargeButton => 'वॉलेट रिचार्ज करें';
+
+  @override
+  String get clientWalletRechargeTitle => 'वॉलेट रिचार्ज';
+
+  @override
+  String get clientWalletRechargeSubtitle =>
+      'तुरंत रिचार्ज करें और बुकिंग का भुगतान सीधे अपने बैलेंस से करें।';
+
+  @override
+  String get clientWalletMinRecharge => 'न्यूनतम रिचार्ज ₹100 है';
+
+  @override
+  String clientWalletContinueAmount(Object amount) {
+    return 'रिचार्ज ₹$amount';
+  }
+
+  @override
+  String get clientWalletTransactionsLabel => 'लेन-देन इतिहास';
+
+  @override
+  String get clientWalletEmpty => 'अभी कोई लेन-देन नहीं';
+
+  @override
+  String get clientWalletEmptyHint =>
+      'बुकिंग का तुरंत भुगतान के लिए अपना वॉलेट रिचार्ज करें।';
+
+  @override
+  String get clientWalletLoadFailed => 'आपका वॉलेट लोड नहीं हो सका';
+
+  @override
+  String get clientWalletRetry => 'फिर कोशिश करें';
+
+  @override
+  String get clientWalletRecharged => 'वॉलेट सफलतापूर्वक रिचार्ज हो गया';
+
+  @override
+  String clientWalletTotalCount(Object count) {
+    return '$count लेन-देन';
+  }
+
+  @override
+  String get walletTxBookingPayment => 'बुकिंग भुगतान';
+
+  @override
+  String get walletTxWalletRefund => 'रिफंड';
+
+  @override
+  String get payFromWalletOption => 'वॉलेट से भुगतान करें';
+
+  @override
+  String payFromWalletBalance(Object amount) {
+    return 'वॉलेट बैलेंस ₹$amount';
+  }
+
+  @override
+  String get payFromWalletChecking => 'वॉलेट बैलेंस…';
+
+  @override
+  String payFromWalletInsufficient(Object amount) {
+    return 'वॉलेट बैलेंस ₹$amount — देय राशि से कम';
+  }
+
+  @override
+  String get payFromWalletWorking => 'वॉलेट से भुगतान हो रहा है…';
+
+  @override
+  String get payFromWalletDone => 'वॉलेट से बुकिंग का भुगतान हुआ';
+
+  @override
+  String get earningsWalletTitle => 'वॉलेट';
+
+  @override
+  String get earningsWalletBalanceLabel => 'आपको देय बैलेंस';
+
+  @override
+  String get earningsWalletBalanceNote =>
+      'ट्रिप पूरी होने पर अपने-आप जमा होता है। एडमिन द्वारा भुगतान किया जाता है।';
+
+  @override
+  String get earningsWalletHistoryLabel => 'लेन-देन इतिहास';
+
+  @override
+  String get earningsWalletEmptyHint => 'अभी कोई लेन-देन नहीं';
+
+  @override
+  String get earningsWalletTotalEarnedLabel => 'कुल कमाई';
+
+  @override
+  String get earningsWalletTotalPaidLabel => 'कुल चुकाया गया';
+
+  @override
+  String get walletTxEarning => 'ट्रिप प्राप्ति (अधिक)';
+
+  @override
+  String get walletTxPayout => 'भुगतान प्राप्त हुआ (कम)';
+
+  @override
+  String get walletTxEarningNote => 'ट्रिप पूरी होने पर अपने-आप जमा';
+
+  @override
+  String get clientBillsNavLabel => 'मेरे बिल';
+
+  @override
+  String get clientBillsTitle => 'मेरे बिल';
+
+  @override
+  String get clientBillsSubtitle =>
+      'आपका मासिक खाता — इधर की पोस्टपेड बुकिंग एक साथ बिल होती हैं';
+
+  @override
+  String get clientBillsOutstandingLabel => 'बाकी राशि';
+
+  @override
+  String clientBillsCreditLimitSuffix(Object limit) {
+    return '₹$limit क्रेडिट लिमिट में से';
+  }
+
+  @override
+  String get clientBillsHistoryLabel => 'बिल इतिहास';
+
+  @override
+  String get clientBillsEmpty => 'अभी कोई बिल नहीं';
+
+  @override
+  String get clientBillsEmptyHint =>
+      'हर महीने बिल आता है, और क्रेडिट लिमिट छूने पर जल्दी भी।';
+
+  @override
+  String get billStatusPending => 'बाकी';
+
+  @override
+  String get billStatusPaid => 'भुगतान हुआ';
+
+  @override
+  String get billTriggerMonthly => 'मासिक बिलिंग';
+
+  @override
+  String get billTriggerCreditLimit => 'क्रेडिट लिमिट पूरी हुई';
+
+  @override
+  String get clientBillsPayNow => 'अभी भुगतान करें';
+
+  @override
+  String get clientBillsDetailTitle => 'बिल विवरण';
+
+  @override
+  String get clientBillsItemsLabel => 'इस बिल की बुकिंग';
+
+  @override
+  String clientBillsBookingCount(Object count) {
+    return '$count बुकिंग';
+  }
+
+  @override
+  String get clientBillsPayTitle => 'बिल का भुगतान';
+
+  @override
+  String get clientBillsPayNowWorking => 'भुगतान खुल रहा है…';
+
+  @override
+  String get clientBillsPaidSuccess => 'बिल का भुगतान सफलतापूर्वक हुआ';
+
+  @override
+  String get clientBillsLoadFailed => 'आपके बिल लोड नहीं हो सके';
+
+  @override
+  String get clientPaidBookingLabel => 'राशि';
+
+  @override
+  String get clientBookingCreditLimitReachedFallback =>
+      'आपने अपनी क्रेडिट लिमिट पूरी कर ली है। दोबारा बुकिंग से पहले \'मेरे बिल\' में बाकी राशि चुकाएँ।';
 }

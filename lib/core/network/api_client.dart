@@ -17,10 +17,15 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode, this.code});
 
   final String message;
   final int? statusCode;
+
+  /// The server's error code from `errors.code` (e.g.
+  /// `KYC_VERIFICATION_REQUIRED`, `PINCODE_NOT_SERVICEABLE`,
+  /// `CREDIT_LIMIT_REACHED`) — null when the response carries none.
+  final String? code;
 
   @override
   String toString() => 'ApiException($statusCode): $message';
@@ -334,6 +339,8 @@ class SskApiClient {
     required String dropLocation,
     required String transportType,
     String? city,
+    String? pickupPincode,
+    String? dropPincode,
   }) async {
     developer.log(
       'POST /api/bookings/validate-location transportType=$transportType city=$city',
@@ -347,6 +354,14 @@ class SskApiClient {
           'drop_location': dropLocation,
           'transport_type': transportType,
           if (city != null && city.isNotEmpty) 'city': city,
+          // Geofence pincode whitelist (web parity: sent through untouched,
+          // omitted when the selection had no resolvable pincode — the server
+          // decides whether one is required). The same check runs again on
+          // POST /api/bookings, which remains the real lock.
+          if (pickupPincode != null && pickupPincode.trim().isNotEmpty)
+            'pickup_pincode': pickupPincode.trim(),
+          if (dropPincode != null && dropPincode.trim().isNotEmpty)
+            'drop_pincode': dropPincode.trim(),
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -502,6 +517,211 @@ class SskApiClient {
           'pay_type': payType,
           'payment_mode': paymentMode,
           ...?gatewayPayload,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Wallet (client prepaid recharge wallet AND the driver/broker earnings
+  // wallet — same endpoints, role-scoped server-side).
+  // ---------------------------------------------------------------------------
+
+  /// `GET /api/wallet` — the signed-in user's balance. Response
+  /// `{ balance: <number> }`.
+  Future<Map<String, dynamic>> getWalletBalance({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/wallet', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/wallet',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `GET /api/wallet/transactions?page=&limit=` — paginated ledger.
+  Future<Map<String, dynamic>> getWalletTransactions({
+    required String accessToken,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    developer.log(
+      'GET /api/wallet/transactions page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/wallet/transactions',
+        queryParameters: {'page': page, 'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `POST /api/wallet/recharge/order` — Razorpay order for a recharge
+  /// (client role only; a driver/broker token gets a 403 here by design).
+  /// Minimum ₹100 is enforced in the UI before this is reached.
+  Future<Map<String, dynamic>> createWalletRechargeOrder({
+    required String accessToken,
+    required double amount,
+  }) async {
+    developer.log(
+      'POST /api/wallet/recharge/order amount=$amount',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/wallet/recharge/order',
+        data: {'amount': amount},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `POST /api/wallet/recharge/verify` — the ONLY call that actually credits
+  /// the balance (Razorpay server-side verification, web parity: never trust
+  /// the SDK's own success event). Returns the new `{ balance }`.
+  Future<Map<String, dynamic>> verifyWalletRecharge({
+    required String accessToken,
+    required String orderId,
+    String? razorpayPaymentId,
+    String? razorpaySignature,
+    String? paymentMode,
+  }) async {
+    developer.log(
+      'POST /api/wallet/recharge/verify orderId=$orderId paymentMode=$paymentMode',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/wallet/recharge/verify',
+        data: {
+          'order_id': orderId,
+          if (paymentMode != null && paymentMode.trim().isNotEmpty)
+            'payment_mode': paymentMode,
+          if (razorpayPaymentId != null && razorpayPaymentId.isNotEmpty)
+            'razorpay_payment_id': razorpayPaymentId,
+          if (razorpaySignature != null && razorpaySignature.isNotEmpty)
+            'razorpay_signature': razorpaySignature,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `POST /api/bookings/:id/pay/wallet` — instant internal debit, no
+  /// gateway round-trip. `payType` is `full` | `advance`. A 402 with a plain
+  /// message means insufficient balance (the UI disables the button below
+  /// the due amount first; this stays the server's fallback).
+  Future<Map<String, dynamic>> payBookingFromWallet({
+    required String accessToken,
+    required String bookingId,
+    required String payType,
+  }) async {
+    developer.log(
+      'POST /api/bookings/$bookingId/pay/wallet payType=$payType',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/pay/wallet',
+        data: {'pay_type': payType},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Postpaid billing (My Bills) — only ever called for a client whose
+  // `billing_type` is "postpaid" (checked per session via getBillsAccount).
+  // ---------------------------------------------------------------------------
+
+  /// `GET /api/bills/account` — `{ billing_type, credit_limit, outstanding }`.
+  Future<Map<String, dynamic>> getBillsAccount({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/bills/account', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bills/account',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `GET /api/bills?page=&limit=`.
+  Future<Map<String, dynamic>> getBills({
+    required String accessToken,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    developer.log('GET /api/bills page=$page limit=$limit', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bills',
+        queryParameters: {'page': page, 'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `GET /api/bills/:id` — `{ bill, items[] }` line items.
+  Future<Map<String, dynamic>> getBillDetail({
+    required String accessToken,
+    required String billId,
+  }) async {
+    developer.log('GET /api/bills/$billId', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bills/$billId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `POST /api/bills/:id/payment/order` — bill's full amount, no payload.
+  Future<Map<String, dynamic>> createBillPaymentOrder({
+    required String accessToken,
+    required String billId,
+  }) async {
+    developer.log('POST /api/bills/$billId/payment/order', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bills/$billId/payment/order',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// `POST /api/bills/:id/payment/verify` — flips the bill + its bookings to
+  /// paid; never trust the SDK's success event alone here either.
+  Future<Map<String, dynamic>> verifyBillPayment({
+    required String accessToken,
+    required String billId,
+    required String orderId,
+    String? razorpayPaymentId,
+    String? razorpaySignature,
+    String? paymentMode,
+  }) async {
+    developer.log(
+      'POST /api/bills/$billId/payment/verify orderId=$orderId paymentMode=$paymentMode',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bills/$billId/payment/verify',
+        data: {
+          'order_id': orderId,
+          if (paymentMode != null && paymentMode.trim().isNotEmpty)
+            'payment_mode': paymentMode,
+          if (razorpayPaymentId != null && razorpayPaymentId.isNotEmpty)
+            'razorpay_payment_id': razorpayPaymentId,
+          if (razorpaySignature != null && razorpaySignature.isNotEmpty)
+            'razorpay_signature': razorpaySignature,
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -2591,6 +2811,26 @@ class SskApiClient {
     );
   }
 
+  /// GST verification (Cashfree VRS) — the one check with no DigiLocker
+  /// document, always a manual GSTIN lookup. `success: true` with
+  /// `data.status: "failed"` is a normal outcome, not an error.
+  Future<Map<String, dynamic>> verifyGst({
+    required String accessToken,
+    required String gstin,
+  }) async {
+    developer.log(
+      'POST /api/kyc/verify/gst gstinLength=${gstin.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/gst',
+        data: {'gstin': gstin},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> startDigilockerVerification({
     required String accessToken,
     required String redirectUrl,
@@ -2773,8 +3013,27 @@ class SskApiClient {
       throw ApiException(
         _extractMessage(error),
         statusCode: error.response?.statusCode,
+        code: _extractErrorCode(error.response?.data),
       );
     }
+  }
+
+  /// The body's `errors.code` value when the server sends a single-error map
+  /// shape (`{"errors": {"code": "PINCODE_REQUIRED"}}`) rather than the 422
+  /// field-error list. Lets callers branch on business error codes without
+  /// string-matching messages (web `response?.errors?.code` parity).
+  String? _extractErrorCode(Object? responseData) {
+    if (responseData is! Map<String, dynamic>) {
+      return null;
+    }
+    final errors = responseData['errors'];
+    if (errors is Map<String, dynamic>) {
+      final code = errors['code']?.toString().trim();
+      if (code != null && code.isNotEmpty && code.toLowerCase() != 'null') {
+        return code;
+      }
+    }
+    return null;
   }
 
   String _extractMessage(DioException error) {

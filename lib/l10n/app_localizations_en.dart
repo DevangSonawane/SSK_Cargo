@@ -7636,4 +7636,275 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get driverTrackingDisclosureBody =>
       'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.';
+
+  @override
+  String get coreDigilockerGstLabel => 'GST';
+
+  @override
+  String get coreDigilockerGstExampleHint => '27ABCDE1234F1Z5';
+
+  @override
+  String get coreDigilockerGstFillFirst => 'Fill in your GST number first';
+
+  @override
+  String get coreDigilockerVerifyGst => 'Verify GST';
+
+  @override
+  String get coreDigilockerGstInvalid =>
+      'Enter a valid GSTIN (e.g. 27ABCDE1234F1Z5)';
+
+  @override
+  String get coreDigilockerBusinessGstNote =>
+      'GST has no DigiLocker document — it is checked directly against government records.';
+
+  @override
+  String get clientVerificationTitle => 'Verify your account';
+
+  @override
+  String get clientVerificationSubtitle =>
+      'Verify your PAN, Aadhaar and GST details — new bookings stay locked until you do.';
+
+  @override
+  String get clientVerificationAadhaarPanTitle => 'Aadhaar & PAN';
+
+  @override
+  String get clientVerificationAadhaarPanSubtitle =>
+      'Verified together through DigiLocker';
+
+  @override
+  String get clientVerificationGstTitle => 'GST';
+
+  @override
+  String get clientVerificationGstSubtitle =>
+      'Checked against government records';
+
+  @override
+  String get clientVerificationDoneTitle => 'You\'re verified';
+
+  @override
+  String get clientVerificationDoneBody =>
+      'PAN, Aadhaar and GST are all confirmed. You\'re all set to book, track shipments and manage payments.';
+
+  @override
+  String get clientVerificationBookNow => 'Book a Truck';
+
+  @override
+  String get clientVerificationCheckNow => 'Check status';
+
+  @override
+  String get clientVerificationStatusLoadFailed =>
+      'Could not load your verification status.';
+
+  @override
+  String get clientVerificationBlockedTitle => 'Verification required';
+
+  @override
+  String get clientVerificationBlockedBody =>
+      'Every client must verify PAN, Aadhaar and GST before creating a booking. Complete your verification to continue to this section.';
+
+  @override
+  String get clientVerificationBlockedWalletBody =>
+      'Every client must verify PAN, Aadhaar and GST before using the wallet. Complete your verification to continue.';
+
+  @override
+  String get clientVerificationAction => 'Verify Now';
+
+  @override
+  String get clientVerificationBackHome => 'Back to Home';
+
+  @override
+  String get clientVerificationNotNow => 'Not now';
+
+  @override
+  String get clientBookingPostpaidNote =>
+      'Postpaid booking — no payment needed now. This booking will be added to your bill.';
+
+  @override
+  String get clientWalletTitle => 'Wallet';
+
+  @override
+  String get clientWalletBalanceLabel => 'Available Balance';
+
+  @override
+  String clientWalletLastRecharged(Object date) {
+    return 'Last recharged $date';
+  }
+
+  @override
+  String get clientWalletLastRechargedNever =>
+      'Recharge to pay for bookings instantly';
+
+  @override
+  String get clientWalletRechargeButton => 'Recharge Wallet';
+
+  @override
+  String get clientWalletRechargeTitle => 'Wallet Recharge';
+
+  @override
+  String get clientWalletRechargeSubtitle =>
+      'Recharge instantly to pay for bookings straight from your balance.';
+
+  @override
+  String get clientWalletMinRecharge => 'Minimum recharge is ₹100';
+
+  @override
+  String clientWalletContinueAmount(Object amount) {
+    return 'Recharge ₹$amount';
+  }
+
+  @override
+  String get clientWalletTransactionsLabel => 'Transaction History';
+
+  @override
+  String get clientWalletEmpty => 'No transactions yet';
+
+  @override
+  String get clientWalletEmptyHint =>
+      'Recharge your wallet to start paying for bookings instantly.';
+
+  @override
+  String get clientWalletLoadFailed => 'Could not load your wallet';
+
+  @override
+  String get clientWalletRetry => 'Retry';
+
+  @override
+  String get clientWalletRecharged => 'Wallet recharged successfully';
+
+  @override
+  String clientWalletTotalCount(Object count) {
+    return '$count transactions';
+  }
+
+  @override
+  String get walletTxBookingPayment => 'Booking Payment';
+
+  @override
+  String get walletTxWalletRefund => 'Refund';
+
+  @override
+  String get payFromWalletOption => 'Pay from Wallet';
+
+  @override
+  String payFromWalletBalance(Object amount) {
+    return 'Wallet balance ₹$amount';
+  }
+
+  @override
+  String get payFromWalletChecking => 'Wallet balance…';
+
+  @override
+  String payFromWalletInsufficient(Object amount) {
+    return 'Wallet balance ₹$amount — less than the amount due';
+  }
+
+  @override
+  String get payFromWalletWorking => 'Paying from wallet…';
+
+  @override
+  String get payFromWalletDone => 'Booking paid from wallet';
+
+  @override
+  String get earningsWalletTitle => 'Wallet';
+
+  @override
+  String get earningsWalletBalanceLabel => 'Balance Owed To You';
+
+  @override
+  String get earningsWalletBalanceNote =>
+      'Credited automatically when a trip completes. Paid out by the admin.';
+
+  @override
+  String get earningsWalletHistoryLabel => 'Transaction History';
+
+  @override
+  String get earningsWalletEmptyHint => 'No transactions yet';
+
+  @override
+  String get earningsWalletTotalEarnedLabel => 'Total earned';
+
+  @override
+  String get earningsWalletTotalPaidLabel => 'Total paid out';
+
+  @override
+  String get walletTxEarning => 'Trip Earning';
+
+  @override
+  String get walletTxPayout => 'Payout Received';
+
+  @override
+  String get walletTxEarningNote => 'Credited automatically on trip completion';
+
+  @override
+  String get clientBillsNavLabel => 'My Bills';
+
+  @override
+  String get clientBillsTitle => 'My Bills';
+
+  @override
+  String get clientBillsSubtitle =>
+      'Your monthly account — bookings postpaid here are billed together';
+
+  @override
+  String get clientBillsOutstandingLabel => 'Outstanding Balance';
+
+  @override
+  String clientBillsCreditLimitSuffix(Object limit) {
+    return 'of ₹$limit credit limit';
+  }
+
+  @override
+  String get clientBillsHistoryLabel => 'Bill History';
+
+  @override
+  String get clientBillsEmpty => 'No bills yet';
+
+  @override
+  String get clientBillsEmptyHint =>
+      'You\'ll be billed monthly or early once you reach your credit limit.';
+
+  @override
+  String get billStatusPending => 'Pending';
+
+  @override
+  String get billStatusPaid => 'Paid';
+
+  @override
+  String get billTriggerMonthly => 'Monthly billing';
+
+  @override
+  String get billTriggerCreditLimit => 'Credit limit reached';
+
+  @override
+  String get clientBillsPayNow => 'Pay Now';
+
+  @override
+  String get clientBillsDetailTitle => 'Bill Details';
+
+  @override
+  String get clientBillsItemsLabel => 'Bookings on this bill';
+
+  @override
+  String clientBillsBookingCount(Object count) {
+    return '$count bookings';
+  }
+
+  @override
+  String get clientBillsPayTitle => 'Pay Bill';
+
+  @override
+  String get clientBillsPayNowWorking => 'Opening payment…';
+
+  @override
+  String get clientBillsPaidSuccess => 'Bill paid successfully';
+
+  @override
+  String get clientBillsLoadFailed => 'Could not load your bills';
+
+  @override
+  String get clientPaidBookingLabel => 'Amount';
+
+  @override
+  String get clientBookingCreditLimitReachedFallback =>
+      'You\'ve reached your credit limit. Please clear your outstanding bill in My Bills before booking again.';
 }
