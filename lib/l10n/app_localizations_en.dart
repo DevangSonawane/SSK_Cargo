@@ -130,7 +130,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verified => 'Verified';
 
   @override
-  String get completeDriverVerification => 'Complete your driver verification';
+  String get completeDriverVerification =>
+      'Complete your lorry owner verification';
 
   @override
   String get earnings => 'Earnings';
@@ -155,7 +156,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allChats => 'All Chats';
 
   @override
-  String get allChatsSubtitle => 'View every driver conversation';
+  String get allChatsSubtitle => 'View every lorry owner conversation';
 
   @override
   String get security => 'Security';
@@ -173,7 +174,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutSubtitle => 'Sign out from this device';
 
   @override
-  String get driverAccount => 'Driver account';
+  String get driverAccount => 'Lorry Owner account';
 
   @override
   String get noAccountConnected => 'No account connected';
@@ -182,7 +183,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kycPending => 'KYC Pending';
 
   @override
-  String get driver => 'Driver';
+  String get driver => 'Lorry Owner';
 
   @override
   String get enterEmailAndPassword => 'Enter both email and password.';
@@ -224,7 +225,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createAccount => 'Create account';
 
   @override
-  String get registerAsBrokerDriver => 'Register as Broker/Driver';
+  String get registerAsBrokerDriver => 'Register as Broker/Lorry Owner';
 
   @override
   String get newEnquiry => 'New Enquiry';
@@ -411,7 +412,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enquiry submitted — our team will get in touch soon';
 
   @override
-  String get driverPhoneUnavailable => 'Driver phone number is not available.';
+  String get driverPhoneUnavailable =>
+      'Lorry Owner phone number is not available.';
 
   @override
   String get couldNotOpenPhoneApp => 'Could not open the phone app.';
@@ -633,7 +635,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String forceTripStatusDescription(Object status) {
-    return 'This moves the trip to \"$status\" on the driver\'s behalf. Use only if the driver is unreachable.';
+    return 'This moves the trip to \"$status\" on the lorry owner\'s behalf. Use only if the lorry owner is unreachable.';
   }
 
   @override
@@ -723,7 +725,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get driverTakeoverTitle => 'Driver unreachable? Take over this trip';
+  String get driverTakeoverTitle =>
+      'Lorry Owner unreachable? Take over this trip';
 
   @override
   String get hide => 'Hide';
@@ -733,7 +736,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverTakeoverDescription =>
-      'Use this only if the driver\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the driver\'s behalf.';
+      'Use this only if the lorry owner\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the lorry owner\'s behalf.';
 
   @override
   String get retryLoadingTrip => 'Retry loading trip';
@@ -773,7 +776,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clientRejectedReuploading =>
-      'Client rejected — driver re-uploading';
+      'Client rejected — lorry owner re-uploading';
 
   @override
   String get sendInvoiceByEmail => 'Send invoice by email';
@@ -881,7 +884,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageFleetAtGlance => 'Manage your fleet at a glance';
 
   @override
-  String get monitorDriverMovement => 'Monitor driver movement';
+  String get monitorDriverMovement => 'Monitor lorry owner movement';
 
   @override
   String get reviewRecentBookings => 'Review recent bookings';
@@ -1025,7 +1028,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejectProofOfDeliveryDescription =>
-      'The driver will be asked to upload new photos before the trip can be completed.';
+      'The lorry owner will be asked to upload new photos before the trip can be completed.';
 
   @override
   String get rejectPodReasonHint =>
@@ -1039,7 +1042,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverAskedToReuploadPod =>
-      'Asked the driver to re-upload proof of delivery.';
+      'Asked the lorry owner to re-upload proof of delivery.';
 
   @override
   String get fetchingAdvanceAmount => 'Fetching configured advance amount';
@@ -1062,7 +1065,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toPay => 'To Pay';
 
   @override
-  String get toPaySubtitle => 'Full amount collected by the driver on delivery';
+  String get toPaySubtitle =>
+      'Full amount collected by the lorry owner on delivery';
 
   @override
   String get toBeBilled => 'To Be Billed';
@@ -1072,7 +1076,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toBeBilledUnavailableSubtitle =>
-      'Available after a driver is confirmed';
+      'Available after a lorry owner is confirmed';
 
   @override
   String get chooseFuturePickupTime => 'Choose a future pickup time.';
@@ -1095,10 +1099,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goToHome => 'Go to home';
 
   @override
-  String get driverOfferReceived => 'Driver offer received';
+  String get driverOfferReceived => 'Lorry Owner offer received';
 
   @override
-  String get confirmingWithDriver => 'Confirming with driver';
+  String get confirmingWithDriver => 'Confirming with lorry owner';
 
   @override
   String get findingNearbyTrucks => 'Finding nearby trucks';
@@ -1109,24 +1113,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmingWithDriverSubtitle =>
-      'You accepted the offer. We are waiting for the driver to complete the handshake.';
+      'You accepted the offer. We are waiting for the lorry owner to complete the handshake.';
 
   @override
   String driversNotifiedRadius(Object radius) {
-    return 'Drivers inside $radius km have been notified. We will show the offer popup when one responds.';
+    return 'Lorry Owners inside $radius km have been notified. We will show the offer popup when one responds.';
   }
 
   @override
   String bookingLiveNotifyingDrivers(Object radius) {
-    return 'Your booking is live. We are notifying drivers inside $radius km.';
+    return 'Your booking is live. We are notifying lorry owners inside $radius km.';
   }
 
   @override
-  String get driverResponse => 'Driver response';
+  String get driverResponse => 'Lorry Owner response';
 
   @override
   String get waitingForDriverAcceptance =>
-      'Waiting for the driver to confirm your acceptance.';
+      'Waiting for the lorry owner to confirm your acceptance.';
 
   @override
   String fareChangeAmount(Object amount) {
@@ -1134,7 +1138,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get driverResponseTimedOut => 'Driver response timed out.';
+  String get driverResponseTimedOut => 'Lorry Owner response timed out.';
 
   @override
   String latestAmount(Object amount) {
@@ -1209,7 +1213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get acceptedWaitingForDriverConfirm =>
-      'Accepted - waiting for the driver to confirm.';
+      'Accepted - waiting for the lorry owner to confirm.';
 
   @override
   String declinedDriverStillWaiting(Object name) {
@@ -1283,7 +1287,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCollectionNow => 'No collection now';
 
   @override
-  String get afterDriverConfirm => 'After driver confirm';
+  String get afterDriverConfirm => 'After lorry owner confirm';
 
   @override
   String get skip => 'Skip';
@@ -1313,7 +1317,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fetchingDriverRequests =>
-      'Fetching driver requests from the server.';
+      'Fetching lorry owner requests from the server.';
 
   @override
   String get couldNotLoadRequests => 'Could not load requests';
@@ -1327,7 +1331,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestTimedOutBrokerHandoff =>
-      'This request timed out for the driver. Broker handoff is active.';
+      'This request timed out for the lorry owner. Broker handoff is active.';
 
   @override
   String get swipeToAccept => 'Swipe to accept';
@@ -1375,10 +1379,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completed => 'Completed';
 
   @override
-  String get addDriver => 'Add driver';
+  String get addDriver => 'Add lorry owner';
 
   @override
-  String get removeDriverQuestion => 'Remove driver?';
+  String get removeDriverQuestion => 'Remove lorry owner?';
 
   @override
   String deleteDriverFromFleet(Object name) {
@@ -1430,10 +1434,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInAgainToDeleteDriver =>
-      'Please sign in again to delete a driver.';
+      'Please sign in again to delete a lorry owner.';
 
   @override
-  String get driverRemoved => 'Driver removed from fleet.';
+  String get driverRemoved => 'Lorry Owner removed from fleet.';
 
   @override
   String get reportIncident => 'Report incident';
@@ -1474,7 +1478,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverLocationActivityOverview =>
-      'Driver location and activity overview';
+      'Lorry Owner location and activity overview';
 
   @override
   String tripId(Object id) {
@@ -1511,7 +1515,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markComplete => 'Mark complete';
 
   @override
-  String get reassignDriver => 'Reassign driver';
+  String get reassignDriver => 'Reassign lorry owner';
 
   @override
   String currentlyAssigned(Object name) {
@@ -1526,7 +1530,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reassignReasonHint =>
-      'Driver unavailable, breakdown, better route fit...';
+      'Lorry Owner unavailable, breakdown, better route fit...';
 
   @override
   String get reassign => 'Reassign';
@@ -1541,13 +1545,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestUpdated => 'Request updated.';
 
   @override
-  String get driverRequests => 'Driver requests';
+  String get driverRequests => 'Lorry Owner requests';
 
   @override
-  String get noDriverRequestsYet => 'No driver requests yet.';
+  String get noDriverRequestsYet => 'No lorry owner requests yet.';
 
   @override
-  String get driverReassigned => 'Driver reassigned.';
+  String get driverReassigned => 'Lorry Owner reassigned.';
 
   @override
   String get tripMarkedCompleted => 'Trip marked as completed.';
@@ -1561,7 +1565,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incidentResolved => 'Incident resolved.';
 
   @override
-  String get driverLocation => 'Driver location';
+  String get driverLocation => 'Lorry Owner location';
 
   @override
   String get tripDestination => 'Trip destination';
@@ -1588,7 +1592,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInToLoadTripProgress => 'Sign in to load trip progress';
 
   @override
-  String get driverLocationOnly => 'Driver location only';
+  String get driverLocationOnly => 'Lorry Owner location only';
 
   @override
   String get liveDetailsUnavailable => 'Live details unavailable';
@@ -1607,7 +1611,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get declineTripDescription =>
-      'You will be freed from this trip and your broker can assign another driver. This cannot be undone.';
+      'You will be freed from this trip and your broker can assign another lorry owner. This cannot be undone.';
 
   @override
   String get keepTrip => 'Keep trip';
@@ -1769,7 +1773,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationOffersSubtitle =>
-      'Review driver requests and broker offers';
+      'Review lorry owner requests and broker offers';
 
   @override
   String get downloadInvoice => 'Download invoice';
@@ -1796,10 +1800,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageCouldNotBeSent => 'Message could not be sent.';
 
   @override
-  String get driverRequestAccepted => 'Driver request accepted.';
+  String get driverRequestAccepted => 'Lorry Owner request accepted.';
 
   @override
-  String get driverRequestDeclined => 'Driver request declined.';
+  String get driverRequestDeclined => 'Lorry Owner request declined.';
 
   @override
   String get offerAccepted => 'Offer accepted.';
@@ -1816,25 +1820,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String nearbyDriverOffers(Object count) {
-    return 'Nearby driver offers ($count)';
+    return 'Nearby lorry owner offers ($count)';
   }
 
   @override
-  String get driverConfirmedBooking => 'This driver confirmed your booking.';
+  String get driverConfirmedBooking =>
+      'This lorry owner confirmed your booking.';
 
   @override
   String get nearbyDriverOffersSubtitle =>
-      'Every nearby driver gets their own card - accept, change fare, or decline each one separately.';
+      'Every nearby lorry owner gets their own card - accept, change fare, or decline each one separately.';
 
   @override
-  String get noDriverOffersYet => 'No driver offers yet';
+  String get noDriverOffersYet => 'No lorry owner offers yet';
 
   @override
   String get driverOffersAppearHere =>
-      'Once a nearby driver responds, the offers will appear here.';
+      'Once a nearby lorry owner responds, the offers will appear here.';
 
   @override
-  String get driverOffer => 'Driver offer';
+  String get driverOffer => 'Lorry Owner offer';
 
   @override
   String get brokerOffers => 'Broker offers';
@@ -1874,25 +1879,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerReqDetailOfferSentToTheDriverWaitingFor =>
-      'Offer sent to the driver - waiting for response.';
+      'Offer sent to the lorry owner - waiting for response.';
 
   @override
-  String get brokerReqDetailAssignDriverTruck => 'Assign Driver & Truck';
+  String get brokerReqDetailAssignDriverTruck => 'Assign Lorry Owner & Truck';
 
   @override
   String brokerReqDetailBookingPickAnAvailableDriverAndTruck(Object id) {
-    return 'Booking #$id - pick an available driver and truck.';
+    return 'Booking #$id - pick an available lorry owner and truck.';
   }
 
   @override
-  String get brokerReqDetailDriver => 'Driver';
+  String get brokerReqDetailDriver => 'Lorry Owner';
 
   @override
   String get brokerReqDetailTruck => 'Truck';
 
   @override
   String get brokerReqDetailSelectOneIdleDriverAndOneIdle =>
-      'Select one idle driver and one idle truck to continue.';
+      'Select one idle lorry owner and one idle truck to continue.';
 
   @override
   String get brokerReqDetailCancel => 'Cancel';
@@ -1901,7 +1906,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerReqDetailConfirmAssignment => 'Confirm Assignment';
 
   @override
-  String get brokerReqDetailSelectDriver => 'Select driver';
+  String get brokerReqDetailSelectDriver => 'Select lorry owner';
 
   @override
   String get brokerReqDetailSelectTruck => 'Select truck';
@@ -1929,7 +1934,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerReqDetailBrokerAssigned => 'Broker-assigned';
 
   @override
-  String get brokerReqDetailAssignedDriverRequest => 'Assigned driver request';
+  String get brokerReqDetailAssignedDriverRequest =>
+      'Assigned lorry owner request';
 
   @override
   String get brokerReqDetailThisPriceWasAlreadyAgreedWithThe =>
@@ -1953,7 +1959,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerReqDetailNoExactMatchFoundAFallbackDriver =>
-      'No exact match found — a fallback driver or truck will be used when you accept.';
+      'No exact match found — a fallback lorry owner or truck will be used when you accept.';
 
   @override
   String get brokerReqDetailBookingDetails => 'Booking Details';
@@ -1998,7 +2004,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String brokerHomeDeclinedPickADifferentDriverForThis(Object name) {
-    return '$name declined. Pick a different driver for this request.';
+    return '$name declined. Pick a different lorry owner for this request.';
   }
 
   @override
@@ -2008,7 +2014,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerHomeOfferSentToTheDriverWaitingFor =>
-      'Offer sent to the driver - waiting for response.';
+      'Offer sent to the lorry owner - waiting for response.';
 
   @override
   String get brokerHomeChangeFare => 'Change fare';
@@ -2070,7 +2076,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerHomeClient => 'Client';
 
   @override
-  String get brokerHomeAssignDriverTruck => 'Assign Driver & Truck';
+  String get brokerHomeAssignDriverTruck => 'Assign Lorry Owner & Truck';
 
   @override
   String get brokerHomeConfirm => 'Confirm';
@@ -2086,18 +2092,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String brokerHomeChooseAnIdleDriverAndTruck(Object booking) {
-    return 'Choose an idle driver and truck for $booking.';
+    return 'Choose an idle lorry owner and truck for $booking.';
   }
 
   @override
-  String get brokerHomeDriver => 'Driver';
+  String get brokerHomeDriver => 'Lorry Owner';
 
   @override
   String get brokerHomeTruck => 'Truck';
 
   @override
   String get brokerHomeSelectOneIdleDriverAndOneIdle =>
-      'Select one idle driver and one idle truck to continue.';
+      'Select one idle lorry owner and one idle truck to continue.';
 
   @override
   String brokerHomeSelect(Object label) {
@@ -2275,7 +2281,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dispute raised - our team will review it shortly.';
 
   @override
-  String get brokerActiveJobsReassignDriver => 'Reassign Driver';
+  String get brokerActiveJobsReassignDriver => 'Reassign Lorry Owner';
 
   @override
   String get brokerActiveJobsCurrentlyAssigned => 'Currently Assigned';
@@ -2292,7 +2298,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Can\'t find the original job request for this booking.';
 
   @override
-  String get brokerActiveJobsDriverReassigned => 'Driver reassigned.';
+  String get brokerActiveJobsDriverReassigned => 'Lorry Owner reassigned.';
 
   @override
   String get brokerActiveJobsActiveJobs => 'Active Jobs';
@@ -2312,7 +2318,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerActiveJobsTruck => 'Truck';
 
   @override
-  String get brokerActiveJobsDriver => 'Driver';
+  String get brokerActiveJobsDriver => 'Lorry Owner';
 
   @override
   String get brokerActiveJobsTRIPPROGRESS => 'TRIP PROGRESS';
@@ -2325,15 +2331,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addDriverPleaseSignInAgainToCreateA =>
-      'Please sign in again to create a driver.';
+      'Please sign in again to create a lorry owner.';
 
   @override
   String get addDriverDriverProfileSavedSuccessfully =>
-      'Driver profile saved successfully.';
+      'Lorry Owner profile saved successfully.';
 
   @override
   String addDriverHasBeenRegisteredAndAddedToYour(Object name) {
-    return '$name has been registered and added to your drivers.';
+    return '$name has been registered and added to your lorry owners.';
   }
 
   @override
@@ -2347,7 +2353,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addDriverThisPasswordIsShownOnlyOnceThe =>
-      'This password is shown only once — the driver can change it from their profile after logging in.';
+      'This password is shown only once — the lorry owner can change it from their profile after logging in.';
 
   @override
   String get addDriverDone => 'Done';
@@ -2357,14 +2363,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String addDriverIsAlreadyTiedToADriverAccount(Object email) {
-    return '$email is already tied to a driver account.';
+    return '$email is already tied to a lorry owner account.';
   }
 
   @override
   String get addDriverKeepEditing => 'Keep editing';
 
   @override
-  String get addDriverViewDrivers => 'View drivers';
+  String get addDriverViewDrivers => 'View lorry owners';
 
   @override
   String get addDriverAccountDetails => 'Account Details';
@@ -2466,7 +2472,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerHistorySearchBookingsRoutesDrivers =>
-      'Search bookings, routes, drivers...';
+      'Search bookings, routes, lorry owners...';
 
   @override
   String get brokerHistoryTotalNetEarningsFiltered =>
@@ -2487,7 +2493,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerHistoryTruck => 'Truck';
 
   @override
-  String get brokerHistoryDriver => 'Driver';
+  String get brokerHistoryDriver => 'Lorry Owner';
 
   @override
   String get brokerHistoryViewDetails => 'View details';
@@ -2503,11 +2509,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get brokerDriverReqDriverRequests => 'Driver requests';
+  String get brokerDriverReqDriverRequests => 'Lorry Owner requests';
 
   @override
   String get brokerDriverReqCouldNotLoadDriverRequests =>
-      'Could not load driver requests';
+      'Could not load lorry owner requests';
 
   @override
   String get brokerDriverReqNegotiationCards => 'Negotiation cards';
@@ -2516,11 +2522,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerDriverReqReload => 'Reload';
 
   @override
-  String get brokerDriverReqNoDriverRequestsYet => 'No driver requests yet';
+  String get brokerDriverReqNoDriverRequestsYet =>
+      'No lorry owner requests yet';
 
   @override
   String get brokerDriverReqWhenADriverTimesOutTheRequest =>
-      'When a driver times out, the request will appear here for broker takeover.';
+      'When a lorry owner times out, the request will appear here for broker takeover.';
 
   @override
   String get brokerDriverReqBookingID => 'Booking ID';
@@ -2553,7 +2560,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerDriverReqDriverTimedOutBrokerTakeoverActive =>
-      'Driver timed out - broker takeover active.';
+      'Lorry Owner timed out - broker takeover active.';
 
   @override
   String get brokerDriverReqBrokerAssigned => 'Broker-assigned';
@@ -2576,7 +2583,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerVehiclesSearchVehiclesDriversOrLocation =>
-      'Search vehicles, drivers or location';
+      'Search vehicles, lorry owners or location';
 
   @override
   String get brokerVehiclesRemoveTruck => 'Remove Truck';
@@ -2628,7 +2635,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please sign in again to add a truck.';
 
   @override
-  String get addVehiclePleaseAssignADriver => 'Please assign a driver.';
+  String get addVehiclePleaseAssignADriver => 'Please assign a lorry owner.';
 
   @override
   String get addVehiclePleaseEnterAValidYear => 'Please enter a valid year.';
@@ -2640,7 +2647,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addVehicleCapacity => 'Capacity';
 
   @override
-  String get addVehicleAssignDriver => 'Assign driver';
+  String get addVehicleAssignDriver => 'Assign lorry owner';
 
   @override
   String get addVehicleMake => 'Make';
@@ -2792,7 +2799,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTruckCapacity => 'Capacity';
 
   @override
-  String get addTruckAssignDriverOptional => 'Assign driver (optional)';
+  String get addTruckAssignDriverOptional => 'Assign lorry owner (optional)';
 
   @override
   String get addTruckMakeOptional => 'Make (optional)';
@@ -2808,7 +2815,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerTrackLiveDriverPhoneNumberIsNotAvailable =>
-      'Driver phone number is not available.';
+      'Lorry Owner phone number is not available.';
 
   @override
   String get brokerTrackLiveCouldNotOpenThePhoneApp =>
@@ -2821,7 +2828,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerTrackLiveChat => 'Chat';
 
   @override
-  String get brokerTrackLiveCallDriver => 'Call driver';
+  String get brokerTrackLiveCallDriver => 'Call lorry owner';
 
   @override
   String get brokerTrackLiveLIVE => 'LIVE';
@@ -2914,27 +2921,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverDetailLiveTracking2 => 'Live Tracking';
 
   @override
-  String get driverDetailLiveDriverPosition => 'Live driver position';
+  String get driverDetailLiveDriverPosition => 'Live lorry owner position';
 
   @override
-  String get driverDetailChatWithDriver => 'Chat with driver';
+  String get driverDetailChatWithDriver => 'Chat with lorry owner';
 
   @override
   String get brokerTruckAssignDriverAssignedToTruck =>
-      'Driver assigned to truck.';
+      'Lorry Owner assigned to truck.';
 
   @override
-  String get brokerTruckAssignAssignDriver => 'Assign Driver';
+  String get brokerTruckAssignAssignDriver => 'Assign Lorry Owner';
 
   @override
   String get brokerTruckAssignTruck => 'Truck';
 
   @override
   String get brokerTruckAssignNoActiveDriversAvailableRightNow =>
-      'No active drivers available right now.';
+      'No active lorry owners available right now.';
 
   @override
-  String get brokerTruckAssignDriver => 'Driver';
+  String get brokerTruckAssignDriver => 'Lorry Owner';
 
   @override
   String get brokerTruckAssignCancel => 'Cancel';
@@ -2969,7 +2976,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerTrackingDriverHasNotBegunNegotiation =>
-      'Driver has not begun negotiation';
+      'Lorry Owner has not begun negotiation';
 
   @override
   String get brokerTrackingClickHereToNegotiateThisTimedOut =>
@@ -2982,18 +2989,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerTrackingNegotiationReady => 'Negotiation ready';
 
   @override
-  String get brokerTrackingDrivers => 'Drivers';
+  String get brokerTrackingDrivers => 'Lorry Owners';
 
   @override
   String get brokerTrackingMonitorYourDriversAndLiveTrips =>
-      'Monitor your drivers and live trips';
+      'Monitor your lorry owners and live trips';
 
   @override
   String get brokerTrackingSearchDriversPhoneOrVehicle =>
-      'Search drivers, phone or vehicle';
+      'Search lorry owners, phone or vehicle';
 
   @override
-  String get brokerTrackingYourDrivers => 'Your drivers';
+  String get brokerTrackingYourDrivers => 'Your lorry owners';
 
   @override
   String get brokerTrackingChangeFareRequest => 'Change fare request';
@@ -3318,7 +3325,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String truckSearchDriverOffers(Object count) {
-    return 'Driver offers ($count)';
+    return 'Lorry Owner offers ($count)';
   }
 
   @override
@@ -3429,7 +3436,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerActiveDescription =>
-      'A small delay here can cost you the booking. Assign a driver quickly.';
+      'A small delay here can cost you the booking. Assign a lorry owner quickly.';
 
   @override
   String get brokerActiveSubmit => 'Confirm assignment';
@@ -3441,7 +3448,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerHomeClientOffered => 'You offered';
 
   @override
-  String get brokerHomeDriverFallback => 'Driver';
+  String get brokerHomeDriverFallback => 'Lorry Owner';
 
   @override
   String get brokerHomeDropUnavailable => 'Drop location unavailable';
@@ -3536,10 +3543,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerReqAcceptedPickDriver =>
-      'Accepted. Pick a driver to continue.';
+      'Accepted. Pick a lorry owner to continue.';
 
   @override
-  String get brokerReqAssignmentTitle => 'Assign driver & truck';
+  String get brokerReqAssignmentTitle => 'Assign lorry owner & truck';
 
   @override
   String get brokerReqAutoSelectedDetails =>
@@ -3575,7 +3582,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerReqGeneralFallback => 'Booking';
 
   @override
-  String get brokerReqNoDriversFound => 'No drivers found';
+  String get brokerReqNoDriversFound => 'No lorry owners found';
 
   @override
   String get brokerReqNoTrucksFound => 'No trucks found';
@@ -3995,7 +4002,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientPublicAssignedDriver => 'To be assigned';
 
   @override
-  String get clientPublicDriverLabel => 'Driver';
+  String get clientPublicDriverLabel => 'Lorry Owner';
 
   @override
   String get clientPublicDropLabel => 'Drop';
@@ -4861,24 +4868,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get negotiationDecline => 'Decline';
 
   @override
-  String get negotiationDriverAcceptedTitle => 'Driver accepted';
+  String get negotiationDriverAcceptedTitle => 'Lorry Owner accepted';
 
   @override
   String get negotiationDriverConfirmBody =>
-      'Waiting for the driver to confirm the new fare.';
+      'Waiting for the lorry owner to confirm the new fare.';
 
   @override
-  String get negotiationDriverConfirmNowTitle => 'Confirm with driver';
+  String get negotiationDriverConfirmNowTitle => 'Confirm with lorry owner';
 
   @override
-  String get negotiationDriverFallback => 'Driver';
+  String get negotiationDriverFallback => 'Lorry Owner';
 
   @override
   String get negotiationDriverResponseBody =>
-      'The driver has responded to your fare change.';
+      'The lorry owner has responded to your fare change.';
 
   @override
-  String get negotiationDriverResponseTitle => 'Driver responded';
+  String get negotiationDriverResponseTitle => 'Lorry Owner responded';
 
   @override
   String get negotiationFareChangeBody =>
@@ -4922,10 +4929,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverBody =>
-      'We have sent the new fare to the driver.';
+      'We have sent the new fare to the lorry owner.';
 
   @override
-  String get negotiationWaitingDriverTitle => 'Waiting for driver';
+  String get negotiationWaitingDriverTitle => 'Waiting for lorry owner';
 
   @override
   String get onboardingFastSubtitle =>
@@ -4942,7 +4949,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSafeSubtitle =>
-      'Book verified trucks and drivers with confidence.';
+      'Book verified trucks and lorry owners with confidence.';
 
   @override
   String get onboardingSafeTitle => 'Safe bookings';
@@ -5143,7 +5150,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get truckSearchAllDeclinedHint =>
-      'Nearby drivers declined. Try widening your search radius.';
+      'Nearby lorry owners declined. Try widening your search radius.';
 
   @override
   String get truckSearchBack => 'Back';
@@ -5161,13 +5168,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get truckSearchConfirmed => 'Confirmed';
 
   @override
-  String get truckSearchDriverFallback => 'Driver';
+  String get truckSearchDriverFallback => 'Lorry Owner';
 
   @override
-  String get truckSearchFindingDrivers => 'Finding drivers';
+  String get truckSearchFindingDrivers => 'Finding lorry owners';
 
   @override
-  String get truckSearchFindingNearby => 'Looking for drivers near your pickup';
+  String get truckSearchFindingNearby =>
+      'Looking for lorry owners near your pickup';
 
   @override
   String get truckSearchGoBack => 'Go back';
@@ -5179,13 +5187,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get truckSearchNewFare => 'New fare received';
 
   @override
-  String get truckSearchNoDriverAccepted => 'No driver accepted yet';
+  String get truckSearchNoDriverAccepted => 'No lorry owner accepted yet';
 
   @override
   String get truckSearchNoResponse => 'No response';
 
   @override
-  String get truckSearchNotifyingDrivers => 'Notifying drivers nearby';
+  String get truckSearchNotifyingDrivers => 'Notifying lorry owners nearby';
 
   @override
   String get truckSearchRetry => 'Try again';
@@ -5230,7 +5238,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please verify everything before submitting.';
 
   @override
-  String get driverKycDriverInformation => 'Driver Information';
+  String get driverKycDriverInformation => 'Lorry Owner Information';
 
   @override
   String get driverKycPANNumber => 'PAN Number';
@@ -5326,7 +5334,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverKycVerifiedSubtitle =>
-      'Your driver account is verified and active.';
+      'Your lorry owner account is verified and active.';
 
   @override
   String get driverKycVerifiedBadge => 'VERIFIED';
@@ -5352,7 +5360,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverKycSubmittedBadge => 'SUBMITTED';
 
   @override
-  String get driverKycCompleteTitle => 'Complete Driver KYC';
+  String get driverKycCompleteTitle => 'Complete Lorry Owner KYC';
 
   @override
   String get driverKycCompleteSubtitle =>
@@ -5506,7 +5514,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationAcceptedWaitingDriverConfirm =>
-      'Accepted - waiting for the driver to confirm.';
+      'Accepted - waiting for the lorry owner to confirm.';
 
   @override
   String get loadingPoint => 'Loading point';
@@ -5568,7 +5576,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerReqAcceptedAssignDriverTruck =>
-      'This request has been accepted. Assign a driver and truck.';
+      'This request has been accepted. Assign a lorry owner and truck.';
 
   @override
   String get brokerReqFareChangeWaitingClient =>
@@ -5643,14 +5651,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get historyDetailsPreviousDriver => 'Previous driver';
+  String get historyDetailsPreviousDriver => 'Previous lorry owner';
 
   @override
-  String get historyDetailsNewDriver => 'New driver';
+  String get historyDetailsNewDriver => 'New lorry owner';
 
   @override
   String historyDetailsDriverChanged(Object count) {
-    return 'Driver changed ($count)';
+    return 'Lorry Owner changed ($count)';
   }
 
   @override
@@ -5744,7 +5752,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addVehicleErrCapacity => 'Enter capacity';
 
   @override
-  String get addVehicleErrSelectDriver => 'Select a driver';
+  String get addVehicleErrSelectDriver => 'Select a lorry owner';
 
   @override
   String get addVehicleErrMake => 'Enter truck make';
@@ -5759,22 +5767,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addVehicleUpdateTruck => 'Update truck';
 
   @override
-  String get addDriverEditTitle => 'Edit driver';
+  String get addDriverEditTitle => 'Edit lorry owner';
 
   @override
-  String get addDriverAddTitle => 'Add driver';
+  String get addDriverAddTitle => 'Add lorry owner';
 
   @override
-  String get addDriverEditSubtitle => 'Update the driver account';
+  String get addDriverEditSubtitle => 'Update the lorry owner account';
 
   @override
-  String get addDriverAddSubtitle => 'Add a new driver to your fleet';
+  String get addDriverAddSubtitle => 'Add a new lorry owner to your fleet';
 
   @override
-  String get addDriverUpdateAction => 'Update driver';
+  String get addDriverUpdateAction => 'Update lorry owner';
 
   @override
-  String get addDriverAddPhotoTitle => 'Add driver photo';
+  String get addDriverAddPhotoTitle => 'Add lorry owner photo';
 
   @override
   String get addDriverErrName => 'Enter full name';
@@ -5784,7 +5792,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addDriverEmailHelper =>
-      'Enter a valid email address — the driver logs in with email + password.';
+      'Enter a valid email address — the lorry owner logs in with email + password.';
 
   @override
   String get addDriverErrMobile => 'Enter mobile number';
@@ -5918,7 +5926,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clientBookingNoDriverInWindow =>
-      'No driver found within the search window';
+      'No lorry owner found within the search window';
 
   @override
   String get clientBookingBookNowTooltip => 'Book now';
@@ -5940,7 +5948,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clientNegotiationRefreshDriverOfferFailed =>
-      'Could not refresh the live driver offer.';
+      'Could not refresh the live lorry owner offer.';
 
   @override
   String get clientTrackingProofLoadFailed => 'Could not load delivery proof.';
@@ -5962,7 +5970,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not load negotiation data.';
 
   @override
-  String get clientTrackingConfirmedDriver => 'Confirmed driver';
+  String get clientTrackingConfirmedDriver => 'Confirmed lorry owner';
 
   @override
   String get clientTrackingConfirmed => 'Confirmed';
@@ -6063,7 +6071,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timePeriodPm => 'PM';
 
   @override
-  String get addDriverCreateAccountSubtitle => 'Create a driver account';
+  String get addDriverCreateAccountSubtitle => 'Create a lorry owner account';
 
   @override
   String brokerNotificationsMinsAgo(Object minutes) {
@@ -6116,7 +6124,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedAddressPickupLabel => 'Pickup';
 
   @override
-  String get trackingAssignedDriver => 'Assigned driver';
+  String get trackingAssignedDriver => 'Assigned lorry owner';
 
   @override
   String get trackingPackageInformation => 'Package information';
@@ -6134,7 +6142,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackingPackageWeightLabel => 'Package weight:';
 
   @override
-  String get trackingDriverNotAssigned => 'Driver not assigned';
+  String get trackingDriverNotAssigned => 'Lorry Owner not assigned';
 
   @override
   String get trackingPickupCodeTitle => 'Pickup Code';
@@ -6147,7 +6155,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingPickupCodeShareHint =>
-      'Share this with your driver when they arrive to confirm pickup.';
+      'Share this with your lorry owner when they arrive to confirm pickup.';
 
   @override
   String get trackingLiveBadge => 'Live';
@@ -6160,7 +6168,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingPodApprovalPrompt =>
-      'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.';
+      'Does this look right? Approve to let the lorry owner close out the trip, or reject to ask for new photos.';
 
   @override
   String get trackingPodApproving => 'Approving...';
@@ -6173,12 +6181,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String trackingPodRejectionWithReason(Object reason) {
-    return 'You asked the driver to re-upload: \"$reason.\" Waiting for new photos.';
+    return 'You asked the lorry owner to re-upload: \"$reason.\" Waiting for new photos.';
   }
 
   @override
   String get trackingPodRejection =>
-      'You asked the driver to re-upload. Waiting for new photos.';
+      'You asked the lorry owner to re-upload. Waiting for new photos.';
 
   @override
   String get trackingPodLoadFailed => 'Could not load delivery proof.';
@@ -6191,7 +6199,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookingScheduledNotifyMessage =>
-      'We will notify drivers or brokers closer to your pickup time.';
+      'We will notify lorry owners or brokers closer to your pickup time.';
 
   @override
   String get checkoutOpeningActivity => 'Opening activity';
@@ -6240,7 +6248,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverKycVerifiedDescription =>
-      'Your KYC has been verified. Your driver account is now active.';
+      'Your KYC has been verified. Your lorry owner account is now active.';
 
   @override
   String get driverKycSubmittedDescription =>
@@ -6292,7 +6300,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pickupOtpShareMessage =>
-      'Share this code with your driver when they arrive to confirm pickup';
+      'Share this code with your lorry owner when they arrive to confirm pickup';
 
   @override
   String get trackingTimelineBookingCreated => 'Booking created';
@@ -6301,7 +6309,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackingTimelineVehicleAssigned => 'Vehicle assigned';
 
   @override
-  String get trackingTimelineDriverAssigned => 'Driver assigned';
+  String get trackingTimelineDriverAssigned => 'Lorry Owner assigned';
 
   @override
   String get trackingTimelineCompletedSuccessfully => 'Completed successfully';
@@ -6490,11 +6498,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String trackingPodFilesPosted(Object count) {
-    return '$count file(s) posted by driver';
+    return '$count file(s) posted by lorry owner';
   }
 
   @override
-  String get trackingDriverPending => 'Driver pending';
+  String get trackingDriverPending => 'Lorry Owner pending';
 
   @override
   String get trackingTruckNotAssigned => 'Truck not assigned';
@@ -6506,7 +6514,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String trackingDriverChangedCount(Object count) {
-    return 'Driver changed ($count)';
+    return 'Lorry Owner changed ($count)';
   }
 
   @override
@@ -6537,7 +6545,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackingChatTyping => 'Typing...';
 
   @override
-  String get trackingChangeDriverFare => 'Change driver fare';
+  String get trackingChangeDriverFare => 'Change lorry owner fare';
 
   @override
   String trackingCurrentOffer(Object amount) {
@@ -6554,7 +6562,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingNegotiationOffersSubtitle =>
-      'Driver requests and broker offers from the client flow.';
+      'Lorry Owner requests and broker offers from the client flow.';
 
   @override
   String get trackingNegotiationLoadFailed =>
@@ -6578,10 +6586,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingWaitingDriverConfirmation =>
-      'Waiting for driver confirmation';
+      'Waiting for lorry owner confirmation';
 
   @override
-  String get trackingWaitingDriverResponse => 'Waiting for driver response';
+  String get trackingWaitingDriverResponse =>
+      'Waiting for lorry owner response';
 
   @override
   String get trackingConfirmed => 'Confirmed';
@@ -6695,7 +6704,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'No trips match your search';
 
   @override
-  String get brokerTruckHistoryDriverPending => 'Driver pending';
+  String get brokerTruckHistoryDriverPending => 'Lorry Owner pending';
 
   @override
   String get brokerTruckHistoryDistancePending => 'Distance pending';
@@ -6716,16 +6725,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Open to continue negotiation.';
 
   @override
-  String get brokerTrackingNoDriversYet => 'No drivers yet';
+  String get brokerTrackingNoDriversYet => 'No lorry owners yet';
 
   @override
   String brokerTrackingNoDriversMatch(Object query) {
-    return 'No drivers match \"$query\"';
+    return 'No lorry owners match \"$query\"';
   }
 
   @override
   String get brokerTrackingCreateDriverFromPlus =>
-      'Create a driver from the + button to start tracking.';
+      'Create a lorry owner from the + button to start tracking.';
 
   @override
   String get brokerTrackingTryDifferentQuery =>
@@ -6733,7 +6742,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brokerTrackingNoActiveTripIncidentData =>
-      'No active trip incident data for this driver.';
+      'No active trip incident data for this lorry owner.';
 
   @override
   String get brokerTrackingNoIncidentsYet => 'No incidents reported yet.';
@@ -6762,7 +6771,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Registration looks invalid, e.g. MH-12-AB-1234.';
 
   @override
-  String get brokerHomeTheDriver => 'The driver';
+  String get brokerHomeTheDriver => 'The lorry owner';
 
   @override
   String get brokerNotificationsMarkAllRead => 'Mark all read';
@@ -6807,14 +6816,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerEarningsSettlementPending => 'Settlement pending';
 
   @override
-  String get brokerReqDetailAutoSelectedDriver => 'Auto-selected driver';
+  String get brokerReqDetailAutoSelectedDriver => 'Auto-selected lorry owner';
 
   @override
   String get brokerReqDetailAutoSelectedTruck => 'Auto-selected truck';
 
   @override
   String brokerTruckLocationDriverLabel(Object name) {
-    return 'Driver: $name';
+    return 'Lorry Owner: $name';
   }
 
   @override
@@ -7232,7 +7241,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverKycResubmitForReview => 'Resubmit for Review';
 
   @override
-  String get driverKycDriverKycTitle => 'Driver KYC';
+  String get driverKycDriverKycTitle => 'Lorry Owner KYC';
 
   @override
   String get chatCurrentUserSenderName => 'You';
@@ -7261,15 +7270,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverAcceptedTitle =>
-      'Driver accepted the request';
+      'Lorry Owner accepted the request';
 
   @override
   String get negotiationWaitingDriverTurnToConfirmTitle =>
-      'Driver accepted - your turn to confirm';
+      'Lorry Owner accepted - your turn to confirm';
 
   @override
   String get negotiationWaitingDriverConfirmationTitle =>
-      'Waiting for driver confirmation';
+      'Waiting for lorry owner confirmation';
 
   @override
   String get negotiationWaitingFareChangeReceivedTitle =>
@@ -7277,27 +7286,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverResponseTypeTitle =>
-      'Waiting for driver response';
+      'Waiting for lorry owner response';
 
   @override
   String get negotiationWaitingDriverAcceptedBody =>
-      'The driver accepted your request. You can confirm the booking and continue to payment.';
+      'The lorry owner accepted your request. You can confirm the booking and continue to payment.';
 
   @override
   String get negotiationWaitingDriverCommittedBody =>
-      'The driver already committed. Confirm or decline to finish the handshake.';
+      'The lorry owner already committed. Confirm or decline to finish the handshake.';
 
   @override
   String get negotiationWaitingDriverYourConfirmBody =>
-      'You already confirmed this offer. We are waiting for the driver to confirm now.';
+      'You already confirmed this offer. We are waiting for the lorry owner to confirm now.';
 
   @override
   String get negotiationWaitingDriverChangedFareBody =>
-      'The driver changed the fare. Review it here and respond instantly.';
+      'The lorry owner changed the fare. Review it here and respond instantly.';
 
   @override
   String get negotiationWaitingDriverTimedOutBody =>
-      'The driver did not respond in time. The broker can step in now.';
+      'The lorry owner did not respond in time. The broker can step in now.';
 
   @override
   String get negotiationWaitingDriverLiveBody =>
@@ -7348,7 +7357,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get negotiationWaitingNextDriverUpdate =>
-      'Waiting for the next driver update...';
+      'Waiting for the next lorry owner update...';
 
   @override
   String get negotiationUseSliderHint =>
@@ -7390,11 +7399,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addDriverTapToUpdateTheDriverPhoto =>
-      'Tap to update the driver photo';
+      'Tap to update the lorry owner photo';
 
   @override
   String get addDriverTapTheCameraToAddADriverPhoto =>
-      'Tap the camera to add a driver photo';
+      'Tap the camera to add a lorry owner photo';
 
   @override
   String get addVehicleTruckAddedSuccessfully => 'Truck added successfully.';
@@ -7439,7 +7448,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get driverTrackingLocationPermissionRequired =>
-      'Location permission is required for live driver tracking.';
+      'Location permission is required for live lorry owner tracking.';
 
   @override
   String get driverTrackingLocationPermissionDeniedForever =>
@@ -7466,7 +7475,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerActiveJobActiveJob => 'Active job';
 
   @override
-  String get brokerActiveJobDriverPending => 'Driver pending';
+  String get brokerActiveJobDriverPending => 'Lorry Owner pending';
 
   @override
   String get brokerActiveJobLoadPending => 'Load details pending';
@@ -7475,13 +7484,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerActiveJobAssigned => 'Assigned';
 
   @override
-  String get brokerActiveJobDriverAssigned => 'Driver assigned';
+  String get brokerActiveJobDriverAssigned => 'Lorry Owner assigned';
 
   @override
   String get brokerActiveJobEnRoutePickup => 'En Route Pickup';
 
   @override
-  String get brokerActiveJobDriverHeadingToPickup => 'Driver heading to pickup';
+  String get brokerActiveJobDriverHeadingToPickup =>
+      'Lorry Owner heading to pickup';
 
   @override
   String get brokerActiveJobPickedUp => 'Picked Up';
@@ -7517,7 +7527,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerFlowAwaitingPickup => 'Awaiting pickup';
 
   @override
-  String get brokerFlowDriverRequestSent => 'Driver request sent';
+  String get brokerFlowDriverRequestSent => 'Lorry Owner request sent';
 
   @override
   String get brokerFlowBrokerNegotiation => 'Broker negotiation';
@@ -7562,7 +7572,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientOfferByBroker => 'Broker';
 
   @override
-  String get clientOfferByDriver => 'Driver';
+  String get clientOfferByDriver => 'Lorry Owner';
 
   @override
   String nearbyTruckRef(Object ref) {
@@ -7576,10 +7586,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverTimelinePickedUp => 'Picked up';
 
   @override
-  String get brokerFlowDriverResponse => 'Driver response';
+  String get brokerFlowDriverResponse => 'Lorry Owner response';
 
   @override
-  String get brokerFlowDriverTimedOut => 'Driver timed out';
+  String get brokerFlowDriverTimedOut => 'Lorry Owner timed out';
 
   @override
   String get brokerFlowHandoffActive => 'Broker handoff is active';
@@ -7631,11 +7641,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripSummaryOngoing => 'Ongoing';
 
   @override
-  String get driverTrackingDisclosureTitle => 'Share driver location';
+  String get driverTrackingDisclosureTitle => 'Share lorry owner location';
 
   @override
   String get driverTrackingDisclosureBody =>
-      'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.';
+      'SSK collects your location to share live lorry owner availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.';
 
   @override
   String get coreDigilockerGstLabel => 'GST';

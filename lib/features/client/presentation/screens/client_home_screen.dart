@@ -985,7 +985,7 @@ class _LaterHeroCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          "We'll notify nearby drivers about 2 hours before this time.",
+          "We'll notify nearby lorry owners about 2 hours before this time.",
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: context.colors.textTertiary,
             fontWeight: FontWeight.w600,

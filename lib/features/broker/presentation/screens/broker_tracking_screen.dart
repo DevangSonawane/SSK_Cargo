@@ -2694,7 +2694,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
                 DropdownMenuItem(
                   value: driver.id,
                   child: Text(
-                    driver.name.isEmpty ? 'Driver' : driver.name,
+                    driver.name.isEmpty ? 'Lorry Owner' : driver.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

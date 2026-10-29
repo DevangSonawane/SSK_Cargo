@@ -128,7 +128,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get verified => 'वेरिफाइड';
 
   @override
-  String get completeDriverVerification => 'अपना ड्राइवर वेरिफिकेशन पूरा करें';
+  String get completeDriverVerification =>
+      'अपना लॉरी मालिक वेरिफिकेशन पूरा करें';
 
   @override
   String get earnings => 'कमाई';
@@ -153,7 +154,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get allChats => 'सभी चैट्स';
 
   @override
-  String get allChatsSubtitle => 'हर ड्राइवर बातचीत देखें';
+  String get allChatsSubtitle => 'हर लॉरी मालिक बातचीत देखें';
 
   @override
   String get security => 'सुरक्षा';
@@ -171,7 +172,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get logoutSubtitle => 'इस डिवाइस से साइन आउट करें';
 
   @override
-  String get driverAccount => 'ड्राइवर अकाउंट';
+  String get driverAccount => 'लॉरी मालिक अकाउंट';
 
   @override
   String get noAccountConnected => 'कोई अकाउंट कनेक्ट नहीं है';
@@ -180,7 +181,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get kycPending => 'KYC पेंडिंग';
 
   @override
-  String get driver => 'ड्राइवर';
+  String get driver => 'लॉरी मालिक';
 
   @override
   String get enterEmailAndPassword => 'ईमेल और पासवर्ड दोनों दर्ज करें।';
@@ -222,7 +223,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get createAccount => 'अकाउंट बनाएं';
 
   @override
-  String get registerAsBrokerDriver => 'ब्रोकर/ड्राइवर के रूप में रजिस्टर करें';
+  String get registerAsBrokerDriver =>
+      'ब्रोकर/लॉरी मालिक के रूप में रजिस्टर करें';
 
   @override
   String get newEnquiry => 'नई पूछताछ';
@@ -410,7 +412,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'पूछताछ सबमिट हो गई — हमारी टीम जल्द संपर्क करेगी';
 
   @override
-  String get driverPhoneUnavailable => 'ड्राइवर का फोन नंबर उपलब्ध नहीं है।';
+  String get driverPhoneUnavailable => 'लॉरी मालिक का फोन नंबर उपलब्ध नहीं है।';
 
   @override
   String get couldNotOpenPhoneApp => 'फोन ऐप नहीं खुल सका।';
@@ -635,7 +637,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String forceTripStatusDescription(Object status) {
-    return 'यह ड्राइवर की ओर से ट्रिप को \"$status\" पर ले जाएगा। केवल तब उपयोग करें जब ड्राइवर उपलब्ध न हो।';
+    return 'यह लॉरी मालिक की ओर से ट्रिप को \"$status\" पर ले जाएगा। केवल तब उपयोग करें जब लॉरी मालिक उपलब्ध न हो।';
   }
 
   @override
@@ -725,7 +727,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get driverTakeoverTitle => 'ड्राइवर उपलब्ध नहीं? इस ट्रिप को संभालें';
+  String get driverTakeoverTitle =>
+      'लॉरी मालिक उपलब्ध नहीं? इस ट्रिप को संभालें';
 
   @override
   String get hide => 'छिपाएं';
@@ -735,7 +738,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverTakeoverDescription =>
-      'इसे केवल तब उपयोग करें जब ड्राइवर का फोन बंद हो, ऐप क्रैश हो गया हो, या सिग्नल न हो। एक्शन सीधे ड्राइवर की ओर से होंगे।';
+      'इसे केवल तब उपयोग करें जब लॉरी मालिक का फोन बंद हो, ऐप क्रैश हो गया हो, या सिग्नल न हो। एक्शन सीधे लॉरी मालिक की ओर से होंगे।';
 
   @override
   String get retryLoadingTrip => 'ट्रिप फिर लोड करें';
@@ -775,7 +778,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clientRejectedReuploading =>
-      'क्लाइंट ने रिजेक्ट किया — ड्राइवर फिर अपलोड कर रहा है';
+      'क्लाइंट ने रिजेक्ट किया — लॉरी मालिक फिर अपलोड कर रहा है';
 
   @override
   String get sendInvoiceByEmail => 'ईमेल से इनवॉइस भेजें';
@@ -883,7 +886,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get manageFleetAtGlance => 'अपनी फ्लीट को एक नजर में मैनेज करें';
 
   @override
-  String get monitorDriverMovement => 'ड्राइवर की मूवमेंट मॉनिटर करें';
+  String get monitorDriverMovement => 'लॉरी मालिक की मूवमेंट मॉनिटर करें';
 
   @override
   String get reviewRecentBookings => 'हाल की बुकिंग देखें';
@@ -1027,7 +1030,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get rejectProofOfDeliveryDescription =>
-      'ट्रिप पूरी होने से पहले ड्राइवर से नई फोटो अपलोड करने को कहा जाएगा।';
+      'ट्रिप पूरी होने से पहले लॉरी मालिक से नई फोटो अपलोड करने को कहा जाएगा।';
 
   @override
   String get rejectPodReasonHint =>
@@ -1041,7 +1044,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverAskedToReuploadPod =>
-      'ड्राइवर से डिलीवरी प्रूफ फिर अपलोड करने को कहा गया।';
+      'लॉरी मालिक से डिलीवरी प्रूफ फिर अपलोड करने को कहा गया।';
 
   @override
   String get fetchingAdvanceAmount => 'कॉन्फिगर की गई एडवांस राशि ला रहे हैं';
@@ -1064,7 +1067,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get toPay => 'टू पे';
 
   @override
-  String get toPaySubtitle => 'पूरी राशि डिलीवरी पर ड्राइवर द्वारा ली जाएगी';
+  String get toPaySubtitle => 'पूरी राशि डिलीवरी पर लॉरी मालिक द्वारा ली जाएगी';
 
   @override
   String get toBeBilled => 'बाद में बिल होगा';
@@ -1074,7 +1077,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get toBeBilledUnavailableSubtitle =>
-      'ड्राइवर कन्फर्म होने के बाद उपलब्ध';
+      'लॉरी मालिक कन्फर्म होने के बाद उपलब्ध';
 
   @override
   String get chooseFuturePickupTime => 'भविष्य का पिकअप समय चुनें।';
@@ -1097,10 +1100,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get goToHome => 'होम पर जाएं';
 
   @override
-  String get driverOfferReceived => 'ड्राइवर ऑफर मिला';
+  String get driverOfferReceived => 'लॉरी मालिक ऑफर मिला';
 
   @override
-  String get confirmingWithDriver => 'ड्राइवर से कन्फर्म हो रहा है';
+  String get confirmingWithDriver => 'लॉरी मालिक से कन्फर्म हो रहा है';
 
   @override
   String get findingNearbyTrucks => 'नजदीकी ट्रक खोज रहे हैं';
@@ -1111,24 +1114,24 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get confirmingWithDriverSubtitle =>
-      'आपने ऑफर स्वीकार किया है। हम ड्राइवर द्वारा हैंडशेक पूरा करने का इंतजार कर रहे हैं।';
+      'आपने ऑफर स्वीकार किया है। हम लॉरी मालिक द्वारा हैंडशेक पूरा करने का इंतजार कर रहे हैं।';
 
   @override
   String driversNotifiedRadius(Object radius) {
-    return '$radius km के अंदर ड्राइवरों को सूचित किया गया है। कोई जवाब देगा तो ऑफर पॉपअप दिखेगा।';
+    return '$radius km के अंदर लॉरी मालिकों को सूचित किया गया है। कोई जवाब देगा तो ऑफर पॉपअप दिखेगा।';
   }
 
   @override
   String bookingLiveNotifyingDrivers(Object radius) {
-    return 'आपकी बुकिंग लाइव है। हम $radius km के अंदर ड्राइवरों को सूचित कर रहे हैं।';
+    return 'आपकी बुकिंग लाइव है। हम $radius km के अंदर लॉरी मालिकों को सूचित कर रहे हैं।';
   }
 
   @override
-  String get driverResponse => 'ड्राइवर जवाब';
+  String get driverResponse => 'लॉरी मालिक जवाब';
 
   @override
   String get waitingForDriverAcceptance =>
-      'ड्राइवर द्वारा आपकी स्वीकृति कन्फर्म करने का इंतजार है।';
+      'लॉरी मालिक द्वारा आपकी स्वीकृति कन्फर्म करने का इंतजार है।';
 
   @override
   String fareChangeAmount(Object amount) {
@@ -1136,7 +1139,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get driverResponseTimedOut => 'ड्राइवर जवाब का समय समाप्त हो गया।';
+  String get driverResponseTimedOut => 'लॉरी मालिक जवाब का समय समाप्त हो गया।';
 
   @override
   String latestAmount(Object amount) {
@@ -1210,7 +1213,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get acceptedWaitingForDriverConfirm =>
-      'स्वीकार किया - ड्राइवर के कन्फर्म करने का इंतजार है।';
+      'स्वीकार किया - लॉरी मालिक के कन्फर्म करने का इंतजार है।';
 
   @override
   String declinedDriverStillWaiting(Object name) {
@@ -1284,7 +1287,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noCollectionNow => 'अभी कोई कलेक्शन नहीं';
 
   @override
-  String get afterDriverConfirm => 'ड्राइवर कन्फर्म के बाद';
+  String get afterDriverConfirm => 'लॉरी मालिक कन्फर्म के बाद';
 
   @override
   String get skip => 'स्किप';
@@ -1313,7 +1316,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get loadingRequests => 'रिक्वेस्ट लोड हो रही हैं';
 
   @override
-  String get fetchingDriverRequests => 'सर्वर से ड्राइवर रिक्वेस्ट ला रहे हैं।';
+  String get fetchingDriverRequests =>
+      'सर्वर से लॉरी मालिक रिक्वेस्ट ला रहे हैं।';
 
   @override
   String get couldNotLoadRequests => 'रिक्वेस्ट लोड नहीं हो सकीं';
@@ -1327,7 +1331,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get requestTimedOutBrokerHandoff =>
-      'यह रिक्वेस्ट ड्राइवर के लिए टाइम आउट हो गई। ब्रोकर हैंडऑफ सक्रिय है।';
+      'यह रिक्वेस्ट लॉरी मालिक के लिए टाइम आउट हो गई। ब्रोकर हैंडऑफ सक्रिय है।';
 
   @override
   String get swipeToAccept => 'स्वीकार करने के लिए स्वाइप करें';
@@ -1375,10 +1379,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get completed => 'पूरी हुई';
 
   @override
-  String get addDriver => 'ड्राइवर जोड़ें';
+  String get addDriver => 'लॉरी मालिक जोड़ें';
 
   @override
-  String get removeDriverQuestion => 'ड्राइवर हटाएं?';
+  String get removeDriverQuestion => 'लॉरी मालिक हटाएं?';
 
   @override
   String deleteDriverFromFleet(Object name) {
@@ -1430,10 +1434,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get signInAgainToDeleteDriver =>
-      'ड्राइवर हटाने के लिए फिर साइन इन करें।';
+      'लॉरी मालिक हटाने के लिए फिर साइन इन करें।';
 
   @override
-  String get driverRemoved => 'ड्राइवर फ्लीट से हटा दिया गया।';
+  String get driverRemoved => 'लॉरी मालिक फ्लीट से हटा दिया गया।';
 
   @override
   String get reportIncident => 'इंसिडेंट रिपोर्ट करें';
@@ -1473,7 +1477,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverLocationActivityOverview =>
-      'ड्राइवर लोकेशन और एक्टिविटी ओवरव्यू';
+      'लॉरी मालिक लोकेशन और एक्टिविटी ओवरव्यू';
 
   @override
   String tripId(Object id) {
@@ -1510,7 +1514,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get markComplete => 'पूरा मार्क करें';
 
   @override
-  String get reassignDriver => 'ड्राइवर रीअसाइन करें';
+  String get reassignDriver => 'लॉरी मालिक रीअसाइन करें';
 
   @override
   String currentlyAssigned(Object name) {
@@ -1525,7 +1529,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get reassignReasonHint =>
-      'ड्राइवर उपलब्ध नहीं, ब्रेकडाउन, बेहतर रूट फिट...';
+      'लॉरी मालिक उपलब्ध नहीं, ब्रेकडाउन, बेहतर रूट फिट...';
 
   @override
   String get reassign => 'रीअसाइन';
@@ -1540,13 +1544,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get requestUpdated => 'रिक्वेस्ट अपडेट हो गई।';
 
   @override
-  String get driverRequests => 'ड्राइवर रिक्वेस्ट';
+  String get driverRequests => 'लॉरी मालिक रिक्वेस्ट';
 
   @override
-  String get noDriverRequestsYet => 'अभी कोई ड्राइवर रिक्वेस्ट नहीं।';
+  String get noDriverRequestsYet => 'अभी कोई लॉरी मालिक रिक्वेस्ट नहीं।';
 
   @override
-  String get driverReassigned => 'ड्राइवर रीअसाइन हो गया।';
+  String get driverReassigned => 'लॉरी मालिक रीअसाइन हो गया।';
 
   @override
   String get tripMarkedCompleted => 'ट्रिप पूरी मार्क हो गई।';
@@ -1560,7 +1564,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get incidentResolved => 'इंसिडेंट रिजॉल्व हो गया।';
 
   @override
-  String get driverLocation => 'ड्राइवर लोकेशन';
+  String get driverLocation => 'लॉरी मालिक लोकेशन';
 
   @override
   String get tripDestination => 'ट्रिप डेस्टिनेशन';
@@ -1588,7 +1592,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'ट्रिप प्रोग्रेस लोड करने के लिए साइन इन करें';
 
   @override
-  String get driverLocationOnly => 'केवल ड्राइवर लोकेशन';
+  String get driverLocationOnly => 'केवल लॉरी मालिक लोकेशन';
 
   @override
   String get liveDetailsUnavailable => 'लाइव डिटेल्स उपलब्ध नहीं';
@@ -1608,7 +1612,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get declineTripDescription =>
-      'आप इस ट्रिप से मुक्त हो जाएंगे और आपका ब्रोकर दूसरा ड्राइवर असाइन कर सकेगा। इसे वापस नहीं किया जा सकता।';
+      'आप इस ट्रिप से मुक्त हो जाएंगे और आपका ब्रोकर दूसरा लॉरी मालिक असाइन कर सकेगा। इसे वापस नहीं किया जा सकता।';
 
   @override
   String get keepTrip => 'ट्रिप रखें';
@@ -1771,7 +1775,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationOffersSubtitle =>
-      'ड्राइवर रिक्वेस्ट और ब्रोकर ऑफर देखें';
+      'लॉरी मालिक रिक्वेस्ट और ब्रोकर ऑफर देखें';
 
   @override
   String get downloadInvoice => 'इनवॉइस डाउनलोड करें';
@@ -1798,10 +1802,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get messageCouldNotBeSent => 'मैसेज भेजा नहीं जा सका।';
 
   @override
-  String get driverRequestAccepted => 'ड्राइवर रिक्वेस्ट स्वीकार हुई।';
+  String get driverRequestAccepted => 'लॉरी मालिक रिक्वेस्ट स्वीकार हुई।';
 
   @override
-  String get driverRequestDeclined => 'ड्राइवर रिक्वेस्ट अस्वीकार हुई।';
+  String get driverRequestDeclined => 'लॉरी मालिक रिक्वेस्ट अस्वीकार हुई।';
 
   @override
   String get offerAccepted => 'ऑफर स्वीकार हुआ।';
@@ -1818,25 +1822,26 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String nearbyDriverOffers(Object count) {
-    return 'नजदीकी ड्राइवर ऑफर ($count)';
+    return 'नजदीकी लॉरी मालिक ऑफर ($count)';
   }
 
   @override
-  String get driverConfirmedBooking => 'इस ड्राइवर ने आपकी बुकिंग कन्फर्म की।';
+  String get driverConfirmedBooking =>
+      'इस लॉरी मालिक ने आपकी बुकिंग कन्फर्म की।';
 
   @override
   String get nearbyDriverOffersSubtitle =>
-      'हर नजदीकी ड्राइवर का अपना कार्ड होता है - हर एक को अलग से स्वीकार, किराया बदलें या अस्वीकार करें।';
+      'हर नजदीकी लॉरी मालिक का अपना कार्ड होता है - हर एक को अलग से स्वीकार, किराया बदलें या अस्वीकार करें।';
 
   @override
-  String get noDriverOffersYet => 'अभी कोई ड्राइवर ऑफर नहीं';
+  String get noDriverOffersYet => 'अभी कोई लॉरी मालिक ऑफर नहीं';
 
   @override
   String get driverOffersAppearHere =>
-      'नजदीकी ड्राइवर जवाब देगा तो ऑफर यहां दिखेंगे।';
+      'नजदीकी लॉरी मालिक जवाब देगा तो ऑफर यहां दिखेंगे।';
 
   @override
-  String get driverOffer => 'ड्राइवर ऑफर';
+  String get driverOffer => 'लॉरी मालिक ऑफर';
 
   @override
   String get brokerOffers => 'ब्रोकर ऑफर';
@@ -1875,25 +1880,25 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerReqDetailOfferSentToTheDriverWaitingFor =>
-      'ऑफर sent to the ड्राइवर - waiting for response.';
+      'ऑफर sent to the लॉरी मालिक - waiting for response.';
 
   @override
-  String get brokerReqDetailAssignDriverTruck => 'असाइन करें ड्राइवर & ट्रक';
+  String get brokerReqDetailAssignDriverTruck => 'असाइन करें लॉरी मालिक & ट्रक';
 
   @override
   String brokerReqDetailBookingPickAnAvailableDriverAndTruck(Object id) {
-    return 'बुकिंग #$id - उपलब्ध ड्राइवर और ट्रक चुनें।';
+    return 'बुकिंग #$id - उपलब्ध लॉरी मालिक और ट्रक चुनें।';
   }
 
   @override
-  String get brokerReqDetailDriver => 'ड्राइवर';
+  String get brokerReqDetailDriver => 'लॉरी मालिक';
 
   @override
   String get brokerReqDetailTruck => 'ट्रक';
 
   @override
   String get brokerReqDetailSelectOneIdleDriverAndOneIdle =>
-      'चुनें one idle ड्राइवर and one idle ट्रक to continue.';
+      'चुनें one idle लॉरी मालिक and one idle ट्रक to continue.';
 
   @override
   String get brokerReqDetailCancel => 'रद्द करें';
@@ -1902,7 +1907,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerReqDetailConfirmAssignment => 'कन्फर्म करें असाइनमेंट';
 
   @override
-  String get brokerReqDetailSelectDriver => 'चुनें ड्राइवर';
+  String get brokerReqDetailSelectDriver => 'चुनें लॉरी मालिक';
 
   @override
   String get brokerReqDetailSelectTruck => 'चुनें ट्रक';
@@ -1930,7 +1935,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerReqDetailBrokerAssigned => 'ब्रोकर-असाइन्ड';
 
   @override
-  String get brokerReqDetailAssignedDriverRequest => 'असाइन्ड ड्राइवर request';
+  String get brokerReqDetailAssignedDriverRequest =>
+      'असाइन्ड लॉरी मालिक request';
 
   @override
   String get brokerReqDetailThisPriceWasAlreadyAgreedWithThe =>
@@ -1953,7 +1959,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerReqDetailNoExactMatchFoundAFallbackDriver =>
-      'कोई exact match मिला — a fallback ड्राइवर or ट्रक will be used when you accept.';
+      'कोई exact match मिला — a fallback लॉरी मालिक or ट्रक will be used when you accept.';
 
   @override
   String get brokerReqDetailBookingDetails => 'बुकिंग विवरण';
@@ -1998,7 +2004,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String brokerHomeDeclinedPickADifferentDriverForThis(Object name) {
-    return '$name ने मना किया। इस रिक्वेस्ट के लिए दूसरा ड्राइवर चुनें।';
+    return '$name ने मना किया। इस रिक्वेस्ट के लिए दूसरा लॉरी मालिक चुनें।';
   }
 
   @override
@@ -2008,7 +2014,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerHomeOfferSentToTheDriverWaitingFor =>
-      'ऑफर sent to the ड्राइवर - waiting for response.';
+      'ऑफर sent to the लॉरी मालिक - waiting for response.';
 
   @override
   String get brokerHomeChangeFare => 'बदलें fare';
@@ -2070,7 +2076,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerHomeClient => 'क्लाइंट';
 
   @override
-  String get brokerHomeAssignDriverTruck => 'असाइन करें ड्राइवर & ट्रक';
+  String get brokerHomeAssignDriverTruck => 'असाइन करें लॉरी मालिक & ट्रक';
 
   @override
   String get brokerHomeConfirm => 'कन्फर्म करें';
@@ -2086,18 +2092,18 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String brokerHomeChooseAnIdleDriverAndTruck(Object booking) {
-    return '$booking के लिए खाली ड्राइवर और ट्रक चुनें।';
+    return '$booking के लिए खाली लॉरी मालिक और ट्रक चुनें।';
   }
 
   @override
-  String get brokerHomeDriver => 'ड्राइवर';
+  String get brokerHomeDriver => 'लॉरी मालिक';
 
   @override
   String get brokerHomeTruck => 'ट्रक';
 
   @override
   String get brokerHomeSelectOneIdleDriverAndOneIdle =>
-      'चुनें one idle ड्राइवर and one idle ट्रक to continue.';
+      'चुनें one idle लॉरी मालिक and one idle ट्रक to continue.';
 
   @override
   String brokerHomeSelect(Object label) {
@@ -2275,7 +2281,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'विवाद दर्ज — हमारी टीम जल्द रिव्यू करेगी।';
 
   @override
-  String get brokerActiveJobsReassignDriver => 'Reassign ड्राइवर';
+  String get brokerActiveJobsReassignDriver => 'Reassign लॉरी मालिक';
 
   @override
   String get brokerActiveJobsCurrentlyAssigned => 'Currently असाइन्ड';
@@ -2292,7 +2298,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'Can\'t find the original जॉब request for this बुकिंग.';
 
   @override
-  String get brokerActiveJobsDriverReassigned => 'ड्राइवर reassigned.';
+  String get brokerActiveJobsDriverReassigned => 'लॉरी मालिक reassigned.';
 
   @override
   String get brokerActiveJobsActiveJobs => 'एक्टिव जॉब्स';
@@ -2312,7 +2318,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerActiveJobsTruck => 'ट्रक';
 
   @override
-  String get brokerActiveJobsDriver => 'ड्राइवर';
+  String get brokerActiveJobsDriver => 'लॉरी मालिक';
 
   @override
   String get brokerActiveJobsTRIPPROGRESS => 'ट्रिप प्रोग्रेस';
@@ -2325,15 +2331,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get addDriverPleaseSignInAgainToCreateA =>
-      'कृपया साइन in फिर से to create a ड्राइवर.';
+      'कृपया साइन in फिर से to create a लॉरी मालिक.';
 
   @override
   String get addDriverDriverProfileSavedSuccessfully =>
-      'ड्राइवर profile saved सफलतापूर्वक.';
+      'लॉरी मालिक profile saved सफलतापूर्वक.';
 
   @override
   String addDriverHasBeenRegisteredAndAddedToYour(Object name) {
-    return '$name रजिस्टर होकर आपके ड्राइवरों में जोड़ दिया गया है।';
+    return '$name रजिस्टर होकर आपके लॉरी मालिकों में जोड़ दिया गया है।';
   }
 
   @override
@@ -2347,7 +2353,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get addDriverThisPasswordIsShownOnlyOnceThe =>
-      'इस password is shown only once — the ड्राइवर can change it from their profile after logging in.';
+      'इस password is shown only once — the लॉरी मालिक can change it from their profile after logging in.';
 
   @override
   String get addDriverDone => 'हो गया';
@@ -2357,14 +2363,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String addDriverIsAlreadyTiedToADriverAccount(Object email) {
-    return '$email पहले से ड्राइवर अकाउंट से जुड़ा है।';
+    return '$email पहले से लॉरी मालिक अकाउंट से जुड़ा है।';
   }
 
   @override
   String get addDriverKeepEditing => 'एडिट जारी रखें';
 
   @override
-  String get addDriverViewDrivers => 'देखें drivers';
+  String get addDriverViewDrivers => 'देखें लॉरी मालिक';
 
   @override
   String get addDriverAccountDetails => 'अकाउंट विवरण';
@@ -2466,7 +2472,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerHistorySearchBookingsRoutesDrivers =>
-      'खोजें bookings, routes, drivers...';
+      'खोजें bookings, routes, लॉरी मालिक...';
 
   @override
   String get brokerHistoryTotalNetEarningsFiltered => 'कुल नेट कमाई (filtered)';
@@ -2486,7 +2492,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerHistoryTruck => 'ट्रक';
 
   @override
-  String get brokerHistoryDriver => 'ड्राइवर';
+  String get brokerHistoryDriver => 'लॉरी मालिक';
 
   @override
   String get brokerHistoryViewDetails => 'देखें details';
@@ -2502,11 +2508,11 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get brokerDriverReqDriverRequests => 'ड्राइवर रिक्वेस्ट';
+  String get brokerDriverReqDriverRequests => 'लॉरी मालिक रिक्वेस्ट';
 
   @override
   String get brokerDriverReqCouldNotLoadDriverRequests =>
-      'नहीं नहीं लोड ड्राइवर रिक्वेस्ट';
+      'नहीं नहीं लोड लॉरी मालिक रिक्वेस्ट';
 
   @override
   String get brokerDriverReqNegotiationCards => 'नेगोशिएशन cards';
@@ -2515,11 +2521,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerDriverReqReload => 'रीलोड करें';
 
   @override
-  String get brokerDriverReqNoDriverRequestsYet => 'कोई ड्राइवर रिक्वेस्ट yet';
+  String get brokerDriverReqNoDriverRequestsYet =>
+      'कोई लॉरी मालिक रिक्वेस्ट yet';
 
   @override
   String get brokerDriverReqWhenADriverTimesOutTheRequest =>
-      'When a ड्राइवर times out, the request will appear here for broker takeover.';
+      'When a लॉरी मालिक times out, the request will appear here for broker takeover.';
 
   @override
   String get brokerDriverReqBookingID => 'बुकिंग ID';
@@ -2552,7 +2559,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerDriverReqDriverTimedOutBrokerTakeoverActive =>
-      'ड्राइवर timed out - broker takeover एक्टिव.';
+      'लॉरी मालिक timed out - broker takeover एक्टिव.';
 
   @override
   String get brokerDriverReqBrokerAssigned => 'ब्रोकर-असाइन्ड';
@@ -2575,7 +2582,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerVehiclesSearchVehiclesDriversOrLocation =>
-      'खोजें vehicles, drivers or location';
+      'खोजें vehicles, लॉरी मालिक or location';
 
   @override
   String get brokerVehiclesRemoveTruck => 'हटाएं ट्रक';
@@ -2627,7 +2634,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'कृपया साइन in फिर से to add a ट्रक.';
 
   @override
-  String get addVehiclePleaseAssignADriver => 'कृपया assign a ड्राइवर.';
+  String get addVehiclePleaseAssignADriver => 'कृपया assign a लॉरी मालिक.';
 
   @override
   String get addVehiclePleaseEnterAValidYear => 'कृपया enter a valid year.';
@@ -2639,7 +2646,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get addVehicleCapacity => 'क्षमता';
 
   @override
-  String get addVehicleAssignDriver => 'असाइन करें ड्राइवर';
+  String get addVehicleAssignDriver => 'असाइन करें लॉरी मालिक';
 
   @override
   String get addVehicleMake => 'मेक';
@@ -2791,7 +2798,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get addTruckCapacity => 'क्षमता';
 
   @override
-  String get addTruckAssignDriverOptional => 'असाइन करें ड्राइवर (optional)';
+  String get addTruckAssignDriverOptional => 'असाइन करें लॉरी मालिक (optional)';
 
   @override
   String get addTruckMakeOptional => 'मेक (optional)';
@@ -2807,7 +2814,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerTrackLiveDriverPhoneNumberIsNotAvailable =>
-      'ड्राइवर phone नंबर is नहीं उपलब्ध.';
+      'लॉरी मालिक phone नंबर is नहीं उपलब्ध.';
 
   @override
   String get brokerTrackLiveCouldNotOpenThePhoneApp =>
@@ -2820,7 +2827,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerTrackLiveChat => 'चैट';
 
   @override
-  String get brokerTrackLiveCallDriver => 'कॉल करें ड्राइवर';
+  String get brokerTrackLiveCallDriver => 'कॉल करें लॉरी मालिक';
 
   @override
   String get brokerTrackLiveLIVE => 'लाइव';
@@ -2912,27 +2919,27 @@ class AppLocalizationsHi extends AppLocalizations {
   String get driverDetailLiveTracking2 => 'लाइव ट्रैकिंग';
 
   @override
-  String get driverDetailLiveDriverPosition => 'लाइव ड्राइवर position';
+  String get driverDetailLiveDriverPosition => 'लाइव लॉरी मालिक position';
 
   @override
-  String get driverDetailChatWithDriver => 'चैट with ड्राइवर';
+  String get driverDetailChatWithDriver => 'चैट with लॉरी मालिक';
 
   @override
   String get brokerTruckAssignDriverAssignedToTruck =>
-      'ड्राइवर assigned to ट्रक.';
+      'लॉरी मालिक assigned to ट्रक.';
 
   @override
-  String get brokerTruckAssignAssignDriver => 'असाइन करें ड्राइवर';
+  String get brokerTruckAssignAssignDriver => 'असाइन करें लॉरी मालिक';
 
   @override
   String get brokerTruckAssignTruck => 'ट्रक';
 
   @override
   String get brokerTruckAssignNoActiveDriversAvailableRightNow =>
-      'कोई एक्टिव drivers उपलब्ध right now.';
+      'कोई एक्टिव लॉरी मालिक उपलब्ध right now.';
 
   @override
-  String get brokerTruckAssignDriver => 'ड्राइवर';
+  String get brokerTruckAssignDriver => 'लॉरी मालिक';
 
   @override
   String get brokerTruckAssignCancel => 'रद्द करें';
@@ -2967,7 +2974,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerTrackingDriverHasNotBegunNegotiation =>
-      'ड्राइवर has नहीं begun negotiation';
+      'लॉरी मालिक has नहीं begun negotiation';
 
   @override
   String get brokerTrackingClickHereToNegotiateThisTimedOut =>
@@ -2980,18 +2987,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerTrackingNegotiationReady => 'नेगोशिएशन ready';
 
   @override
-  String get brokerTrackingDrivers => 'ड्राइवर';
+  String get brokerTrackingDrivers => 'लॉरी मालिक';
 
   @override
   String get brokerTrackingMonitorYourDriversAndLiveTrips =>
-      'Monitor your drivers and live ट्रिप';
+      'Monitor your लॉरी मालिक and live ट्रिप';
 
   @override
   String get brokerTrackingSearchDriversPhoneOrVehicle =>
-      'खोजें drivers, phone or vehicle';
+      'खोजें लॉरी मालिक, phone or vehicle';
 
   @override
-  String get brokerTrackingYourDrivers => 'आपका drivers';
+  String get brokerTrackingYourDrivers => 'आपका लॉरी मालिक';
 
   @override
   String get brokerTrackingChangeFareRequest => 'बदलें fare request';
@@ -3316,7 +3323,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String truckSearchDriverOffers(Object count) {
-    return 'ड्राइवर ऑफर ($count)';
+    return 'लॉरी मालिक ऑफर ($count)';
   }
 
   @override
@@ -3428,7 +3435,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerActiveDescription =>
-      'यहां थोड़ी देरी आपकी बुकिंग छीन सकती है। जल्दी ड्राइवर असाइन करें।';
+      'यहां थोड़ी देरी आपकी बुकिंग छीन सकती है। जल्दी लॉरी मालिक असाइन करें।';
 
   @override
   String get brokerActiveSubmit => 'असाइनमेंट की पुष्टि करें';
@@ -3440,7 +3447,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerHomeClientOffered => 'आपने ऑफर दिया';
 
   @override
-  String get brokerHomeDriverFallback => 'ड्राइवर';
+  String get brokerHomeDriverFallback => 'लॉरी मालिक';
 
   @override
   String get brokerHomeDropUnavailable => 'ड्रॉप स्थान उपलब्ध नहीं';
@@ -3535,10 +3542,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerReqAcceptedPickDriver =>
-      'स्वीकार हो गया। जारी रखने के लिए ड्राइवर चुनें।';
+      'स्वीकार हो गया। जारी रखने के लिए लॉरी मालिक चुनें।';
 
   @override
-  String get brokerReqAssignmentTitle => 'ड्राइवर और ट्रक असाइन करें';
+  String get brokerReqAssignmentTitle => 'लॉरी मालिक और ट्रक असाइन करें';
 
   @override
   String get brokerReqAutoSelectedDetails =>
@@ -3574,7 +3581,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerReqGeneralFallback => 'बुकिंग';
 
   @override
-  String get brokerReqNoDriversFound => 'कोई ड्राइवर नहीं मिला';
+  String get brokerReqNoDriversFound => 'कोई लॉरी मालिक नहीं मिला';
 
   @override
   String get brokerReqNoTrucksFound => 'कोई ट्रक नहीं मिला';
@@ -3995,7 +4002,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clientPublicAssignedDriver => 'असाइन होना बाकी';
 
   @override
-  String get clientPublicDriverLabel => 'ड्राइवर';
+  String get clientPublicDriverLabel => 'लॉरी मालिक';
 
   @override
   String get clientPublicDropLabel => 'ड्रॉप';
@@ -4858,24 +4865,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get negotiationDecline => 'अस्वीकार करें';
 
   @override
-  String get negotiationDriverAcceptedTitle => 'ड्राइवर ने स्वीकार किया';
+  String get negotiationDriverAcceptedTitle => 'लॉरी मालिक ने स्वीकार किया';
 
   @override
   String get negotiationDriverConfirmBody =>
-      'नए किराये की पुष्टि ड्राइवर से होनी बाकी है।';
+      'नए किराये की पुष्टि लॉरी मालिक से होनी बाकी है।';
 
   @override
-  String get negotiationDriverConfirmNowTitle => 'ड्राइवर से पुष्टि करें';
+  String get negotiationDriverConfirmNowTitle => 'लॉरी मालिक से पुष्टि करें';
 
   @override
-  String get negotiationDriverFallback => 'ड्राइवर';
+  String get negotiationDriverFallback => 'लॉरी मालिक';
 
   @override
   String get negotiationDriverResponseBody =>
-      'ड्राइवर ने आपके किराया बदलाव का जवाब दिया है।';
+      'लॉरी मालिक ने आपके किराया बदलाव का जवाब दिया है।';
 
   @override
-  String get negotiationDriverResponseTitle => 'ड्राइवर ने जवाब दिया';
+  String get negotiationDriverResponseTitle => 'लॉरी मालिक ने जवाब दिया';
 
   @override
   String get negotiationFareChangeBody =>
@@ -4919,10 +4926,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverBody =>
-      'हमने ड्राइवर को नया किराया भेज दिया है।';
+      'हमने लॉरी मालिक को नया किराया भेज दिया है।';
 
   @override
-  String get negotiationWaitingDriverTitle => 'ड्राइवर की प्रतीक्षा';
+  String get negotiationWaitingDriverTitle => 'लॉरी मालिक की प्रतीक्षा';
 
   @override
   String get onboardingFastSubtitle =>
@@ -4939,7 +4946,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get onboardingSafeSubtitle =>
-      'विश्वास के साथ सत्यापित ट्रक और ड्राइवर बुक करें।';
+      'विश्वास के साथ सत्यापित ट्रक और लॉरी मालिक बुक करें।';
 
   @override
   String get onboardingSafeTitle => 'सुरक्षित बुकिंग';
@@ -5139,7 +5146,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get truckSearchAllDeclinedHint =>
-      'आस-पास के ड्राइवरों ने मना कर दिया। खोज का दायरा बढ़ाकर देखें।';
+      'आस-पास के लॉरी मालिकों ने मना कर दिया। खोज का दायरा बढ़ाकर देखें।';
 
   @override
   String get truckSearchBack => 'वापस';
@@ -5157,13 +5164,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get truckSearchConfirmed => 'पुष्ट हो गया';
 
   @override
-  String get truckSearchDriverFallback => 'ड्राइवर';
+  String get truckSearchDriverFallback => 'लॉरी मालिक';
 
   @override
-  String get truckSearchFindingDrivers => 'ड्राइवर खोज रहे हैं';
+  String get truckSearchFindingDrivers => 'लॉरी मालिक खोज रहे हैं';
 
   @override
-  String get truckSearchFindingNearby => 'पिकअप के पास ड्राइवर खोज रहे हैं';
+  String get truckSearchFindingNearby => 'पिकअप के पास लॉरी मालिक खोज रहे हैं';
 
   @override
   String get truckSearchGoBack => 'वापस जाएं';
@@ -5176,14 +5183,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get truckSearchNoDriverAccepted =>
-      'अभी किसी ड्राइवर ने स्वीकार नहीं किया';
+      'अभी किसी लॉरी मालिक ने स्वीकार नहीं किया';
 
   @override
   String get truckSearchNoResponse => 'कोई जवाब नहीं';
 
   @override
   String get truckSearchNotifyingDrivers =>
-      'आस-पास के ड्राइवरों को सूचना भेज रहे हैं';
+      'आस-पास के लॉरी मालिकों को सूचना भेज रहे हैं';
 
   @override
   String get truckSearchRetry => 'फिर कोशिश करें';
@@ -5228,7 +5235,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'सबमिट करने से पहले कृपया सब कुछ सत्यापित करें।';
 
   @override
-  String get driverKycDriverInformation => 'ड्राइवर जानकारी';
+  String get driverKycDriverInformation => 'लॉरी मालिक जानकारी';
 
   @override
   String get driverKycPANNumber => 'PAN नंबर';
@@ -5323,7 +5330,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverKycVerifiedSubtitle =>
-      'आपका ड्राइवर अकाउंट सत्यापित और सक्रिय है।';
+      'आपका लॉरी मालिक अकाउंट सत्यापित और सक्रिय है।';
 
   @override
   String get driverKycVerifiedBadge => 'सत्यापित';
@@ -5349,7 +5356,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get driverKycSubmittedBadge => 'सबमिट किया गया';
 
   @override
-  String get driverKycCompleteTitle => 'ड्राइवर KYC पूरा करें';
+  String get driverKycCompleteTitle => 'लॉरी मालिक KYC पूरा करें';
 
   @override
   String get driverKycCompleteSubtitle =>
@@ -5501,7 +5508,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationAcceptedWaitingDriverConfirm =>
-      'स्वीकार किया गया - ड्राइवर की पुष्टि की प्रतीक्षा है।';
+      'स्वीकार किया गया - लॉरी मालिक की पुष्टि की प्रतीक्षा है।';
 
   @override
   String get loadingPoint => 'लोडिंग पॉइंट';
@@ -5563,7 +5570,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerReqAcceptedAssignDriverTruck =>
-      'यह रिक्वेस्ट स्वीकार हो गई है। ड्राइवर और ट्रक असाइन करें।';
+      'यह रिक्वेस्ट स्वीकार हो गई है। लॉरी मालिक और ट्रक असाइन करें।';
 
   @override
   String get brokerReqFareChangeWaitingClient =>
@@ -5638,14 +5645,14 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get historyDetailsPreviousDriver => 'पिछला ड्राइवर';
+  String get historyDetailsPreviousDriver => 'पिछला लॉरी मालिक';
 
   @override
-  String get historyDetailsNewDriver => 'नया ड्राइवर';
+  String get historyDetailsNewDriver => 'नया लॉरी मालिक';
 
   @override
   String historyDetailsDriverChanged(Object count) {
-    return 'ड्राइवर बदला ($count)';
+    return 'लॉरी मालिक बदला ($count)';
   }
 
   @override
@@ -5739,7 +5746,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get addVehicleErrCapacity => 'क्षमता दर्ज करें';
 
   @override
-  String get addVehicleErrSelectDriver => 'ड्राइवर चुनें';
+  String get addVehicleErrSelectDriver => 'लॉरी मालिक चुनें';
 
   @override
   String get addVehicleErrMake => 'ट्रक का मेक दर्ज करें';
@@ -5754,22 +5761,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get addVehicleUpdateTruck => 'ट्रक अपडेट करें';
 
   @override
-  String get addDriverEditTitle => 'ड्राइवर बदलें';
+  String get addDriverEditTitle => 'लॉरी मालिक बदलें';
 
   @override
-  String get addDriverAddTitle => 'ड्राइवर जोड़ें';
+  String get addDriverAddTitle => 'लॉरी मालिक जोड़ें';
 
   @override
-  String get addDriverEditSubtitle => 'ड्राइवर अकाउंट अपडेट करें';
+  String get addDriverEditSubtitle => 'लॉरी मालिक अकाउंट अपडेट करें';
 
   @override
-  String get addDriverAddSubtitle => 'अपनी फ्लीट में नया ड्राइवर जोड़ें';
+  String get addDriverAddSubtitle => 'अपनी फ्लीट में नया लॉरी मालिक जोड़ें';
 
   @override
-  String get addDriverUpdateAction => 'ड्राइवर अपडेट करें';
+  String get addDriverUpdateAction => 'लॉरी मालिक अपडेट करें';
 
   @override
-  String get addDriverAddPhotoTitle => 'ड्राइवर फोटो जोड़ें';
+  String get addDriverAddPhotoTitle => 'लॉरी मालिक फोटो जोड़ें';
 
   @override
   String get addDriverErrName => 'पूरा नाम दर्ज करें';
@@ -5779,7 +5786,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get addDriverEmailHelper =>
-      'सही ईमेल दर्ज करें — ड्राइवर ईमेल और पासवर्ड से लॉग इन करता है।';
+      'सही ईमेल दर्ज करें — लॉरी मालिक ईमेल और पासवर्ड से लॉग इन करता है।';
 
   @override
   String get addDriverErrMobile => 'मोबाइल नंबर दर्ज करें';
@@ -5913,7 +5920,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clientBookingNoDriverInWindow =>
-      'खोज क्षेत्र में कोई ड्राइवर नहीं मिला';
+      'खोज क्षेत्र में कोई लॉरी मालिक नहीं मिला';
 
   @override
   String get clientBookingBookNowTooltip => 'अभी बुक करें';
@@ -5935,7 +5942,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get clientNegotiationRefreshDriverOfferFailed =>
-      'ड्राइवर का लाइव ऑफर रिफ्रेश नहीं हो सका।';
+      'लॉरी मालिक का लाइव ऑफर रिफ्रेश नहीं हो सका।';
 
   @override
   String get clientTrackingProofLoadFailed => 'डिलीवरी प्रूफ लोड नहीं हो सका।';
@@ -5957,7 +5964,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'सामंजस्य का डेटा लोड नहीं हो सका।';
 
   @override
-  String get clientTrackingConfirmedDriver => 'पुष्ट ड्राइवर';
+  String get clientTrackingConfirmedDriver => 'पुष्ट लॉरी मालिक';
 
   @override
   String get clientTrackingConfirmed => 'पुष्ट';
@@ -6057,7 +6064,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get timePeriodPm => 'अपराह्न';
 
   @override
-  String get addDriverCreateAccountSubtitle => 'ड्राइवर अकाउंट बनाएं';
+  String get addDriverCreateAccountSubtitle => 'लॉरी मालिक अकाउंट बनाएं';
 
   @override
   String brokerNotificationsMinsAgo(Object minutes) {
@@ -6110,7 +6117,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get savedAddressPickupLabel => 'पिकअप';
 
   @override
-  String get trackingAssignedDriver => 'असाइन किया गया ड्राइवर';
+  String get trackingAssignedDriver => 'असाइन किया गया लॉरी मालिक';
 
   @override
   String get trackingPackageInformation => 'पैकेज की जानकारी';
@@ -6128,7 +6135,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get trackingPackageWeightLabel => 'पैकेज का वज़न:';
 
   @override
-  String get trackingDriverNotAssigned => 'ड्राइवर असाइन नहीं है';
+  String get trackingDriverNotAssigned => 'लॉरी मालिक असाइन नहीं है';
 
   @override
   String get trackingPickupCodeTitle => 'पिकअप कोड';
@@ -6142,7 +6149,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get trackingPickupCodeShareHint =>
-      'जब आपका ड्राइवर पहुंचेगा तो पिकअप की पुष्टि के लिए यह उसके साथ साझा करें।';
+      'जब आपका लॉरी मालिक पहुंचेगा तो पिकअप की पुष्टि के लिए यह उसके साथ साझा करें।';
 
   @override
   String get trackingLiveBadge => 'लाइव';
@@ -6168,12 +6175,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String trackingPodRejectionWithReason(Object reason) {
-    return 'आपने ड्राइवर से दोबारा अपलोड करने के लिए कहा: \"$reason\" नई फ़ोटो की प्रतीक्षा है।';
+    return 'आपने लॉरी मालिक से दोबारा अपलोड करने के लिए कहा: \"$reason\" नई फ़ोटो की प्रतीक्षा है।';
   }
 
   @override
   String get trackingPodRejection =>
-      'आपने ड्राइवर से दोबारा अपलोड करने के लिए कहा है। नई फ़ोटो की प्रतीक्षा है।';
+      'आपने लॉरी मालिक से दोबारा अपलोड करने के लिए कहा है। नई फ़ोटो की प्रतीक्षा है।';
 
   @override
   String get trackingPodLoadFailed => 'डिलीवरी का प्रमाण लोड नहीं हो सका।';
@@ -6186,7 +6193,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get bookingScheduledNotifyMessage =>
-      'हम आपके पिकअप समय के करीब ड्राइवरों या ब्रोकर को सूचित करेंगे।';
+      'हम आपके पिकअप समय के करीब लॉरी मालिकों या ब्रोकर को सूचित करेंगे।';
 
   @override
   String get checkoutOpeningActivity => 'गतिविधि खोली जा रही है';
@@ -6235,7 +6242,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverKycVerifiedDescription =>
-      'आपका KYC सत्यापित हो गया है। आपका ड्राइवर अकाउंट अब सक्रिय है।';
+      'आपका KYC सत्यापित हो गया है। आपका लॉरी मालिक अकाउंट अब सक्रिय है।';
 
   @override
   String get driverKycSubmittedDescription =>
@@ -6287,7 +6294,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get pickupOtpShareMessage =>
-      'पिकअप की पुष्टि के लिए ड्राइवर के पहुँचने पर यह कोड उसे दें';
+      'पिकअप की पुष्टि के लिए लॉरी मालिक के पहुँचने पर यह कोड उसे दें';
 
   @override
   String get trackingTimelineBookingCreated => 'बुकिंग बनाई गई';
@@ -6296,7 +6303,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get trackingTimelineVehicleAssigned => 'वाहन आवंटित';
 
   @override
-  String get trackingTimelineDriverAssigned => 'ड्राइवर आवंटित';
+  String get trackingTimelineDriverAssigned => 'लॉरी मालिक आवंटित';
 
   @override
   String get trackingTimelineCompletedSuccessfully => 'सफलतापूर्वक पूरा हुआ';
@@ -6484,11 +6491,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String trackingPodFilesPosted(Object count) {
-    return 'ड्राइवर द्वारा पोस्ट की गई $count फ़ाइलें';
+    return 'लॉरी मालिक द्वारा पोस्ट की गई $count फ़ाइलें';
   }
 
   @override
-  String get trackingDriverPending => 'ड्राइवर बाकी है';
+  String get trackingDriverPending => 'लॉरी मालिक बाकी है';
 
   @override
   String get trackingTruckNotAssigned => 'ट्रक असाइन नहीं हुई';
@@ -6500,7 +6507,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String trackingDriverChangedCount(Object count) {
-    return 'ड्राइवर बदला ($count)';
+    return 'लॉरी मालिक बदला ($count)';
   }
 
   @override
@@ -6533,7 +6540,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get trackingChatTyping => 'टाइप कर रहे हैं...';
 
   @override
-  String get trackingChangeDriverFare => 'ड्राइवर का किराया बदलें';
+  String get trackingChangeDriverFare => 'लॉरी मालिक का किराया बदलें';
 
   @override
   String trackingCurrentOffer(Object amount) {
@@ -6550,7 +6557,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get trackingNegotiationOffersSubtitle =>
-      'क्लाइंट फ्लो से ड्राइवर अनुरोध और ब्रोकर ऑफर।';
+      'क्लाइंट फ्लो से लॉरी मालिक अनुरोध और ब्रोकर ऑफर।';
 
   @override
   String get trackingNegotiationLoadFailed => 'बातचीत का डेटा लोड नहीं हो सका।';
@@ -6573,10 +6580,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get trackingWaitingDriverConfirmation =>
-      'ड्राइवर की पुष्टि की प्रतीक्षा';
+      'लॉरी मालिक की पुष्टि की प्रतीक्षा';
 
   @override
-  String get trackingWaitingDriverResponse => 'ड्राइवर के जवाब की प्रतीक्षा';
+  String get trackingWaitingDriverResponse => 'लॉरी मालिक के जवाब की प्रतीक्षा';
 
   @override
   String get trackingConfirmed => 'पुष्ट';
@@ -6690,7 +6697,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'आपकी खोज से कोई यात्रा मेल नहीं खाती';
 
   @override
-  String get brokerTruckHistoryDriverPending => 'ड्राइवर लंबित';
+  String get brokerTruckHistoryDriverPending => 'लॉरी मालिक लंबित';
 
   @override
   String get brokerTruckHistoryDistancePending => 'दूरी लंबित';
@@ -6711,16 +6718,16 @@ class AppLocalizationsHi extends AppLocalizations {
       'वार्ता जारी रखने के लिए खोलें।';
 
   @override
-  String get brokerTrackingNoDriversYet => 'अभी तक कोई ड्राइवर नहीं';
+  String get brokerTrackingNoDriversYet => 'अभी तक कोई लॉरी मालिक नहीं';
 
   @override
   String brokerTrackingNoDriversMatch(Object query) {
-    return '\"$query\" से मेल खाने वाला कोई ड्राइवर नहीं';
+    return '\"$query\" से मेल खाने वाला कोई लॉरी मालिक नहीं';
   }
 
   @override
   String get brokerTrackingCreateDriverFromPlus =>
-      'ट्रैकिंग शुरू करने के लिए + बटन से ड्राइवर बनाएं।';
+      'ट्रैकिंग शुरू करने के लिए + बटन से लॉरी मालिक बनाएं।';
 
   @override
   String get brokerTrackingTryDifferentQuery =>
@@ -6728,7 +6735,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get brokerTrackingNoActiveTripIncidentData =>
-      'इस ड्राइवर का कोई सक्रिय यात्रा घटना डेटा नहीं है।';
+      'इस लॉरी मालिक का कोई सक्रिय यात्रा घटना डेटा नहीं है।';
 
   @override
   String get brokerTrackingNoIncidentsYet => 'अभी तक कोई घटना दर्ज नहीं है।';
@@ -6756,7 +6763,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'पंजीकरण अमान्य लगता है, जैसे MH-12-AB-1234।';
 
   @override
-  String get brokerHomeTheDriver => 'ड्राइवर';
+  String get brokerHomeTheDriver => 'लॉरी मालिक';
 
   @override
   String get brokerNotificationsMarkAllRead => 'सभी को पढ़ा हुआ चिह्नित करें';
@@ -6801,14 +6808,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerEarningsSettlementPending => 'निपटान लंबित';
 
   @override
-  String get brokerReqDetailAutoSelectedDriver => 'स्वतः चयनित ड्राइवर';
+  String get brokerReqDetailAutoSelectedDriver => 'स्वतः चयनित लॉरी मालिक';
 
   @override
   String get brokerReqDetailAutoSelectedTruck => 'स्वतः चयनित ट्रक';
 
   @override
   String brokerTruckLocationDriverLabel(Object name) {
-    return 'ड्राइवर: $name';
+    return 'लॉरी मालिक: $name';
   }
 
   @override
@@ -7228,7 +7235,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get driverKycResubmitForReview => 'समीक्षा के लिए पुनः सबमिट करें';
 
   @override
-  String get driverKycDriverKycTitle => 'ड्राइवर KYC';
+  String get driverKycDriverKycTitle => 'लॉरी मालिक KYC';
 
   @override
   String get chatCurrentUserSenderName => 'आप';
@@ -7257,15 +7264,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverAcceptedTitle =>
-      'ड्राइवर ने अनुरोध स्वीकार कर लिया';
+      'लॉरी मालिक ने अनुरोध स्वीकार कर लिया';
 
   @override
   String get negotiationWaitingDriverTurnToConfirmTitle =>
-      'ड्राइवर ने स्वीकार कर लिया - पुष्टि करने का आपका मोड़';
+      'लॉरी मालिक ने स्वीकार कर लिया - पुष्टि करने का आपका मोड़';
 
   @override
   String get negotiationWaitingDriverConfirmationTitle =>
-      'ड्राइवर की पुष्टि का इंतजार';
+      'लॉरी मालिक की पुष्टि का इंतजार';
 
   @override
   String get negotiationWaitingFareChangeReceivedTitle =>
@@ -7273,27 +7280,27 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationWaitingDriverResponseTypeTitle =>
-      'ड्राइवर के जवाब का इंतजार';
+      'लॉरी मालिक के जवाब का इंतजार';
 
   @override
   String get negotiationWaitingDriverAcceptedBody =>
-      'ड्राइवर ने आपका अनुरोध स्वीकार कर लिया है। आप बुकिंग की पुष्टि कर सकते हैं और भुगतान जारी रख सकते हैं।';
+      'लॉरी मालिक ने आपका अनुरोध स्वीकार कर लिया है। आप बुकिंग की पुष्टि कर सकते हैं और भुगतान जारी रख सकते हैं।';
 
   @override
   String get negotiationWaitingDriverCommittedBody =>
-      'ड्राइवर पहले से ही प्रतिबद्ध हो चुए हैं। हैंडशेक पूरा करने के लिए कन्फर्म या अस्वीकार करें।';
+      'लॉरी मालिक पहले से ही प्रतिबद्ध हो चुए हैं। हैंडशेक पूरा करने के लिए कन्फर्म या अस्वीकार करें।';
 
   @override
   String get negotiationWaitingDriverYourConfirmBody =>
-      'आपने पहले ही यह ऑफर कन्फर्म कर दिया है। अब हम ड्राइवर की पुष्टि का इंतजार कर रहे हैं।';
+      'आपने पहले ही यह ऑफर कन्फर्म कर दिया है। अब हम लॉरी मालिक की पुष्टि का इंतजार कर रहे हैं।';
 
   @override
   String get negotiationWaitingDriverChangedFareBody =>
-      'ड्राइवर ने किराया बदल दिया है। इसे यहां समीक्षा करें और तुरंत जवाब दें।';
+      'लॉरी मालिक ने किराया बदल दिया है। इसे यहां समीक्षा करें और तुरंत जवाब दें।';
 
   @override
   String get negotiationWaitingDriverTimedOutBody =>
-      'ड्राइवर समय पर जवाब नहीं दिया। अब ब्रोकर इसमें हस्तक्षेप कर सकता है।';
+      'लॉरी मालिक समय पर जवाब नहीं दिया। अब ब्रोकर इसमें हस्तक्षेप कर सकता है।';
 
   @override
   String get negotiationWaitingDriverLiveBody =>
@@ -7343,7 +7350,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get negotiationWaitingNextDriverUpdate =>
-      'अगले ड्राइवर अपडेट का इंतजार...';
+      'अगले लॉरी मालिक अपडेट का इंतजार...';
 
   @override
   String get negotiationUseSliderHint =>
@@ -7385,11 +7392,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get addDriverTapToUpdateTheDriverPhoto =>
-      'ड्राइवर की फोटो बदलने के लिए टैप करें';
+      'लॉरी मालिक की फोटो बदलने के लिए टैप करें';
 
   @override
   String get addDriverTapTheCameraToAddADriverPhoto =>
-      'ड्राइवर की फोटो जोड़ने के लिए कैमरा टैप करें';
+      'लॉरी मालिक की फोटो जोड़ने के लिए कैमरा टैप करें';
 
   @override
   String get addVehicleTruckAddedSuccessfully => 'ट्रक सफलतापूर्वक जोड़ा गया।';
@@ -7435,7 +7442,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get driverTrackingLocationPermissionRequired =>
-      'लाइव ड्राइवर ट्रैकिंग के लिए लोकेशन की अनुमति आवश्यक है।';
+      'लाइव लॉरी मालिक ट्रैकिंग के लिए लोकेशन की अनुमति आवश्यक है।';
 
   @override
   String get driverTrackingLocationPermissionDeniedForever =>
@@ -7462,7 +7469,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerActiveJobActiveJob => 'सक्रिय काम';
 
   @override
-  String get brokerActiveJobDriverPending => 'ड्राइवर लंबित';
+  String get brokerActiveJobDriverPending => 'लॉरी मालिक लंबित';
 
   @override
   String get brokerActiveJobLoadPending => 'लोड विवरण लंबित';
@@ -7471,14 +7478,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerActiveJobAssigned => 'सौंपा गया';
 
   @override
-  String get brokerActiveJobDriverAssigned => 'ड्राइवर सौंपा गया';
+  String get brokerActiveJobDriverAssigned => 'लॉरी मालिक सौंपा गया';
 
   @override
   String get brokerActiveJobEnRoutePickup => 'पिकअप की ओर';
 
   @override
   String get brokerActiveJobDriverHeadingToPickup =>
-      'ड्राइवर पिकअप की ओर जा रहा है';
+      'लॉरी मालिक पिकअप की ओर जा रहा है';
 
   @override
   String get brokerActiveJobPickedUp => 'पिकअप हो गया';
@@ -7514,7 +7521,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerFlowAwaitingPickup => 'पिकअप की प्रतीक्षा';
 
   @override
-  String get brokerFlowDriverRequestSent => 'ड्राइवर अनुरोध भेजा गया';
+  String get brokerFlowDriverRequestSent => 'लॉरी मालिक अनुरोध भेजा गया';
 
   @override
   String get brokerFlowBrokerNegotiation => 'ब्रोकर वार्ता';
@@ -7559,7 +7566,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clientOfferByBroker => 'ब्रोकर';
 
   @override
-  String get clientOfferByDriver => 'ड्राइवर';
+  String get clientOfferByDriver => 'लॉरी मालिक';
 
   @override
   String nearbyTruckRef(Object ref) {
@@ -7573,10 +7580,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get driverTimelinePickedUp => 'पिकअप हो गया';
 
   @override
-  String get brokerFlowDriverResponse => 'ड्राइवर प्रतिक्रिया';
+  String get brokerFlowDriverResponse => 'लॉरी मालिक प्रतिक्रिया';
 
   @override
-  String get brokerFlowDriverTimedOut => 'ड्राइवर समय समाप्त';
+  String get brokerFlowDriverTimedOut => 'लॉरी मालिक समय समाप्त';
 
   @override
   String get brokerFlowHandoffActive => 'ब्रोकर हैंडऑफ़ सक्रिय है';
@@ -7628,11 +7635,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tripSummaryOngoing => 'जारी';
 
   @override
-  String get driverTrackingDisclosureTitle => 'ड्राइवर की लोकेशन साझा करें';
+  String get driverTrackingDisclosureTitle => 'लॉरी मालिक की लोकेशन साझा करें';
 
   @override
   String get driverTrackingDisclosureBody =>
-      'SSK आपके ऑनलाइन रहने या सक्रिय ट्रिप के दौरान ब्रोकर और ग्राहकों के साथ ड्राइवर की उपलब्धता और लाइव ट्रिप ट्रैकिंग साझा करने के लिए आपकी लोकेशन लेता है, तब भी जब ऐप बैकग्राउंड में हो या स्क्रीन लॉक हो। ऑफलाइन होने और कोई सक्रिय ट्रिप न होने पर ट्रैकिंग बंद हो जाती है। लोकेशन की अनुमति देने के लिए जारी रखें।';
+      'SSK आपके ऑनलाइन रहने या सक्रिय ट्रिप के दौरान ब्रोकर और ग्राहकों के साथ लॉरी मालिक की उपलब्धता और लाइव ट्रिप ट्रैकिंग साझा करने के लिए आपकी लोकेशन लेता है, तब भी जब ऐप बैकग्राउंड में हो या स्क्रीन लॉक हो। ऑफलाइन होने और कोई सक्रिय ट्रिप न होने पर ट्रैकिंग बंद हो जाती है। लोकेशन की अनुमति देने के लिए जारी रखें।';
 
   @override
   String get coreDigilockerGstLabel => 'GST';

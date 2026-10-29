@@ -609,7 +609,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
               : 'GadiDost Logistics')
         : (_driverName?.trim().isNotEmpty == true
               ? _driverName!.trim()
-              : 'Driver');
+              : 'Lorry Owner');
     // Web parity: the UPI QR is drawn on-device from the intent string
     // (the web's QRCode.toDataURL), not fetched from an image service.
     final generatedQrData =

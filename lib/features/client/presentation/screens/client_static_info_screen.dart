@@ -245,15 +245,15 @@ const _helpDocument = _ClientInfoDocument(
     _ClientInfoSection(
       title: 'Tracking',
       items: [
-        'Live tracking may show route progress, pickup/drop details, driver/truck details, ETA, distance remaining, and shipment status.',
-        'Location updates depend on driver GPS permissions, network availability, device connectivity, and backend sync.',
+        'Live tracking may show route progress, pickup/drop details, lorry owner/truck details, ETA, distance remaining, and shipment status.',
+        'Location updates depend on lorry owner GPS permissions, network availability, device connectivity, and backend sync.',
         'Public tracking links can be viewed without login. Share them only with trusted recipients.',
       ],
     ),
     _ClientInfoSection(
       title: 'Cancellations and Refunds',
       items: [
-        'Cancellation availability and charges depend on booking status, driver assignment, truck arrival, loading progress, and operational costs.',
+        'Cancellation availability and charges depend on booking status, lorry owner assignment, truck arrival, loading progress, and operational costs.',
         'Approved refunds are usually processed to the original payment method, subject to payment provider and bank timelines.',
       ],
     ),
@@ -261,14 +261,14 @@ const _helpDocument = _ClientInfoDocument(
       title: 'Common Issues',
       items: [
         'If you cannot find a booking, confirm you are logged in with the same account used to create it, then refresh My Bookings.',
-        'If driver location is not updating, refresh tracking. Weak GPS, battery settings, network issues, or sync delays can cause temporary gaps.',
+        'If lorry owner location is not updating, refresh tracking. Weak GPS, battery settings, network issues, or sync delays can cause temporary gaps.',
         'Fare changes can happen due to route changes, truck availability, halting, express handling, payment stage, taxes, or manual correction.',
       ],
     ),
     _ClientInfoSection(
       title: 'Escalations',
       items: [
-        'Escalate when the driver is unreachable, the truck has not arrived after confirmation, payment is deducted but not reflected, shipment status is wrong, goods are damaged or missing, or you suspect fraud.',
+        'Escalate when the lorry owner is unreachable, the truck has not arrived after confirmation, payment is deducted but not reflected, shipment status is wrong, goods are damaged or missing, or you suspect fraud.',
         'Support may ask for invoices, photos, delivery proof, chat history, payment references, or identity verification.',
       ],
     ),
@@ -295,7 +295,7 @@ const _termsDocument = _ClientInfoDocument(
       title: 'Terms of Use',
       items: [
         'By creating an account, booking a shipment, making a payment, tracking a shipment, or using the platform, you agree to these terms.',
-        'SSK Logistics provides a technology platform to request goods transport, connect with drivers, brokers, or logistics partners, track shipments, communicate about bookings, and manage payments.',
+        'SSK Logistics provides a technology platform to request goods transport, connect with lorry owners, brokers, or logistics partners, track shipments, communicate about bookings, and manage payments.',
         'Service availability may vary by location, truck type, route, partner availability, and operational conditions.',
       ],
     ),
@@ -310,7 +310,7 @@ const _termsDocument = _ClientInfoDocument(
     _ClientInfoSection(
       title: 'Bookings, Pricing, and Payments',
       items: [
-        'A booking request may depend on vehicle availability, driver or broker acceptance, payment status, location accuracy, route feasibility, and operational review.',
+        'A booking request may depend on vehicle availability, lorry owner or broker acceptance, payment status, location accuracy, route feasibility, and operational review.',
         'Final charges may differ from estimates if booking details change, routes change, extra waiting time is incurred, or taxes and fees apply.',
         'Payment options may include online payment, advance payment, to-pay collection, to-be-billed settlement, UPI, cards, wallets, net banking, or other supported methods.',
       ],
@@ -328,7 +328,7 @@ const _termsDocument = _ClientInfoDocument(
       items: [
         'We may collect account, booking, location, tracking, payment, communication, device, usage, security, and diagnostic information.',
         'Information is used to manage accounts, process bookings, assign partners, estimate prices, enable payments, provide tracking, send notifications, support users, prevent fraud, improve service, and meet legal obligations.',
-        'Necessary information may be shared with drivers, brokers, fleet partners, payment providers, map/location providers, support teams, legal authorities, and service providers needed to complete the service.',
+        'Necessary information may be shared with lorry owners, brokers, fleet partners, payment providers, map/location providers, support teams, legal authorities, and service providers needed to complete the service.',
       ],
     ),
     _ClientInfoSection(

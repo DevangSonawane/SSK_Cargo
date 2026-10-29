@@ -731,7 +731,7 @@ class ClientBookingOffer {
           ? brokerName
           : nestedBrokerName.isNotEmpty
           ? nestedBrokerName
-          : 'Driver',
+          : 'Lorry Owner',
       note: _readString(json, const ['note', 'message', 'remarks']),
       driverLat: _readFiniteDouble(json, const [
         'driverLat',

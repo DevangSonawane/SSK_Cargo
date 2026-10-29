@@ -235,7 +235,7 @@ class _HomeScheduleSheetState extends State<HomeScheduleSheet> {
                       ? context.colors.textTertiary
                       : context.colors.dangerEmphasis,
                   text: _isFuture
-                      ? "We'll notify nearby drivers or brokers about 2 hours before pickup."
+                      ? "We'll notify nearby lorry owners or brokers about 2 hours before pickup."
                       : l10n.chooseFuturePickupTime,
                 ),
                 const SizedBox(height: 16),

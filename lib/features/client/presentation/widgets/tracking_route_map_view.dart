@@ -721,7 +721,7 @@ class LiveLocationMapView extends StatefulWidget {
     this.markerHue = BitmapDescriptor.hueAzure,
     this.emptyTitle = 'Location pending',
     this.emptySubtitle =
-        'Live GPS coordinates will appear once the driver sends an update.',
+        'Live GPS coordinates will appear once the lorry owner sends an update.',
   });
 
   final double? latitude;

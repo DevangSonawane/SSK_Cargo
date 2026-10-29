@@ -2102,6 +2102,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               id: bookingId,
               reason: brokerMode
                   ? 'Broker search cancelled by client'
+                  // Sent to the API, not shown in the UI — keep it identical
+                  // to the web client's reason string.
                   : 'No driver found within the search window',
             );
       }
@@ -4835,7 +4837,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Shared truck — we broadcast to drivers who have Part Truck mode on. You can accept, counter, or decline offers just like Find Truck.',
+              'Shared truck — we broadcast to lorry owners who have Part Truck mode on. You can accept, counter, or decline offers just like Find Truck.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontWeight: FontWeight.w600,

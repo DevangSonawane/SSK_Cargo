@@ -113,7 +113,7 @@ class RoleLoginScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 12),
                                 _AccessChoiceCard(
-                                  title: 'Driver',
+                                  title: 'Lorry Owner',
                                   description:
                                       'View assigned trips and delivery tasks',
                                   imagePath: 'assets/driverloginscreen.png',

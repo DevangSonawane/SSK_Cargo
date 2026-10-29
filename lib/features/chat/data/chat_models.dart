@@ -104,7 +104,7 @@ class ChatThreadSummary {
       if (audience == ChatAudience.driver) {
         return brokerName.isNotEmpty ? brokerName : 'Broker';
       }
-      return driverName.isNotEmpty ? driverName : 'Driver';
+      return driverName.isNotEmpty ? driverName : 'Lorry Owner';
     }
     if (audience == ChatAudience.client) {
       final candidate = driverName.isNotEmpty

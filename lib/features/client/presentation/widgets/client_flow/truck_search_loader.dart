@@ -134,6 +134,11 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
     final driverName = request.brokerName.isNotEmpty
         ? request.brokerName
         : l10n.truckSearchDriverFallback;
+    // No real name yet: the model falls back to 'Lorry Owner', this widget to
+    // the localized fallback — either means "speak generically".
+    final isFallbackName =
+        driverName == 'Lorry Owner' ||
+        driverName == l10n.truckSearchDriverFallback;
     final amount = request.amountText.isNotEmpty ? request.amountText : '—';
 
     final String statusLabel;
@@ -329,7 +334,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
           if (_negotiating && _sent) ...[
             const SizedBox(height: 8),
             Text(
-              'Your offer of ${_rupees(_sentAmount)} was sent — this card updates automatically once ${driverName == 'Driver' ? 'they' : driverName} respond.',
+              'Your offer of ${_rupees(_sentAmount)} was sent — this card updates automatically once ${isFallbackName ? 'they' : driverName} respond.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
               ),
@@ -430,7 +435,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
           ] else if (isWaiting) ...[
             const SizedBox(height: 4),
             Text(
-              'You accepted — waiting for ${driverName == 'Driver' ? 'the driver' : driverName} to confirm.',
+              'You accepted — waiting for ${isFallbackName ? 'the lorry owner' : driverName} to confirm.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
               ),
@@ -450,7 +455,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
             // driver — no Confirm/Counter/Decline until they move.
             const SizedBox(height: 4),
             Text(
-              'Your new fare of ${_rupees(_myCounterAmount > 0 ? _myCounterAmount : _sentAmount)} was sent — waiting for ${driverName == 'Driver' ? 'the driver' : driverName} to respond.',
+              'Your new fare of ${_rupees(_myCounterAmount > 0 ? _myCounterAmount : _sentAmount)} was sent — waiting for ${isFallbackName ? 'the lorry owner' : driverName} to respond.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
@@ -728,7 +733,7 @@ class _FindTruckOffersPagerState extends State<_FindTruckOffersPager> {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              'Swipe to compare drivers',
+              'Swipe to compare lorry owners',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: context.colors.textTertiary,
                 fontSize: 10,

@@ -335,7 +335,7 @@ abstract class AppLocalizations {
   /// No description provided for @completeDriverVerification.
   ///
   /// In en, this message translates to:
-  /// **'Complete your driver verification'**
+  /// **'Complete your lorry owner verification'**
   String get completeDriverVerification;
 
   /// No description provided for @earnings.
@@ -383,7 +383,7 @@ abstract class AppLocalizations {
   /// No description provided for @allChatsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'View every driver conversation'**
+  /// **'View every lorry owner conversation'**
   String get allChatsSubtitle;
 
   /// No description provided for @security.
@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverAccount.
   ///
   /// In en, this message translates to:
-  /// **'Driver account'**
+  /// **'Lorry Owner account'**
   String get driverAccount;
 
   /// No description provided for @noAccountConnected.
@@ -437,7 +437,7 @@ abstract class AppLocalizations {
   /// No description provided for @driver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get driver;
 
   /// No description provided for @enterEmailAndPassword.
@@ -521,7 +521,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerAsBrokerDriver.
   ///
   /// In en, this message translates to:
-  /// **'Register as Broker/Driver'**
+  /// **'Register as Broker/Lorry Owner'**
   String get registerAsBrokerDriver;
 
   /// No description provided for @newEnquiry.
@@ -869,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverPhoneUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Driver phone number is not available.'**
+  /// **'Lorry Owner phone number is not available.'**
   String get driverPhoneUnavailable;
 
   /// No description provided for @couldNotOpenPhoneApp.
@@ -1270,7 +1270,7 @@ abstract class AppLocalizations {
   /// No description provided for @forceTripStatusDescription.
   ///
   /// In en, this message translates to:
-  /// **'This moves the trip to \"{status}\" on the driver\'s behalf. Use only if the driver is unreachable.'**
+  /// **'This moves the trip to \"{status}\" on the lorry owner\'s behalf. Use only if the lorry owner is unreachable.'**
   String forceTripStatusDescription(Object status);
 
   /// No description provided for @apply.
@@ -1444,7 +1444,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverTakeoverTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver unreachable? Take over this trip'**
+  /// **'Lorry Owner unreachable? Take over this trip'**
   String get driverTakeoverTitle;
 
   /// No description provided for @hide.
@@ -1462,7 +1462,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverTakeoverDescription.
   ///
   /// In en, this message translates to:
-  /// **'Use this only if the driver\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the driver\'s behalf.'**
+  /// **'Use this only if the lorry owner\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the lorry owner\'s behalf.'**
   String get driverTakeoverDescription;
 
   /// No description provided for @retryLoadingTrip.
@@ -1540,7 +1540,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientRejectedReuploading.
   ///
   /// In en, this message translates to:
-  /// **'Client rejected — driver re-uploading'**
+  /// **'Client rejected — lorry owner re-uploading'**
   String get clientRejectedReuploading;
 
   /// No description provided for @sendInvoiceByEmail.
@@ -1732,7 +1732,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorDriverMovement.
   ///
   /// In en, this message translates to:
-  /// **'Monitor driver movement'**
+  /// **'Monitor lorry owner movement'**
   String get monitorDriverMovement;
 
   /// No description provided for @reviewRecentBookings.
@@ -2008,7 +2008,7 @@ abstract class AppLocalizations {
   /// No description provided for @rejectProofOfDeliveryDescription.
   ///
   /// In en, this message translates to:
-  /// **'The driver will be asked to upload new photos before the trip can be completed.'**
+  /// **'The lorry owner will be asked to upload new photos before the trip can be completed.'**
   String get rejectProofOfDeliveryDescription;
 
   /// No description provided for @rejectPodReasonHint.
@@ -2032,7 +2032,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverAskedToReuploadPod.
   ///
   /// In en, this message translates to:
-  /// **'Asked the driver to re-upload proof of delivery.'**
+  /// **'Asked the lorry owner to re-upload proof of delivery.'**
   String get driverAskedToReuploadPod;
 
   /// No description provided for @fetchingAdvanceAmount.
@@ -2074,7 +2074,7 @@ abstract class AppLocalizations {
   /// No description provided for @toPaySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Full amount collected by the driver on delivery'**
+  /// **'Full amount collected by the lorry owner on delivery'**
   String get toPaySubtitle;
 
   /// No description provided for @toBeBilled.
@@ -2092,7 +2092,7 @@ abstract class AppLocalizations {
   /// No description provided for @toBeBilledUnavailableSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Available after a driver is confirmed'**
+  /// **'Available after a lorry owner is confirmed'**
   String get toBeBilledUnavailableSubtitle;
 
   /// No description provided for @chooseFuturePickupTime.
@@ -2134,13 +2134,13 @@ abstract class AppLocalizations {
   /// No description provided for @driverOfferReceived.
   ///
   /// In en, this message translates to:
-  /// **'Driver offer received'**
+  /// **'Lorry Owner offer received'**
   String get driverOfferReceived;
 
   /// No description provided for @confirmingWithDriver.
   ///
   /// In en, this message translates to:
-  /// **'Confirming with driver'**
+  /// **'Confirming with lorry owner'**
   String get confirmingWithDriver;
 
   /// No description provided for @findingNearbyTrucks.
@@ -2158,31 +2158,31 @@ abstract class AppLocalizations {
   /// No description provided for @confirmingWithDriverSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'You accepted the offer. We are waiting for the driver to complete the handshake.'**
+  /// **'You accepted the offer. We are waiting for the lorry owner to complete the handshake.'**
   String get confirmingWithDriverSubtitle;
 
   /// No description provided for @driversNotifiedRadius.
   ///
   /// In en, this message translates to:
-  /// **'Drivers inside {radius} km have been notified. We will show the offer popup when one responds.'**
+  /// **'Lorry Owners inside {radius} km have been notified. We will show the offer popup when one responds.'**
   String driversNotifiedRadius(Object radius);
 
   /// No description provided for @bookingLiveNotifyingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Your booking is live. We are notifying drivers inside {radius} km.'**
+  /// **'Your booking is live. We are notifying lorry owners inside {radius} km.'**
   String bookingLiveNotifyingDrivers(Object radius);
 
   /// No description provided for @driverResponse.
   ///
   /// In en, this message translates to:
-  /// **'Driver response'**
+  /// **'Lorry Owner response'**
   String get driverResponse;
 
   /// No description provided for @waitingForDriverAcceptance.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for the driver to confirm your acceptance.'**
+  /// **'Waiting for the lorry owner to confirm your acceptance.'**
   String get waitingForDriverAcceptance;
 
   /// No description provided for @fareChangeAmount.
@@ -2194,7 +2194,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverResponseTimedOut.
   ///
   /// In en, this message translates to:
-  /// **'Driver response timed out.'**
+  /// **'Lorry Owner response timed out.'**
   String get driverResponseTimedOut;
 
   /// No description provided for @latestAmount.
@@ -2302,7 +2302,7 @@ abstract class AppLocalizations {
   /// No description provided for @acceptedWaitingForDriverConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Accepted - waiting for the driver to confirm.'**
+  /// **'Accepted - waiting for the lorry owner to confirm.'**
   String get acceptedWaitingForDriverConfirm;
 
   /// No description provided for @declinedDriverStillWaiting.
@@ -2434,7 +2434,7 @@ abstract class AppLocalizations {
   /// No description provided for @afterDriverConfirm.
   ///
   /// In en, this message translates to:
-  /// **'After driver confirm'**
+  /// **'After lorry owner confirm'**
   String get afterDriverConfirm;
 
   /// No description provided for @skip.
@@ -2488,7 +2488,7 @@ abstract class AppLocalizations {
   /// No description provided for @fetchingDriverRequests.
   ///
   /// In en, this message translates to:
-  /// **'Fetching driver requests from the server.'**
+  /// **'Fetching lorry owner requests from the server.'**
   String get fetchingDriverRequests;
 
   /// No description provided for @couldNotLoadRequests.
@@ -2512,7 +2512,7 @@ abstract class AppLocalizations {
   /// No description provided for @requestTimedOutBrokerHandoff.
   ///
   /// In en, this message translates to:
-  /// **'This request timed out for the driver. Broker handoff is active.'**
+  /// **'This request timed out for the lorry owner. Broker handoff is active.'**
   String get requestTimedOutBrokerHandoff;
 
   /// No description provided for @swipeToAccept.
@@ -2602,13 +2602,13 @@ abstract class AppLocalizations {
   /// No description provided for @addDriver.
   ///
   /// In en, this message translates to:
-  /// **'Add driver'**
+  /// **'Add lorry owner'**
   String get addDriver;
 
   /// No description provided for @removeDriverQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Remove driver?'**
+  /// **'Remove lorry owner?'**
   String get removeDriverQuestion;
 
   /// No description provided for @deleteDriverFromFleet.
@@ -2692,13 +2692,13 @@ abstract class AppLocalizations {
   /// No description provided for @signInAgainToDeleteDriver.
   ///
   /// In en, this message translates to:
-  /// **'Please sign in again to delete a driver.'**
+  /// **'Please sign in again to delete a lorry owner.'**
   String get signInAgainToDeleteDriver;
 
   /// No description provided for @driverRemoved.
   ///
   /// In en, this message translates to:
-  /// **'Driver removed from fleet.'**
+  /// **'Lorry Owner removed from fleet.'**
   String get driverRemoved;
 
   /// No description provided for @reportIncident.
@@ -2776,7 +2776,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverLocationActivityOverview.
   ///
   /// In en, this message translates to:
-  /// **'Driver location and activity overview'**
+  /// **'Lorry Owner location and activity overview'**
   String get driverLocationActivityOverview;
 
   /// No description provided for @tripId.
@@ -2830,7 +2830,7 @@ abstract class AppLocalizations {
   /// No description provided for @reassignDriver.
   ///
   /// In en, this message translates to:
-  /// **'Reassign driver'**
+  /// **'Reassign lorry owner'**
   String get reassignDriver;
 
   /// No description provided for @currentlyAssigned.
@@ -2854,7 +2854,7 @@ abstract class AppLocalizations {
   /// No description provided for @reassignReasonHint.
   ///
   /// In en, this message translates to:
-  /// **'Driver unavailable, breakdown, better route fit...'**
+  /// **'Lorry Owner unavailable, breakdown, better route fit...'**
   String get reassignReasonHint;
 
   /// No description provided for @reassign.
@@ -2884,19 +2884,19 @@ abstract class AppLocalizations {
   /// No description provided for @driverRequests.
   ///
   /// In en, this message translates to:
-  /// **'Driver requests'**
+  /// **'Lorry Owner requests'**
   String get driverRequests;
 
   /// No description provided for @noDriverRequestsYet.
   ///
   /// In en, this message translates to:
-  /// **'No driver requests yet.'**
+  /// **'No lorry owner requests yet.'**
   String get noDriverRequestsYet;
 
   /// No description provided for @driverReassigned.
   ///
   /// In en, this message translates to:
-  /// **'Driver reassigned.'**
+  /// **'Lorry Owner reassigned.'**
   String get driverReassigned;
 
   /// No description provided for @tripMarkedCompleted.
@@ -2920,7 +2920,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverLocation.
   ///
   /// In en, this message translates to:
-  /// **'Driver location'**
+  /// **'Lorry Owner location'**
   String get driverLocation;
 
   /// No description provided for @tripDestination.
@@ -2974,7 +2974,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverLocationOnly.
   ///
   /// In en, this message translates to:
-  /// **'Driver location only'**
+  /// **'Lorry Owner location only'**
   String get driverLocationOnly;
 
   /// No description provided for @liveDetailsUnavailable.
@@ -3010,7 +3010,7 @@ abstract class AppLocalizations {
   /// No description provided for @declineTripDescription.
   ///
   /// In en, this message translates to:
-  /// **'You will be freed from this trip and your broker can assign another driver. This cannot be undone.'**
+  /// **'You will be freed from this trip and your broker can assign another lorry owner. This cannot be undone.'**
   String get declineTripDescription;
 
   /// No description provided for @keepTrip.
@@ -3310,7 +3310,7 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationOffersSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Review driver requests and broker offers'**
+  /// **'Review lorry owner requests and broker offers'**
   String get negotiationOffersSubtitle;
 
   /// No description provided for @downloadInvoice.
@@ -3364,13 +3364,13 @@ abstract class AppLocalizations {
   /// No description provided for @driverRequestAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Driver request accepted.'**
+  /// **'Lorry Owner request accepted.'**
   String get driverRequestAccepted;
 
   /// No description provided for @driverRequestDeclined.
   ///
   /// In en, this message translates to:
-  /// **'Driver request declined.'**
+  /// **'Lorry Owner request declined.'**
   String get driverRequestDeclined;
 
   /// No description provided for @offerAccepted.
@@ -3400,37 +3400,37 @@ abstract class AppLocalizations {
   /// No description provided for @nearbyDriverOffers.
   ///
   /// In en, this message translates to:
-  /// **'Nearby driver offers ({count})'**
+  /// **'Nearby lorry owner offers ({count})'**
   String nearbyDriverOffers(Object count);
 
   /// No description provided for @driverConfirmedBooking.
   ///
   /// In en, this message translates to:
-  /// **'This driver confirmed your booking.'**
+  /// **'This lorry owner confirmed your booking.'**
   String get driverConfirmedBooking;
 
   /// No description provided for @nearbyDriverOffersSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Every nearby driver gets their own card - accept, change fare, or decline each one separately.'**
+  /// **'Every nearby lorry owner gets their own card - accept, change fare, or decline each one separately.'**
   String get nearbyDriverOffersSubtitle;
 
   /// No description provided for @noDriverOffersYet.
   ///
   /// In en, this message translates to:
-  /// **'No driver offers yet'**
+  /// **'No lorry owner offers yet'**
   String get noDriverOffersYet;
 
   /// No description provided for @driverOffersAppearHere.
   ///
   /// In en, this message translates to:
-  /// **'Once a nearby driver responds, the offers will appear here.'**
+  /// **'Once a nearby lorry owner responds, the offers will appear here.'**
   String get driverOffersAppearHere;
 
   /// No description provided for @driverOffer.
   ///
   /// In en, this message translates to:
-  /// **'Driver offer'**
+  /// **'Lorry Owner offer'**
   String get driverOffer;
 
   /// No description provided for @brokerOffers.
@@ -3502,25 +3502,25 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailOfferSentToTheDriverWaitingFor.
   ///
   /// In en, this message translates to:
-  /// **'Offer sent to the driver - waiting for response.'**
+  /// **'Offer sent to the lorry owner - waiting for response.'**
   String get brokerReqDetailOfferSentToTheDriverWaitingFor;
 
   /// No description provided for @brokerReqDetailAssignDriverTruck.
   ///
   /// In en, this message translates to:
-  /// **'Assign Driver & Truck'**
+  /// **'Assign Lorry Owner & Truck'**
   String get brokerReqDetailAssignDriverTruck;
 
   /// No description provided for @brokerReqDetailBookingPickAnAvailableDriverAndTruck.
   ///
   /// In en, this message translates to:
-  /// **'Booking #{id} - pick an available driver and truck.'**
+  /// **'Booking #{id} - pick an available lorry owner and truck.'**
   String brokerReqDetailBookingPickAnAvailableDriverAndTruck(Object id);
 
   /// No description provided for @brokerReqDetailDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerReqDetailDriver;
 
   /// No description provided for @brokerReqDetailTruck.
@@ -3532,7 +3532,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailSelectOneIdleDriverAndOneIdle.
   ///
   /// In en, this message translates to:
-  /// **'Select one idle driver and one idle truck to continue.'**
+  /// **'Select one idle lorry owner and one idle truck to continue.'**
   String get brokerReqDetailSelectOneIdleDriverAndOneIdle;
 
   /// No description provided for @brokerReqDetailCancel.
@@ -3550,7 +3550,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailSelectDriver.
   ///
   /// In en, this message translates to:
-  /// **'Select driver'**
+  /// **'Select lorry owner'**
   String get brokerReqDetailSelectDriver;
 
   /// No description provided for @brokerReqDetailSelectTruck.
@@ -3598,7 +3598,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailAssignedDriverRequest.
   ///
   /// In en, this message translates to:
-  /// **'Assigned driver request'**
+  /// **'Assigned lorry owner request'**
   String get brokerReqDetailAssignedDriverRequest;
 
   /// No description provided for @brokerReqDetailThisPriceWasAlreadyAgreedWithThe.
@@ -3640,7 +3640,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailNoExactMatchFoundAFallbackDriver.
   ///
   /// In en, this message translates to:
-  /// **'No exact match found — a fallback driver or truck will be used when you accept.'**
+  /// **'No exact match found — a fallback lorry owner or truck will be used when you accept.'**
   String get brokerReqDetailNoExactMatchFoundAFallbackDriver;
 
   /// No description provided for @brokerReqDetailBookingDetails.
@@ -3724,7 +3724,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeDeclinedPickADifferentDriverForThis.
   ///
   /// In en, this message translates to:
-  /// **'{name} declined. Pick a different driver for this request.'**
+  /// **'{name} declined. Pick a different lorry owner for this request.'**
   String brokerHomeDeclinedPickADifferentDriverForThis(Object name);
 
   /// No description provided for @brokerHomeConfirmedTripCreated.
@@ -3736,7 +3736,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeOfferSentToTheDriverWaitingFor.
   ///
   /// In en, this message translates to:
-  /// **'Offer sent to the driver - waiting for response.'**
+  /// **'Offer sent to the lorry owner - waiting for response.'**
   String get brokerHomeOfferSentToTheDriverWaitingFor;
 
   /// No description provided for @brokerHomeChangeFare.
@@ -3850,7 +3850,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeAssignDriverTruck.
   ///
   /// In en, this message translates to:
-  /// **'Assign Driver & Truck'**
+  /// **'Assign Lorry Owner & Truck'**
   String get brokerHomeAssignDriverTruck;
 
   /// No description provided for @brokerHomeConfirm.
@@ -3880,13 +3880,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeChooseAnIdleDriverAndTruck.
   ///
   /// In en, this message translates to:
-  /// **'Choose an idle driver and truck for {booking}.'**
+  /// **'Choose an idle lorry owner and truck for {booking}.'**
   String brokerHomeChooseAnIdleDriverAndTruck(Object booking);
 
   /// No description provided for @brokerHomeDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerHomeDriver;
 
   /// No description provided for @brokerHomeTruck.
@@ -3898,7 +3898,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeSelectOneIdleDriverAndOneIdle.
   ///
   /// In en, this message translates to:
-  /// **'Select one idle driver and one idle truck to continue.'**
+  /// **'Select one idle lorry owner and one idle truck to continue.'**
   String get brokerHomeSelectOneIdleDriverAndOneIdle;
 
   /// No description provided for @brokerHomeSelect.
@@ -4204,7 +4204,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobsReassignDriver.
   ///
   /// In en, this message translates to:
-  /// **'Reassign Driver'**
+  /// **'Reassign Lorry Owner'**
   String get brokerActiveJobsReassignDriver;
 
   /// No description provided for @brokerActiveJobsCurrentlyAssigned.
@@ -4234,7 +4234,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobsDriverReassigned.
   ///
   /// In en, this message translates to:
-  /// **'Driver reassigned.'**
+  /// **'Lorry Owner reassigned.'**
   String get brokerActiveJobsDriverReassigned;
 
   /// No description provided for @brokerActiveJobsActiveJobs.
@@ -4270,7 +4270,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobsDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerActiveJobsDriver;
 
   /// No description provided for @brokerActiveJobsTRIPPROGRESS.
@@ -4294,19 +4294,19 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverPleaseSignInAgainToCreateA.
   ///
   /// In en, this message translates to:
-  /// **'Please sign in again to create a driver.'**
+  /// **'Please sign in again to create a lorry owner.'**
   String get addDriverPleaseSignInAgainToCreateA;
 
   /// No description provided for @addDriverDriverProfileSavedSuccessfully.
   ///
   /// In en, this message translates to:
-  /// **'Driver profile saved successfully.'**
+  /// **'Lorry Owner profile saved successfully.'**
   String get addDriverDriverProfileSavedSuccessfully;
 
   /// No description provided for @addDriverHasBeenRegisteredAndAddedToYour.
   ///
   /// In en, this message translates to:
-  /// **'{name} has been registered and added to your drivers.'**
+  /// **'{name} has been registered and added to your lorry owners.'**
   String addDriverHasBeenRegisteredAndAddedToYour(Object name);
 
   /// No description provided for @addDriverTemporaryPassword.
@@ -4330,7 +4330,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverThisPasswordIsShownOnlyOnceThe.
   ///
   /// In en, this message translates to:
-  /// **'This password is shown only once — the driver can change it from their profile after logging in.'**
+  /// **'This password is shown only once — the lorry owner can change it from their profile after logging in.'**
   String get addDriverThisPasswordIsShownOnlyOnceThe;
 
   /// No description provided for @addDriverDone.
@@ -4348,7 +4348,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverIsAlreadyTiedToADriverAccount.
   ///
   /// In en, this message translates to:
-  /// **'{email} is already tied to a driver account.'**
+  /// **'{email} is already tied to a lorry owner account.'**
   String addDriverIsAlreadyTiedToADriverAccount(Object email);
 
   /// No description provided for @addDriverKeepEditing.
@@ -4360,7 +4360,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverViewDrivers.
   ///
   /// In en, this message translates to:
-  /// **'View drivers'**
+  /// **'View lorry owners'**
   String get addDriverViewDrivers;
 
   /// No description provided for @addDriverAccountDetails.
@@ -4546,7 +4546,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHistorySearchBookingsRoutesDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Search bookings, routes, drivers...'**
+  /// **'Search bookings, routes, lorry owners...'**
   String get brokerHistorySearchBookingsRoutesDrivers;
 
   /// No description provided for @brokerHistoryTotalNetEarningsFiltered.
@@ -4582,7 +4582,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHistoryDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerHistoryDriver;
 
   /// No description provided for @brokerHistoryViewDetails.
@@ -4606,13 +4606,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerDriverReqDriverRequests.
   ///
   /// In en, this message translates to:
-  /// **'Driver requests'**
+  /// **'Lorry Owner requests'**
   String get brokerDriverReqDriverRequests;
 
   /// No description provided for @brokerDriverReqCouldNotLoadDriverRequests.
   ///
   /// In en, this message translates to:
-  /// **'Could not load driver requests'**
+  /// **'Could not load lorry owner requests'**
   String get brokerDriverReqCouldNotLoadDriverRequests;
 
   /// No description provided for @brokerDriverReqNegotiationCards.
@@ -4630,13 +4630,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerDriverReqNoDriverRequestsYet.
   ///
   /// In en, this message translates to:
-  /// **'No driver requests yet'**
+  /// **'No lorry owner requests yet'**
   String get brokerDriverReqNoDriverRequestsYet;
 
   /// No description provided for @brokerDriverReqWhenADriverTimesOutTheRequest.
   ///
   /// In en, this message translates to:
-  /// **'When a driver times out, the request will appear here for broker takeover.'**
+  /// **'When a lorry owner times out, the request will appear here for broker takeover.'**
   String get brokerDriverReqWhenADriverTimesOutTheRequest;
 
   /// No description provided for @brokerDriverReqBookingID.
@@ -4696,7 +4696,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerDriverReqDriverTimedOutBrokerTakeoverActive.
   ///
   /// In en, this message translates to:
-  /// **'Driver timed out - broker takeover active.'**
+  /// **'Lorry Owner timed out - broker takeover active.'**
   String get brokerDriverReqDriverTimedOutBrokerTakeoverActive;
 
   /// No description provided for @brokerDriverReqBrokerAssigned.
@@ -4738,7 +4738,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerVehiclesSearchVehiclesDriversOrLocation.
   ///
   /// In en, this message translates to:
-  /// **'Search vehicles, drivers or location'**
+  /// **'Search vehicles, lorry owners or location'**
   String get brokerVehiclesSearchVehiclesDriversOrLocation;
 
   /// No description provided for @brokerVehiclesRemoveTruck.
@@ -4834,7 +4834,7 @@ abstract class AppLocalizations {
   /// No description provided for @addVehiclePleaseAssignADriver.
   ///
   /// In en, this message translates to:
-  /// **'Please assign a driver.'**
+  /// **'Please assign a lorry owner.'**
   String get addVehiclePleaseAssignADriver;
 
   /// No description provided for @addVehiclePleaseEnterAValidYear.
@@ -4858,7 +4858,7 @@ abstract class AppLocalizations {
   /// No description provided for @addVehicleAssignDriver.
   ///
   /// In en, this message translates to:
-  /// **'Assign driver'**
+  /// **'Assign lorry owner'**
   String get addVehicleAssignDriver;
 
   /// No description provided for @addVehicleMake.
@@ -5134,7 +5134,7 @@ abstract class AppLocalizations {
   /// No description provided for @addTruckAssignDriverOptional.
   ///
   /// In en, this message translates to:
-  /// **'Assign driver (optional)'**
+  /// **'Assign lorry owner (optional)'**
   String get addTruckAssignDriverOptional;
 
   /// No description provided for @addTruckMakeOptional.
@@ -5164,7 +5164,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackLiveDriverPhoneNumberIsNotAvailable.
   ///
   /// In en, this message translates to:
-  /// **'Driver phone number is not available.'**
+  /// **'Lorry Owner phone number is not available.'**
   String get brokerTrackLiveDriverPhoneNumberIsNotAvailable;
 
   /// No description provided for @brokerTrackLiveCouldNotOpenThePhoneApp.
@@ -5188,7 +5188,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackLiveCallDriver.
   ///
   /// In en, this message translates to:
-  /// **'Call driver'**
+  /// **'Call lorry owner'**
   String get brokerTrackLiveCallDriver;
 
   /// No description provided for @brokerTrackLiveLIVE.
@@ -5362,25 +5362,25 @@ abstract class AppLocalizations {
   /// No description provided for @driverDetailLiveDriverPosition.
   ///
   /// In en, this message translates to:
-  /// **'Live driver position'**
+  /// **'Live lorry owner position'**
   String get driverDetailLiveDriverPosition;
 
   /// No description provided for @driverDetailChatWithDriver.
   ///
   /// In en, this message translates to:
-  /// **'Chat with driver'**
+  /// **'Chat with lorry owner'**
   String get driverDetailChatWithDriver;
 
   /// No description provided for @brokerTruckAssignDriverAssignedToTruck.
   ///
   /// In en, this message translates to:
-  /// **'Driver assigned to truck.'**
+  /// **'Lorry Owner assigned to truck.'**
   String get brokerTruckAssignDriverAssignedToTruck;
 
   /// No description provided for @brokerTruckAssignAssignDriver.
   ///
   /// In en, this message translates to:
-  /// **'Assign Driver'**
+  /// **'Assign Lorry Owner'**
   String get brokerTruckAssignAssignDriver;
 
   /// No description provided for @brokerTruckAssignTruck.
@@ -5392,13 +5392,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTruckAssignNoActiveDriversAvailableRightNow.
   ///
   /// In en, this message translates to:
-  /// **'No active drivers available right now.'**
+  /// **'No active lorry owners available right now.'**
   String get brokerTruckAssignNoActiveDriversAvailableRightNow;
 
   /// No description provided for @brokerTruckAssignDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerTruckAssignDriver;
 
   /// No description provided for @brokerTruckAssignCancel.
@@ -5452,7 +5452,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackingDriverHasNotBegunNegotiation.
   ///
   /// In en, this message translates to:
-  /// **'Driver has not begun negotiation'**
+  /// **'Lorry Owner has not begun negotiation'**
   String get brokerTrackingDriverHasNotBegunNegotiation;
 
   /// No description provided for @brokerTrackingClickHereToNegotiateThisTimedOut.
@@ -5476,25 +5476,25 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Drivers'**
+  /// **'Lorry Owners'**
   String get brokerTrackingDrivers;
 
   /// No description provided for @brokerTrackingMonitorYourDriversAndLiveTrips.
   ///
   /// In en, this message translates to:
-  /// **'Monitor your drivers and live trips'**
+  /// **'Monitor your lorry owners and live trips'**
   String get brokerTrackingMonitorYourDriversAndLiveTrips;
 
   /// No description provided for @brokerTrackingSearchDriversPhoneOrVehicle.
   ///
   /// In en, this message translates to:
-  /// **'Search drivers, phone or vehicle'**
+  /// **'Search lorry owners, phone or vehicle'**
   String get brokerTrackingSearchDriversPhoneOrVehicle;
 
   /// No description provided for @brokerTrackingYourDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Your drivers'**
+  /// **'Your lorry owners'**
   String get brokerTrackingYourDrivers;
 
   /// No description provided for @brokerTrackingChangeFareRequest.
@@ -5924,7 +5924,7 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchDriverOffers.
   ///
   /// In en, this message translates to:
-  /// **'Driver offers ({count})'**
+  /// **'Lorry Owner offers ({count})'**
   String truckSearchDriverOffers(Object count);
 
   /// No description provided for @allEarningsActiveMonths.
@@ -6140,7 +6140,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveDescription.
   ///
   /// In en, this message translates to:
-  /// **'A small delay here can cost you the booking. Assign a driver quickly.'**
+  /// **'A small delay here can cost you the booking. Assign a lorry owner quickly.'**
   String get brokerActiveDescription;
 
   /// No description provided for @brokerActiveSubmit.
@@ -6164,7 +6164,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get brokerHomeDriverFallback;
 
   /// No description provided for @brokerHomeDropUnavailable.
@@ -6344,13 +6344,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqAcceptedPickDriver.
   ///
   /// In en, this message translates to:
-  /// **'Accepted. Pick a driver to continue.'**
+  /// **'Accepted. Pick a lorry owner to continue.'**
   String get brokerReqAcceptedPickDriver;
 
   /// No description provided for @brokerReqAssignmentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Assign driver & truck'**
+  /// **'Assign lorry owner & truck'**
   String get brokerReqAssignmentTitle;
 
   /// No description provided for @brokerReqAutoSelectedDetails.
@@ -6416,7 +6416,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqNoDriversFound.
   ///
   /// In en, this message translates to:
-  /// **'No drivers found'**
+  /// **'No lorry owners found'**
   String get brokerReqNoDriversFound;
 
   /// No description provided for @brokerReqNoTrucksFound.
@@ -7232,7 +7232,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientPublicDriverLabel.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get clientPublicDriverLabel;
 
   /// No description provided for @clientPublicDropLabel.
@@ -8894,37 +8894,37 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationDriverAcceptedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver accepted'**
+  /// **'Lorry Owner accepted'**
   String get negotiationDriverAcceptedTitle;
 
   /// No description provided for @negotiationDriverConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for the driver to confirm the new fare.'**
+  /// **'Waiting for the lorry owner to confirm the new fare.'**
   String get negotiationDriverConfirmBody;
 
   /// No description provided for @negotiationDriverConfirmNowTitle.
   ///
   /// In en, this message translates to:
-  /// **'Confirm with driver'**
+  /// **'Confirm with lorry owner'**
   String get negotiationDriverConfirmNowTitle;
 
   /// No description provided for @negotiationDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get negotiationDriverFallback;
 
   /// No description provided for @negotiationDriverResponseBody.
   ///
   /// In en, this message translates to:
-  /// **'The driver has responded to your fare change.'**
+  /// **'The lorry owner has responded to your fare change.'**
   String get negotiationDriverResponseBody;
 
   /// No description provided for @negotiationDriverResponseTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver responded'**
+  /// **'Lorry Owner responded'**
   String get negotiationDriverResponseTitle;
 
   /// No description provided for @negotiationFareChangeBody.
@@ -9002,13 +9002,13 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationWaitingDriverBody.
   ///
   /// In en, this message translates to:
-  /// **'We have sent the new fare to the driver.'**
+  /// **'We have sent the new fare to the lorry owner.'**
   String get negotiationWaitingDriverBody;
 
   /// No description provided for @negotiationWaitingDriverTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for driver'**
+  /// **'Waiting for lorry owner'**
   String get negotiationWaitingDriverTitle;
 
   /// No description provided for @onboardingFastSubtitle.
@@ -9038,7 +9038,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSafeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Book verified trucks and drivers with confidence.'**
+  /// **'Book verified trucks and lorry owners with confidence.'**
   String get onboardingSafeSubtitle;
 
   /// No description provided for @onboardingSafeTitle.
@@ -9428,7 +9428,7 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchAllDeclinedHint.
   ///
   /// In en, this message translates to:
-  /// **'Nearby drivers declined. Try widening your search radius.'**
+  /// **'Nearby lorry owners declined. Try widening your search radius.'**
   String get truckSearchAllDeclinedHint;
 
   /// No description provided for @truckSearchBack.
@@ -9464,19 +9464,19 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get truckSearchDriverFallback;
 
   /// No description provided for @truckSearchFindingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Finding drivers'**
+  /// **'Finding lorry owners'**
   String get truckSearchFindingDrivers;
 
   /// No description provided for @truckSearchFindingNearby.
   ///
   /// In en, this message translates to:
-  /// **'Looking for drivers near your pickup'**
+  /// **'Looking for lorry owners near your pickup'**
   String get truckSearchFindingNearby;
 
   /// No description provided for @truckSearchGoBack.
@@ -9500,7 +9500,7 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchNoDriverAccepted.
   ///
   /// In en, this message translates to:
-  /// **'No driver accepted yet'**
+  /// **'No lorry owner accepted yet'**
   String get truckSearchNoDriverAccepted;
 
   /// No description provided for @truckSearchNoResponse.
@@ -9512,7 +9512,7 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchNotifyingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Notifying drivers nearby'**
+  /// **'Notifying lorry owners nearby'**
   String get truckSearchNotifyingDrivers;
 
   /// No description provided for @truckSearchRetry.
@@ -9596,7 +9596,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycDriverInformation.
   ///
   /// In en, this message translates to:
-  /// **'Driver Information'**
+  /// **'Lorry Owner Information'**
   String get driverKycDriverInformation;
 
   /// No description provided for @driverKycPANNumber.
@@ -9782,7 +9782,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycVerifiedSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your driver account is verified and active.'**
+  /// **'Your lorry owner account is verified and active.'**
   String get driverKycVerifiedSubtitle;
 
   /// No description provided for @driverKycVerifiedBadge.
@@ -9830,7 +9830,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycCompleteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Complete Driver KYC'**
+  /// **'Complete Lorry Owner KYC'**
   String get driverKycCompleteTitle;
 
   /// No description provided for @driverKycCompleteSubtitle.
@@ -10100,7 +10100,7 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationAcceptedWaitingDriverConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Accepted - waiting for the driver to confirm.'**
+  /// **'Accepted - waiting for the lorry owner to confirm.'**
   String get negotiationAcceptedWaitingDriverConfirm;
 
   /// No description provided for @loadingPoint.
@@ -10214,7 +10214,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqAcceptedAssignDriverTruck.
   ///
   /// In en, this message translates to:
-  /// **'This request has been accepted. Assign a driver and truck.'**
+  /// **'This request has been accepted. Assign a lorry owner and truck.'**
   String get brokerReqAcceptedAssignDriverTruck;
 
   /// No description provided for @brokerReqFareChangeWaitingClient.
@@ -10346,19 +10346,19 @@ abstract class AppLocalizations {
   /// No description provided for @historyDetailsPreviousDriver.
   ///
   /// In en, this message translates to:
-  /// **'Previous driver'**
+  /// **'Previous lorry owner'**
   String get historyDetailsPreviousDriver;
 
   /// No description provided for @historyDetailsNewDriver.
   ///
   /// In en, this message translates to:
-  /// **'New driver'**
+  /// **'New lorry owner'**
   String get historyDetailsNewDriver;
 
   /// No description provided for @historyDetailsDriverChanged.
   ///
   /// In en, this message translates to:
-  /// **'Driver changed ({count})'**
+  /// **'Lorry Owner changed ({count})'**
   String historyDetailsDriverChanged(Object count);
 
   /// No description provided for @deliveryDetailsStopLabel.
@@ -10526,7 +10526,7 @@ abstract class AppLocalizations {
   /// No description provided for @addVehicleErrSelectDriver.
   ///
   /// In en, this message translates to:
-  /// **'Select a driver'**
+  /// **'Select a lorry owner'**
   String get addVehicleErrSelectDriver;
 
   /// No description provided for @addVehicleErrMake.
@@ -10556,37 +10556,37 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit driver'**
+  /// **'Edit lorry owner'**
   String get addDriverEditTitle;
 
   /// No description provided for @addDriverAddTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add driver'**
+  /// **'Add lorry owner'**
   String get addDriverAddTitle;
 
   /// No description provided for @addDriverEditSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Update the driver account'**
+  /// **'Update the lorry owner account'**
   String get addDriverEditSubtitle;
 
   /// No description provided for @addDriverAddSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Add a new driver to your fleet'**
+  /// **'Add a new lorry owner to your fleet'**
   String get addDriverAddSubtitle;
 
   /// No description provided for @addDriverUpdateAction.
   ///
   /// In en, this message translates to:
-  /// **'Update driver'**
+  /// **'Update lorry owner'**
   String get addDriverUpdateAction;
 
   /// No description provided for @addDriverAddPhotoTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add driver photo'**
+  /// **'Add lorry owner photo'**
   String get addDriverAddPhotoTitle;
 
   /// No description provided for @addDriverErrName.
@@ -10604,7 +10604,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverEmailHelper.
   ///
   /// In en, this message translates to:
-  /// **'Enter a valid email address — the driver logs in with email + password.'**
+  /// **'Enter a valid email address — the lorry owner logs in with email + password.'**
   String get addDriverEmailHelper;
 
   /// No description provided for @addDriverErrMobile.
@@ -10856,7 +10856,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientBookingNoDriverInWindow.
   ///
   /// In en, this message translates to:
-  /// **'No driver found within the search window'**
+  /// **'No lorry owner found within the search window'**
   String get clientBookingNoDriverInWindow;
 
   /// No description provided for @clientBookingBookNowTooltip.
@@ -10892,7 +10892,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientNegotiationRefreshDriverOfferFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not refresh the live driver offer.'**
+  /// **'Could not refresh the live lorry owner offer.'**
   String get clientNegotiationRefreshDriverOfferFailed;
 
   /// No description provided for @clientTrackingProofLoadFailed.
@@ -10934,7 +10934,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientTrackingConfirmedDriver.
   ///
   /// In en, this message translates to:
-  /// **'Confirmed driver'**
+  /// **'Confirmed lorry owner'**
   String get clientTrackingConfirmedDriver;
 
   /// No description provided for @clientTrackingConfirmed.
@@ -11126,7 +11126,7 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverCreateAccountSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Create a driver account'**
+  /// **'Create a lorry owner account'**
   String get addDriverCreateAccountSubtitle;
 
   /// No description provided for @brokerNotificationsMinsAgo.
@@ -11216,7 +11216,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingAssignedDriver.
   ///
   /// In en, this message translates to:
-  /// **'Assigned driver'**
+  /// **'Assigned lorry owner'**
   String get trackingAssignedDriver;
 
   /// No description provided for @trackingPackageInformation.
@@ -11252,7 +11252,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingDriverNotAssigned.
   ///
   /// In en, this message translates to:
-  /// **'Driver not assigned'**
+  /// **'Lorry Owner not assigned'**
   String get trackingDriverNotAssigned;
 
   /// No description provided for @trackingPickupCodeTitle.
@@ -11276,7 +11276,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingPickupCodeShareHint.
   ///
   /// In en, this message translates to:
-  /// **'Share this with your driver when they arrive to confirm pickup.'**
+  /// **'Share this with your lorry owner when they arrive to confirm pickup.'**
   String get trackingPickupCodeShareHint;
 
   /// No description provided for @trackingLiveBadge.
@@ -11300,7 +11300,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingPodApprovalPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.'**
+  /// **'Does this look right? Approve to let the lorry owner close out the trip, or reject to ask for new photos.'**
   String get trackingPodApprovalPrompt;
 
   /// No description provided for @trackingPodApproving.
@@ -11324,13 +11324,13 @@ abstract class AppLocalizations {
   /// No description provided for @trackingPodRejectionWithReason.
   ///
   /// In en, this message translates to:
-  /// **'You asked the driver to re-upload: \"{reason}.\" Waiting for new photos.'**
+  /// **'You asked the lorry owner to re-upload: \"{reason}.\" Waiting for new photos.'**
   String trackingPodRejectionWithReason(Object reason);
 
   /// No description provided for @trackingPodRejection.
   ///
   /// In en, this message translates to:
-  /// **'You asked the driver to re-upload. Waiting for new photos.'**
+  /// **'You asked the lorry owner to re-upload. Waiting for new photos.'**
   String get trackingPodRejection;
 
   /// No description provided for @trackingPodLoadFailed.
@@ -11354,7 +11354,7 @@ abstract class AppLocalizations {
   /// No description provided for @bookingScheduledNotifyMessage.
   ///
   /// In en, this message translates to:
-  /// **'We will notify drivers or brokers closer to your pickup time.'**
+  /// **'We will notify lorry owners or brokers closer to your pickup time.'**
   String get bookingScheduledNotifyMessage;
 
   /// No description provided for @checkoutOpeningActivity.
@@ -11450,7 +11450,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycVerifiedDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your KYC has been verified. Your driver account is now active.'**
+  /// **'Your KYC has been verified. Your lorry owner account is now active.'**
   String get driverKycVerifiedDescription;
 
   /// No description provided for @driverKycSubmittedDescription.
@@ -11546,7 +11546,7 @@ abstract class AppLocalizations {
   /// No description provided for @pickupOtpShareMessage.
   ///
   /// In en, this message translates to:
-  /// **'Share this code with your driver when they arrive to confirm pickup'**
+  /// **'Share this code with your lorry owner when they arrive to confirm pickup'**
   String get pickupOtpShareMessage;
 
   /// No description provided for @trackingTimelineBookingCreated.
@@ -11564,7 +11564,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingTimelineDriverAssigned.
   ///
   /// In en, this message translates to:
-  /// **'Driver assigned'**
+  /// **'Lorry Owner assigned'**
   String get trackingTimelineDriverAssigned;
 
   /// No description provided for @trackingTimelineCompletedSuccessfully.
@@ -11900,13 +11900,13 @@ abstract class AppLocalizations {
   /// No description provided for @trackingPodFilesPosted.
   ///
   /// In en, this message translates to:
-  /// **'{count} file(s) posted by driver'**
+  /// **'{count} file(s) posted by lorry owner'**
   String trackingPodFilesPosted(Object count);
 
   /// No description provided for @trackingDriverPending.
   ///
   /// In en, this message translates to:
-  /// **'Driver pending'**
+  /// **'Lorry Owner pending'**
   String get trackingDriverPending;
 
   /// No description provided for @trackingTruckNotAssigned.
@@ -11924,7 +11924,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingDriverChangedCount.
   ///
   /// In en, this message translates to:
-  /// **'Driver changed ({count})'**
+  /// **'Lorry Owner changed ({count})'**
   String trackingDriverChangedCount(Object count);
 
   /// No description provided for @trackingCancelWhyHint.
@@ -11984,7 +11984,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingChangeDriverFare.
   ///
   /// In en, this message translates to:
-  /// **'Change driver fare'**
+  /// **'Change lorry owner fare'**
   String get trackingChangeDriverFare;
 
   /// No description provided for @trackingCurrentOffer.
@@ -12008,7 +12008,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingNegotiationOffersSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver requests and broker offers from the client flow.'**
+  /// **'Lorry Owner requests and broker offers from the client flow.'**
   String get trackingNegotiationOffersSubtitle;
 
   /// No description provided for @trackingNegotiationLoadFailed.
@@ -12050,13 +12050,13 @@ abstract class AppLocalizations {
   /// No description provided for @trackingWaitingDriverConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for driver confirmation'**
+  /// **'Waiting for lorry owner confirmation'**
   String get trackingWaitingDriverConfirmation;
 
   /// No description provided for @trackingWaitingDriverResponse.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for driver response'**
+  /// **'Waiting for lorry owner response'**
   String get trackingWaitingDriverResponse;
 
   /// No description provided for @trackingConfirmed.
@@ -12260,7 +12260,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTruckHistoryDriverPending.
   ///
   /// In en, this message translates to:
-  /// **'Driver pending'**
+  /// **'Lorry Owner pending'**
   String get brokerTruckHistoryDriverPending;
 
   /// No description provided for @brokerTruckHistoryDistancePending.
@@ -12296,19 +12296,19 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackingNoDriversYet.
   ///
   /// In en, this message translates to:
-  /// **'No drivers yet'**
+  /// **'No lorry owners yet'**
   String get brokerTrackingNoDriversYet;
 
   /// No description provided for @brokerTrackingNoDriversMatch.
   ///
   /// In en, this message translates to:
-  /// **'No drivers match \"{query}\"'**
+  /// **'No lorry owners match \"{query}\"'**
   String brokerTrackingNoDriversMatch(Object query);
 
   /// No description provided for @brokerTrackingCreateDriverFromPlus.
   ///
   /// In en, this message translates to:
-  /// **'Create a driver from the + button to start tracking.'**
+  /// **'Create a lorry owner from the + button to start tracking.'**
   String get brokerTrackingCreateDriverFromPlus;
 
   /// No description provided for @brokerTrackingTryDifferentQuery.
@@ -12320,7 +12320,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTrackingNoActiveTripIncidentData.
   ///
   /// In en, this message translates to:
-  /// **'No active trip incident data for this driver.'**
+  /// **'No active trip incident data for this lorry owner.'**
   String get brokerTrackingNoActiveTripIncidentData;
 
   /// No description provided for @brokerTrackingNoIncidentsYet.
@@ -12374,7 +12374,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerHomeTheDriver.
   ///
   /// In en, this message translates to:
-  /// **'The driver'**
+  /// **'The lorry owner'**
   String get brokerHomeTheDriver;
 
   /// No description provided for @brokerNotificationsMarkAllRead.
@@ -12452,7 +12452,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerReqDetailAutoSelectedDriver.
   ///
   /// In en, this message translates to:
-  /// **'Auto-selected driver'**
+  /// **'Auto-selected lorry owner'**
   String get brokerReqDetailAutoSelectedDriver;
 
   /// No description provided for @brokerReqDetailAutoSelectedTruck.
@@ -12464,7 +12464,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerTruckLocationDriverLabel.
   ///
   /// In en, this message translates to:
-  /// **'Driver: {name}'**
+  /// **'Lorry Owner: {name}'**
   String brokerTruckLocationDriverLabel(Object name);
 
   /// No description provided for @brokerDriverRequestsAccepted.
@@ -13160,7 +13160,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycDriverKycTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver KYC'**
+  /// **'Lorry Owner KYC'**
   String get driverKycDriverKycTitle;
 
   /// No description provided for @chatCurrentUserSenderName.
@@ -13202,19 +13202,19 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationWaitingDriverAcceptedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver accepted the request'**
+  /// **'Lorry Owner accepted the request'**
   String get negotiationWaitingDriverAcceptedTitle;
 
   /// No description provided for @negotiationWaitingDriverTurnToConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver accepted - your turn to confirm'**
+  /// **'Lorry Owner accepted - your turn to confirm'**
   String get negotiationWaitingDriverTurnToConfirmTitle;
 
   /// No description provided for @negotiationWaitingDriverConfirmationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for driver confirmation'**
+  /// **'Waiting for lorry owner confirmation'**
   String get negotiationWaitingDriverConfirmationTitle;
 
   /// No description provided for @negotiationWaitingFareChangeReceivedTitle.
@@ -13226,37 +13226,37 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationWaitingDriverResponseTypeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for driver response'**
+  /// **'Waiting for lorry owner response'**
   String get negotiationWaitingDriverResponseTypeTitle;
 
   /// No description provided for @negotiationWaitingDriverAcceptedBody.
   ///
   /// In en, this message translates to:
-  /// **'The driver accepted your request. You can confirm the booking and continue to payment.'**
+  /// **'The lorry owner accepted your request. You can confirm the booking and continue to payment.'**
   String get negotiationWaitingDriverAcceptedBody;
 
   /// No description provided for @negotiationWaitingDriverCommittedBody.
   ///
   /// In en, this message translates to:
-  /// **'The driver already committed. Confirm or decline to finish the handshake.'**
+  /// **'The lorry owner already committed. Confirm or decline to finish the handshake.'**
   String get negotiationWaitingDriverCommittedBody;
 
   /// No description provided for @negotiationWaitingDriverYourConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'You already confirmed this offer. We are waiting for the driver to confirm now.'**
+  /// **'You already confirmed this offer. We are waiting for the lorry owner to confirm now.'**
   String get negotiationWaitingDriverYourConfirmBody;
 
   /// No description provided for @negotiationWaitingDriverChangedFareBody.
   ///
   /// In en, this message translates to:
-  /// **'The driver changed the fare. Review it here and respond instantly.'**
+  /// **'The lorry owner changed the fare. Review it here and respond instantly.'**
   String get negotiationWaitingDriverChangedFareBody;
 
   /// No description provided for @negotiationWaitingDriverTimedOutBody.
   ///
   /// In en, this message translates to:
-  /// **'The driver did not respond in time. The broker can step in now.'**
+  /// **'The lorry owner did not respond in time. The broker can step in now.'**
   String get negotiationWaitingDriverTimedOutBody;
 
   /// No description provided for @negotiationWaitingDriverLiveBody.
@@ -13328,7 +13328,7 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationWaitingNextDriverUpdate.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for the next driver update...'**
+  /// **'Waiting for the next lorry owner update...'**
   String get negotiationWaitingNextDriverUpdate;
 
   /// No description provided for @negotiationUseSliderHint.
@@ -13406,13 +13406,13 @@ abstract class AppLocalizations {
   /// No description provided for @addDriverTapToUpdateTheDriverPhoto.
   ///
   /// In en, this message translates to:
-  /// **'Tap to update the driver photo'**
+  /// **'Tap to update the lorry owner photo'**
   String get addDriverTapToUpdateTheDriverPhoto;
 
   /// No description provided for @addDriverTapTheCameraToAddADriverPhoto.
   ///
   /// In en, this message translates to:
-  /// **'Tap the camera to add a driver photo'**
+  /// **'Tap the camera to add a lorry owner photo'**
   String get addDriverTapTheCameraToAddADriverPhoto;
 
   /// No description provided for @addVehicleTruckAddedSuccessfully.
@@ -13490,7 +13490,7 @@ abstract class AppLocalizations {
   /// No description provided for @driverTrackingLocationPermissionRequired.
   ///
   /// In en, this message translates to:
-  /// **'Location permission is required for live driver tracking.'**
+  /// **'Location permission is required for live lorry owner tracking.'**
   String get driverTrackingLocationPermissionRequired;
 
   /// No description provided for @driverTrackingLocationPermissionDeniedForever.
@@ -13532,7 +13532,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobDriverPending.
   ///
   /// In en, this message translates to:
-  /// **'Driver pending'**
+  /// **'Lorry Owner pending'**
   String get brokerActiveJobDriverPending;
 
   /// No description provided for @brokerActiveJobLoadPending.
@@ -13550,7 +13550,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobDriverAssigned.
   ///
   /// In en, this message translates to:
-  /// **'Driver assigned'**
+  /// **'Lorry Owner assigned'**
   String get brokerActiveJobDriverAssigned;
 
   /// No description provided for @brokerActiveJobEnRoutePickup.
@@ -13562,7 +13562,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerActiveJobDriverHeadingToPickup.
   ///
   /// In en, this message translates to:
-  /// **'Driver heading to pickup'**
+  /// **'Lorry Owner heading to pickup'**
   String get brokerActiveJobDriverHeadingToPickup;
 
   /// No description provided for @brokerActiveJobPickedUp.
@@ -13634,7 +13634,7 @@ abstract class AppLocalizations {
   /// No description provided for @brokerFlowDriverRequestSent.
   ///
   /// In en, this message translates to:
-  /// **'Driver request sent'**
+  /// **'Lorry Owner request sent'**
   String get brokerFlowDriverRequestSent;
 
   /// No description provided for @brokerFlowBrokerNegotiation.
@@ -13718,7 +13718,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientOfferByDriver.
   ///
   /// In en, this message translates to:
-  /// **'Driver'**
+  /// **'Lorry Owner'**
   String get clientOfferByDriver;
 
   /// No description provided for @nearbyTruckRef.
@@ -13742,13 +13742,13 @@ abstract class AppLocalizations {
   /// No description provided for @brokerFlowDriverResponse.
   ///
   /// In en, this message translates to:
-  /// **'Driver response'**
+  /// **'Lorry Owner response'**
   String get brokerFlowDriverResponse;
 
   /// No description provided for @brokerFlowDriverTimedOut.
   ///
   /// In en, this message translates to:
-  /// **'Driver timed out'**
+  /// **'Lorry Owner timed out'**
   String get brokerFlowDriverTimedOut;
 
   /// No description provided for @brokerFlowHandoffActive.
@@ -13832,13 +13832,13 @@ abstract class AppLocalizations {
   /// No description provided for @driverTrackingDisclosureTitle.
   ///
   /// In en, this message translates to:
-  /// **'Share driver location'**
+  /// **'Share lorry owner location'**
   String get driverTrackingDisclosureTitle;
 
   /// No description provided for @driverTrackingDisclosureBody.
   ///
   /// In en, this message translates to:
-  /// **'SSK collects your location to share live driver availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.'**
+  /// **'SSK collects your location to share live lorry owner availability and trip tracking with brokers and clients while you are online or have an active trip, even when the app is in the background or the screen is locked. Tracking stops when you are offline and have no active trip. Continue to allow location access.'**
   String get driverTrackingDisclosureBody;
 
   /// No description provided for @coreDigilockerGstLabel.

@@ -183,7 +183,7 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
       if (!silentDeclined && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('That driver declined — pick another truck.')),
+              content: Text('That lorry owner declined — pick another truck.')),
         );
       }
       setState(() {
@@ -288,7 +288,7 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
     final l10n = AppLocalizations.of(context)!;
     final title = switch (_phase) {
       _PartLoadPhase.candidates => 'Pick a truck to share',
-      _PartLoadPhase.pending => 'Waiting for the driver',
+      _PartLoadPhase.pending => 'Waiting for the lorry owner',
       _PartLoadPhase.accepted => l10n.bookingConfirmed,
     };
     // Web parity (PartLoadSearch.jsx): the radar ping runs through both
@@ -507,8 +507,8 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
   Widget _pendingBody() {
     final r = _request;
     final driverLine = (r?.truckReg.isNotEmpty ?? false)
-        ? 'Waiting for ${(r!.driverName.isEmpty ? 'the driver' : r.driverName)} (${r.truckReg})'
-        : 'Waiting for the driver to respond';
+        ? 'Waiting for ${(r!.driverName.isEmpty ? 'the lorry owner' : r.driverName)} (${r.truckReg})'
+        : 'Waiting for the lorry owner to respond';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -584,7 +584,7 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
           if (r?.driverTimedOut ?? false) ...[
             const SizedBox(height: 8),
             Text(
-              'Driver timed out — waiting on their broker…',
+              'Lorry Owner timed out — waiting on their broker…',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
@@ -601,7 +601,7 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
     final l10n = AppLocalizations.of(context)!;
     final r = _request;
     final message =
-        '${(r?.driverName.isEmpty ?? true) ? 'Your driver' : r!.driverName} will carry your load${(r?.truckReg.isNotEmpty ?? false) ? ' — truck ${r!.truckReg}' : ''}.';
+        '${(r?.driverName.isEmpty ?? true) ? 'Your lorry owner' : r!.driverName} will carry your load${(r?.truckReg.isNotEmpty ?? false) ? ' — truck ${r!.truckReg}' : ''}.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -893,7 +893,7 @@ class PartLoadCandidateTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${truck.registration} · ${truck.driverName.isEmpty ? 'Driver' : truck.driverName}',
+                  '${truck.registration} · ${truck.driverName.isEmpty ? 'Lorry Owner' : truck.driverName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(

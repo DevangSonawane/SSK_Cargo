@@ -666,7 +666,7 @@ class _DriverDeliveryCompletionFlowScreenState
       _str(const ['driverUpiId', 'driver_upi_id', 'upiId', 'upi_id']);
   String get _driverName => _str(const ['driverName', 'driver_name']).isNotEmpty
       ? _str(const ['driverName', 'driver_name'])
-      : 'Driver';
+      : 'Lorry Owner';
   String get _companyUpiId => _str(const ['companyUpiId', 'company_upi_id']);
   String get _companyUpiName {
     final name = _str(const ['companyUpiName', 'company_upi_name']);

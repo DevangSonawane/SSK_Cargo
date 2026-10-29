@@ -1757,7 +1757,7 @@ List<TrackingTimelineStep> _timelineForStatus(
   );
   final driverAssigned = text(
     l10n?.trackingTimelineDriverAssigned,
-    'Driver assigned',
+    'Lorry Owner assigned',
   );
   final completedSuccessfully = text(
     l10n?.trackingTimelineCompletedSuccessfully,

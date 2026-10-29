@@ -391,7 +391,7 @@ class _BrokerMonthlyHiringFormScreenState
                           decoration: InputDecoration(
                             labelText: 'Availability Notes (optional)',
                             hintText:
-                                'e.g. Available across Maharashtra, driver included',
+                                'e.g. Available across Maharashtra, lorry owner included',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),

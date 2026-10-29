@@ -4415,7 +4415,7 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
   late final TextEditingController _controller;
 
   static const _quickReasons = [
-    'Driver is delayed',
+    'Lorry Owner is delayed',
     'Booked by mistake',
     'Found another truck',
     'Price changed',
