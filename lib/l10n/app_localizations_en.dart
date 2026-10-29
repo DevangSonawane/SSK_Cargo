@@ -7917,4 +7917,47 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clientBookingCreditLimitReachedFallback =>
       'You\'ve reached your credit limit. Please clear your outstanding bill in My Bills before booking again.';
+
+  @override
+  String get serviceableAreasTitle => 'Serviceable areas';
+
+  @override
+  String get serviceableAreasSubtitle =>
+      'We currently pick up loads only from these cities and pincodes.';
+
+  @override
+  String serviceableAreasPincodeCount(int count) {
+    return '$count pincodes';
+  }
+
+  @override
+  String get serviceableAreasSearchHint => 'Search city or pincode';
+
+  @override
+  String get serviceableAreasNoResults => 'We don\'t serve this location yet';
+
+  @override
+  String get unserviceableTitle => 'We don\'t serve this area yet';
+
+  @override
+  String get unserviceablePickupBody =>
+      'Your loading location is outside our service area. Pick a location in one of our serviceable cities.';
+
+  @override
+  String get unserviceableDropBody =>
+      'Your unloading location is outside our service area. Pick a location in one of our serviceable cities.';
+
+  @override
+  String unserviceablePincode(String pincode) {
+    return 'Pincode $pincode';
+  }
+
+  @override
+  String get unserviceableChangePickup => 'Change loading location';
+
+  @override
+  String get unserviceableChangeDrop => 'Change unloading location';
+
+  @override
+  String get unserviceableViewAreas => 'View serviceable areas';
 }

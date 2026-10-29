@@ -601,6 +601,21 @@ class _LocationDetailsScreenState
                             ),
                           ),
                         ),
+                        if (widget.kind == _LocationFieldKind.pickup) ...[
+                          const SizedBox(width: 4),
+                          IconButton(
+                            onPressed: () =>
+                                _showServiceableAreasSheet(context),
+                            tooltip: AppLocalizations.of(
+                              context,
+                            )!.serviceableAreasTitle,
+                            icon: Icon(
+                              AppIcons.info_outline_rounded,
+                              size: 22,
+                              color: context.colors.infoEmphasis,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 20),

@@ -14320,6 +14320,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'ve reached your credit limit. Please clear your outstanding bill in My Bills before booking again.'**
   String get clientBookingCreditLimitReachedFallback;
+
+  /// No description provided for @serviceableAreasTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Serviceable areas'**
+  String get serviceableAreasTitle;
+
+  /// No description provided for @serviceableAreasSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We currently pick up loads only from these cities and pincodes.'**
+  String get serviceableAreasSubtitle;
+
+  /// No description provided for @serviceableAreasPincodeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pincodes'**
+  String serviceableAreasPincodeCount(int count);
+
+  /// No description provided for @serviceableAreasSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search city or pincode'**
+  String get serviceableAreasSearchHint;
+
+  /// No description provided for @serviceableAreasNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'We don\'t serve this location yet'**
+  String get serviceableAreasNoResults;
+
+  /// No description provided for @unserviceableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We don\'t serve this area yet'**
+  String get unserviceableTitle;
+
+  /// No description provided for @unserviceablePickupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your loading location is outside our service area. Pick a location in one of our serviceable cities.'**
+  String get unserviceablePickupBody;
+
+  /// No description provided for @unserviceableDropBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unloading location is outside our service area. Pick a location in one of our serviceable cities.'**
+  String get unserviceableDropBody;
+
+  /// No description provided for @unserviceablePincode.
+  ///
+  /// In en, this message translates to:
+  /// **'Pincode {pincode}'**
+  String unserviceablePincode(String pincode);
+
+  /// No description provided for @unserviceableChangePickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Change loading location'**
+  String get unserviceableChangePickup;
+
+  /// No description provided for @unserviceableChangeDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Change unloading location'**
+  String get unserviceableChangeDrop;
+
+  /// No description provided for @unserviceableViewAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'View serviceable areas'**
+  String get unserviceableViewAreas;
 }
 
 class _AppLocalizationsDelegate

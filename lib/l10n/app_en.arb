@@ -3024,5 +3024,31 @@
   "clientBillsPaidSuccess": "Bill paid successfully",
   "clientBillsLoadFailed": "Could not load your bills",
   "clientPaidBookingLabel": "Amount",
-  "clientBookingCreditLimitReachedFallback": "You've reached your credit limit. Please clear your outstanding bill in My Bills before booking again."
+  "clientBookingCreditLimitReachedFallback": "You've reached your credit limit. Please clear your outstanding bill in My Bills before booking again.",
+  "serviceableAreasTitle": "Serviceable areas",
+  "serviceableAreasSubtitle": "We currently pick up loads only from these cities and pincodes.",
+  "serviceableAreasPincodeCount": "{count} pincodes",
+  "@serviceableAreasPincodeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serviceableAreasSearchHint": "Search city or pincode",
+  "serviceableAreasNoResults": "We don't serve this location yet",
+  "unserviceableTitle": "We don't serve this area yet",
+  "unserviceablePickupBody": "Your loading location is outside our service area. Pick a location in one of our serviceable cities.",
+  "unserviceableDropBody": "Your unloading location is outside our service area. Pick a location in one of our serviceable cities.",
+  "unserviceablePincode": "Pincode {pincode}",
+  "@unserviceablePincode": {
+    "placeholders": {
+      "pincode": {
+        "type": "String"
+      }
+    }
+  },
+  "unserviceableChangePickup": "Change loading location",
+  "unserviceableChangeDrop": "Change unloading location",
+  "unserviceableViewAreas": "View serviceable areas"
 }

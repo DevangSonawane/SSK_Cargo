@@ -2131,6 +2131,8 @@ Future<void> showQuickBookingFlow(
       pickupLng: pickup.longitude,
       dropLat: drop.latitude,
       dropLng: drop.longitude,
+      pickupPincode: pickup.pincode,
+      dropPincode: drop.pincode,
       scheduledDate:
           initialScheduledDate ?? DateTime.now().add(const Duration(hours: 3)),
       isScheduled: initialScheduledDate != null,

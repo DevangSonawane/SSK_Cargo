@@ -37,3 +37,4 @@ part 'client_flow/negotiation_sheets.dart';
 part 'client_flow/checkout_and_status_widgets.dart';
 part 'client_flow/search_selection_widgets.dart';
 part 'client_flow/vehicle_and_bottom_bar.dart';
+part 'client_flow/serviceable_areas.dart';

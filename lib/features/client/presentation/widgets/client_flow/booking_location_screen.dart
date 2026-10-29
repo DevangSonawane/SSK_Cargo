@@ -323,6 +323,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
     if (widget.skipLocationStep) {
       _step = _BookingFlowStep.itemDetails;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_validateSkippedLocations());
+        }
+      });
     }
 
     if (widget.autoOpenLocationFlow) {
@@ -1005,6 +1010,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   void _showBookingCreateError(Object error) {
+    if (_isUnserviceableError(error)) {
+      unawaited(_handleUnserviceableLocation(error as ApiException));
+      return;
+    }
     final message = switch (error) {
       ApiException(code: 'BILLING_PARTY_REQUIRED') =>
         'Supplier Name and GST Number are required when the receiver pays.',
@@ -2659,6 +2668,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _resolvingDistance = true;
     });
 
+    ApiException? unserviceable;
     try {
       await _resolveTypedCoordinates(pickup: pickup, drop: drop);
       // Best-effort pincode enrichment right before the earliest geofence
@@ -2770,13 +2780,24 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _step = _BookingFlowStep.itemDetails;
       });
       _stopLocationStream();
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      if (_isUnserviceableError(error)) {
+        unserviceable = error;
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
     } catch (error) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
     } finally {
@@ -2786,6 +2807,81 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
       }
     }
+
+    if (unserviceable != null && mounted) {
+      await _handleUnserviceableLocation(unserviceable);
+    }
+  }
+
+  /// Home quick-booking picks both ends before this screen opens and jumps
+  /// straight to the weight step, so run the backend geofence check
+  /// (validate-location) here rather than first learning about it at booking
+  /// create. Only serviceability problems are surfaced; the city-mismatch
+  /// half of the same endpoint is resolved later as before.
+  Future<void> _validateSkippedLocations() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final pickup = _fromController.text.trim();
+    final drop = _toController.text.trim();
+    if (session == null || pickup.isEmpty || drop.isEmpty) {
+      return;
+    }
+    try {
+      await _resolveMissingPincodes();
+      final tripType = _resolveTripTypeFromLocations(pickup, drop);
+      await ref
+          .read(apiClientProvider)
+          .validateBookingLocation(
+            accessToken: session.tokens.accessToken,
+            pickupLocation: pickup,
+            dropLocation: drop,
+            transportType: tripType == TripType.intraCity ? 'intra' : 'inter',
+            city: tripType == TripType.intraCity && _draft.city.isNotEmpty
+                ? _draft.city
+                : null,
+            pickupPincode: _draft.pickupPincode,
+            dropPincode: _draft.dropPincode,
+          );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      if (_isUnserviceableError(error)) {
+        await _handleUnserviceableLocation(error);
+      } else if (error.code == 'PINCODE_REQUIRED') {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } catch (_) {
+      // Booking create re-checks; don't block the weight step on a blip.
+    }
+  }
+
+  /// Names the end the server's geofence rejected and lets the client fix it
+  /// in place instead of reading a raw server message.
+  Future<void> _handleUnserviceableLocation(ApiException error) async {
+    final pickupPincode = _draft.pickupPincode.trim();
+    final dropPincode = _draft.dropPincode.trim();
+    // The server message names the failing end ("...the drop pincode.").
+    final kind = error.message.toLowerCase().contains('drop')
+        ? _LocationFieldKind.drop
+        : _LocationFieldKind.pickup;
+    final action = await _showUnserviceableLocationSheet(
+      context,
+      kind: kind,
+      pincode: kind == _LocationFieldKind.pickup ? pickupPincode : dropPincode,
+    );
+    if (action != _UnserviceableAction.changeLocation || !mounted) {
+      return;
+    }
+    final selection = await _openLocationDetailsScreen(kind);
+    if (selection == null || !mounted) {
+      return;
+    }
+    if (kind == _LocationFieldKind.pickup) {
+      _applyDraftPickup(selection);
+    } else {
+      _applyDraftDrop(selection);
+    }
+    await _resolveDistanceAndContinue();
   }
 
   /// Replaces a picked/typed selection's draft fields — AND keeps the
@@ -5706,13 +5802,25 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           pickupAddress: _draft.from,
           dropAddress: _draft.to,
           onEditTap: () async {
-            final selection = await _openLocationDetailsScreen(
+            // Edit the whole route: loading first, then unloading, then
+            // re-validate and re-quote for the new pair.
+            final pickup = await _openLocationDetailsScreen(
               _LocationFieldKind.pickup,
             );
-            if (selection == null || !mounted) {
+            if (pickup == null || !mounted) {
               return;
             }
-            _applyDraftPickup(selection);
+            _applyDraftPickup(pickup);
+            final drop = await _openLocationDetailsScreen(
+              _LocationFieldKind.drop,
+            );
+            if (!mounted) {
+              return;
+            }
+            if (drop != null) {
+              _applyDraftDrop(drop);
+            }
+            await _resolveDistanceAndContinue();
           },
         ),
         const SizedBox(height: 12),

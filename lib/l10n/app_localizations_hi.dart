@@ -7910,4 +7910,47 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get clientBookingCreditLimitReachedFallback =>
       'आपने अपनी क्रेडिट लिमिट पूरी कर ली है। दोबारा बुकिंग से पहले \'मेरे बिल\' में बाकी राशि चुकाएँ।';
+
+  @override
+  String get serviceableAreasTitle => 'सेवा क्षेत्र';
+
+  @override
+  String get serviceableAreasSubtitle =>
+      'अभी हम केवल इन शहरों और पिनकोड से ही लोड उठाते हैं।';
+
+  @override
+  String serviceableAreasPincodeCount(int count) {
+    return '$count पिनकोड';
+  }
+
+  @override
+  String get serviceableAreasSearchHint => 'शहर या पिनकोड खोजें';
+
+  @override
+  String get serviceableAreasNoResults => 'हम अभी इस स्थान पर सेवा नहीं देते';
+
+  @override
+  String get unserviceableTitle => 'हम अभी इस क्षेत्र में सेवा नहीं देते';
+
+  @override
+  String get unserviceablePickupBody =>
+      'आपका लोडिंग स्थान हमारे सेवा क्षेत्र से बाहर है। कृपया हमारे सेवा वाले शहरों में से कोई स्थान चुनें।';
+
+  @override
+  String get unserviceableDropBody =>
+      'आपका अनलोडिंग स्थान हमारे सेवा क्षेत्र से बाहर है। कृपया हमारे सेवा वाले शहरों में से कोई स्थान चुनें।';
+
+  @override
+  String unserviceablePincode(String pincode) {
+    return 'पिनकोड $pincode';
+  }
+
+  @override
+  String get unserviceableChangePickup => 'लोडिंग स्थान बदलें';
+
+  @override
+  String get unserviceableChangeDrop => 'अनलोडिंग स्थान बदलें';
+
+  @override
+  String get unserviceableViewAreas => 'सेवा क्षेत्र देखें';
 }

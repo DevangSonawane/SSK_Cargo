@@ -3014,5 +3014,17 @@
   "clientBillsPaidSuccess": "बिल का भुगतान सफलतापूर्वक हुआ",
   "clientBillsLoadFailed": "आपके बिल लोड नहीं हो सके",
   "clientPaidBookingLabel": "राशि",
-  "clientBookingCreditLimitReachedFallback": "आपने अपनी क्रेडिट लिमिट पूरी कर ली है। दोबारा बुकिंग से पहले 'मेरे बिल' में बाकी राशि चुकाएँ।"
+  "clientBookingCreditLimitReachedFallback": "आपने अपनी क्रेडिट लिमिट पूरी कर ली है। दोबारा बुकिंग से पहले 'मेरे बिल' में बाकी राशि चुकाएँ।",
+  "serviceableAreasTitle": "सेवा क्षेत्र",
+  "serviceableAreasSubtitle": "अभी हम केवल इन शहरों और पिनकोड से ही लोड उठाते हैं।",
+  "serviceableAreasPincodeCount": "{count} पिनकोड",
+  "serviceableAreasSearchHint": "शहर या पिनकोड खोजें",
+  "serviceableAreasNoResults": "हम अभी इस स्थान पर सेवा नहीं देते",
+  "unserviceableTitle": "हम अभी इस क्षेत्र में सेवा नहीं देते",
+  "unserviceablePickupBody": "आपका लोडिंग स्थान हमारे सेवा क्षेत्र से बाहर है। कृपया हमारे सेवा वाले शहरों में से कोई स्थान चुनें।",
+  "unserviceableDropBody": "आपका अनलोडिंग स्थान हमारे सेवा क्षेत्र से बाहर है। कृपया हमारे सेवा वाले शहरों में से कोई स्थान चुनें।",
+  "unserviceablePincode": "पिनकोड {pincode}",
+  "unserviceableChangePickup": "लोडिंग स्थान बदलें",
+  "unserviceableChangeDrop": "अनलोडिंग स्थान बदलें",
+  "unserviceableViewAreas": "सेवा क्षेत्र देखें"
 }

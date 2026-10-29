@@ -72,16 +72,24 @@ dependencies {
     // Flutter's plugin loader resolves empty API jars for these plugins with
     // the current AGP setup. Their release runtime variants contain the plugin
     // entry points referenced by GeneratedPluginRegistrant.
-    implementation(project(path = ":jni_flutter", configuration = "releaseRuntimeElements"))
-    implementation(project(path = ":package_info_plus", configuration = "releaseRuntimeElements"))
-    compileOnly(
+    add(
+        "releaseImplementation",
+        project(path = ":jni_flutter", configuration = "releaseRuntimeElements"),
+    )
+    add(
+        "releaseImplementation",
+        project(path = ":package_info_plus", configuration = "releaseRuntimeElements"),
+    )
+    add(
+        "releaseCompileOnly",
         files(
             rootProject.layout.buildDirectory.file(
                 "jni_flutter/intermediates/runtime_library_classes_jar/release/bundleLibRuntimeToJarRelease/classes.jar",
             ),
         ),
     )
-    compileOnly(
+    add(
+        "releaseCompileOnly",
         files(
             rootProject.layout.buildDirectory.file(
                 "package_info_plus/intermediates/runtime_library_classes_jar/release/bundleLibRuntimeToJarRelease/classes.jar",
