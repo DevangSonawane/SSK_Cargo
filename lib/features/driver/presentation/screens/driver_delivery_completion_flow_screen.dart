@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/upi_qr_code.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -687,14 +688,6 @@ class _DriverDeliveryCompletionFlowScreenState
 
   String get _bookingRefSafe => _bookingRef;
 
-  String _qrImageForIntent(String intent) {
-    return Uri.https('chart.googleapis.com', '/chart', {
-      'cht': 'qr',
-      'chs': '220x220',
-      'chl': intent,
-    }).toString();
-  }
-
   Future<void> _syncRazorpayQr() async {
     if (_activeQrSource != 'razorpay' ||
         !_razorpayAvailable ||
@@ -1161,7 +1154,7 @@ class _DriverDeliveryCompletionFlowScreenState
     final upiId = active == 'company' ? _companyUpiId : _driverUpiId;
     final payee = active == 'company' ? _companyUpiName : _driverName;
     final intentQr = upiId.isNotEmpty && amount > 0
-        ? _qrImageForIntent(_upiIntent(upiId: upiId, payee: payee))
+        ? _upiIntent(upiId: upiId, payee: payee)
         : null;
     final isPartial = _paymentStatus == 'partial';
     return Column(
@@ -1269,12 +1262,11 @@ class _DriverDeliveryCompletionFlowScreenState
             )!.deliveryFlowShowThisToCollect(_money(amount)),
           )
         else if (intentQr != null)
-          _QrImage(
-            url: intentQr,
-            accessToken: null,
+          _QrFrame(
             label: AppLocalizations.of(
               context,
             )!.deliveryFlowScanToPayViaUpi(_money(amount)),
+            child: UpiQrCode(data: intentQr),
           )
         else
           Container(
@@ -1384,9 +1376,19 @@ class _DriverDeliveryCompletionFlowScreenState
         ),
       );
     }
+    // Web parity: the web never loads Razorpay's own image_url directly —
+    // it fetches the same QR through our backend proxy with the driver's
+    // token (getPaymentQrImage in trip.controller.js).
+    final proxyUrl = Uri.parse(
+      ref.read(dioProvider).options.baseUrl,
+    ).resolve('/api/trips/${widget.tripId}/collect-payment/qr/image');
     return _QrImage(
-      url: url,
-      accessToken: null,
+      url: proxyUrl.toString(),
+      accessToken: ref
+          .read(authSessionProvider)
+          .valueOrNull
+          ?.tokens
+          .accessToken,
       label: AppLocalizations.of(context)!.deliveryFlowRazorpayAutoConfirms,
     );
   }
@@ -1979,6 +1981,37 @@ class _QrImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _QrFrame(
+      label: label,
+      child: Image.network(
+        url,
+        fit: BoxFit.contain,
+        headers: accessToken != null
+            ? {'Authorization': 'Bearer $accessToken'}
+            : null,
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : const Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+        errorBuilder: (_, _, _) => const Center(
+          child: Icon(
+            AppIcons.qr_code_rounded,
+            color: AppColors.textSecondary,
+            size: 56,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QrFrame extends StatelessWidget {
+  const _QrFrame({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
@@ -1998,20 +2031,7 @@ class _QrImage extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.divider),
           ),
-          child: Image.network(
-            url,
-            fit: BoxFit.contain,
-            headers: accessToken != null
-                ? {'Authorization': 'Bearer $accessToken'}
-                : null,
-            errorBuilder: (_, _, _) => const Center(
-              child: Icon(
-                AppIcons.qr_code_rounded,
-                color: AppColors.textSecondary,
-                size: 56,
-              ),
-            ),
-          ),
+          child: child,
         ),
       ],
     );

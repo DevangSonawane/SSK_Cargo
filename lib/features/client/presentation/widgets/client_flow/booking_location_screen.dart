@@ -3364,29 +3364,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
-    // Postpaid accounts never choose a payment method. The booking endpoint
-    // has already marked this booking `to_be_billed`; this fresh account read
-    // avoids relying on a stale login payload when an admin changes billing.
-    try {
-      final account = await ref
-          .read(apiClientProvider)
-          .getBillsAccount(accessToken: session.tokens.accessToken);
-      final data = account['data'] is Map
-          ? (account['data'] as Map).cast<String, dynamic>()
-          : account;
-      if (data['billing_type'] == 'postpaid') {
-        if (!mounted) return;
-        setState(() {
-          _submitting = false;
-          _bookingCreated = true;
-        });
-        await _showBookingCompleteAndRedirect();
-        return;
-      }
-    } catch (_) {
-      // The create endpoint remains authoritative for postpaid enforcement.
-    }
-
+    // Web parity (RequestDriver.jsx): Pay Now always goes through the
+    // gateway, whatever the account's billing type. Postpaid clients pick
+    // "To Be Billed" themselves instead of being silently skipped past it.
     final selectedMethod = _selectedPaymentMethod;
     setState(() {
       _submitting = true;

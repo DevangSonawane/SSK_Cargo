@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gadidost/core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/upi_qr_code.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -339,14 +340,6 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     return 'upi://pay?$query';
   }
 
-  String _buildQrImageUrl(String value) {
-    return Uri.https('chart.googleapis.com', '/chart', {
-      'cht': 'qr',
-      'chs': '220x220',
-      'chl': value,
-    }).toString();
-  }
-
   Future<void> _uploadQrCode() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -617,17 +610,22 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         : (_driverName?.trim().isNotEmpty == true
               ? _driverName!.trim()
               : 'Driver');
-    final generatedQrUrl =
+    // Web parity: the UPI QR is drawn on-device from the intent string
+    // (the web's QRCode.toDataURL), not fetched from an image service.
+    final generatedQrData =
         activeUpiId?.trim().isNotEmpty == true && (_amountToCollect ?? 0) > 0
-        ? _buildQrImageUrl(
-            _buildUpiIntent(
-              upiId: activeUpiId!.trim(),
-              payeeName: activePayeeName,
-              amount: _amountToCollect!,
-              note: 'Payment for ${_bookingId ?? widget.tripId}',
-            ),
+        ? _buildUpiIntent(
+            upiId: activeUpiId!.trim(),
+            payeeName: activePayeeName,
+            amount: _amountToCollect!,
+            note: 'Payment for ${_bookingId ?? widget.tripId}',
           )
         : null;
+    final accessToken = ref
+        .read(authSessionProvider)
+        .valueOrNull
+        ?.tokens
+        .accessToken;
     final razorpayTabActiveUnpaid =
         activeQrSource == 'razorpay' && !_razorpayPaid;
     final canSelfReportUpi =
@@ -868,7 +866,16 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   ],
                   if (activeQrSource == 'razorpay')
                     _RazorpayQrView(
-                      imageUrl: _razorpayQrImageUrl,
+                      // Web parity: load the QR through the backend's
+                      // authenticated proxy, never Razorpay's raw image_url.
+                      imageUrl: _razorpayQrImageUrl == null
+                          ? null
+                          : Uri.parse(ref.read(dioProvider).options.baseUrl)
+                                .resolve(
+                                  '/api/trips/${widget.tripId}/collect-payment/qr/image',
+                                )
+                                .toString(),
+                      accessToken: accessToken,
                       loading: _creatingRazorpayQr,
                       error: _razorpayQrError,
                       paid: _razorpayPaid,
@@ -876,13 +883,9 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                     )
                   else
                     _QrPlaceholder(
-                      qrUrl: generatedQrUrl ?? _driverQrUrl,
-                      accessToken: ref
-                          .read(authSessionProvider)
-                          .valueOrNull
-                          ?.tokens
-                          .accessToken,
-                      requiresAuth: generatedQrUrl == null,
+                      qrData: generatedQrData,
+                      qrUrl: generatedQrData == null ? _driverQrUrl : null,
+                      accessToken: accessToken,
                       centerIcon: activeQrSource == 'company'
                           ? AppIcons.apartment_rounded
                           : AppIcons.person_rounded,
@@ -1071,6 +1074,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
 class _RazorpayQrView extends StatelessWidget {
   const _RazorpayQrView({
     required this.imageUrl,
+    required this.accessToken,
     required this.loading,
     required this.error,
     required this.paid,
@@ -1078,6 +1082,7 @@ class _RazorpayQrView extends StatelessWidget {
   });
 
   final String? imageUrl;
+  final String? accessToken;
   final bool loading;
   final bool error;
   final bool paid;
@@ -1143,7 +1148,11 @@ class _RazorpayQrView extends StatelessWidget {
             return GestureDetector(
               onTap: imageUrl == null || loading
                   ? null
-                  : () => _showQrZoom(context, imageUrl!),
+                  : () => _showQrZoom(
+                      context,
+                      imageUrl!,
+                      headers: _authHeaders(accessToken),
+                    ),
               child: Stack(
                 children: [
                   Container(
@@ -1174,6 +1183,7 @@ class _RazorpayQrView extends StatelessWidget {
                               imageUrl!,
                               fit: BoxFit.contain,
                               filterQuality: FilterQuality.high,
+                              headers: _authHeaders(accessToken),
                               errorBuilder: (context, error, stackTrace) {
                                 return const Center(
                                   child: Icon(
@@ -1261,7 +1271,14 @@ class _RazorpayQrView extends StatelessWidget {
 }
 
 /// Fullscreen QR viewer so the code is unmissable at scan time.
-void _showQrZoom(BuildContext context, String imageUrl) {
+Map<String, String>? _authHeaders(String? accessToken) =>
+    accessToken == null ? null : {'Authorization': 'Bearer $accessToken'};
+
+void _showQrZoom(
+  BuildContext context,
+  String imageUrl, {
+  Map<String, String>? headers,
+}) {
   final side = MediaQuery.of(context).size.width * 0.86;
   showDialog<void>(
     context: context,
@@ -1286,6 +1303,7 @@ void _showQrZoom(BuildContext context, String imageUrl) {
                 imageUrl,
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.high,
+                headers: headers,
                 errorBuilder: (context, _, _) => const Center(
                   child: Icon(
                     AppIcons.qr_code_rounded,
@@ -1320,19 +1338,37 @@ void _showQrZoom(BuildContext context, String imageUrl) {
 
 class _QrPlaceholder extends StatelessWidget {
   const _QrPlaceholder({
+    this.qrData,
     this.qrUrl,
     this.accessToken,
-    this.requiresAuth = true,
     this.centerIcon = AppIcons.person_rounded,
   });
 
+  /// UPI intent to draw on-device; takes priority over [qrUrl].
+  final String? qrData;
+
+  /// The driver's own uploaded QR, served behind auth.
   final String? qrUrl;
   final String? accessToken;
-  final bool requiresAuth;
   final IconData centerIcon;
 
   @override
   Widget build(BuildContext context) {
+    final data = qrData;
+    if (data != null) {
+      // No centre badge over a real QR — it would eat into the modules.
+      return Container(
+        width: 220,
+        height: 220,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: UpiQrCode(data: data),
+      );
+    }
     return Container(
       width: 220,
       height: 220,
@@ -1344,16 +1380,14 @@ class _QrPlaceholder extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (qrUrl != null && (!requiresAuth || accessToken != null))
+          if (qrUrl != null && accessToken != null)
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
                 child: Image.network(
                   qrUrl!,
                   fit: BoxFit.cover,
-                  headers: requiresAuth
-                      ? {'Authorization': 'Bearer $accessToken'}
-                      : null,
+                  headers: {'Authorization': 'Bearer $accessToken'},
                   errorBuilder: (context, error, stackTrace) {
                     return const _QrPattern();
                   },

@@ -1131,25 +1131,6 @@ class _BrokerNegotiationSheetState
       return;
     }
 
-    try {
-      final account = await ref
-          .read(apiClientProvider)
-          .getBillsAccount(accessToken: session.tokens.accessToken);
-      final data = account['data'] is Map
-          ? (account['data'] as Map).cast<String, dynamic>()
-          : account;
-      if (data['billing_type'] == 'postpaid') {
-        if (!mounted) return;
-        setState(() {
-          _paymentSubmitting = false;
-          _stage = _DirectNegotiationStage.confirmed;
-        });
-        return;
-      }
-    } catch (_) {
-      // Booking creation is the server-enforced credit-limit backstop.
-    }
-
     setState(() {
       _paymentSubmitting = true;
     });

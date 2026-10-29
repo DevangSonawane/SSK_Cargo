@@ -51,6 +51,7 @@ dependencies:
   url_launcher: ^6.3.1
   socket_io_client: ^2.0.3
   razorpay_flutter: ^1.4.6
+  qr: ^3.0.2
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
   permission_handler: ^12.0.1
