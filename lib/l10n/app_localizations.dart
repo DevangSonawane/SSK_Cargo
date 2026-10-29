@@ -1072,7 +1072,7 @@ abstract class AppLocalizations {
   /// No description provided for @sskVersion.
   ///
   /// In en, this message translates to:
-  /// **'SSK Logistics v1.0.0'**
+  /// **'Gadidost V1.0.0'**
   String get sskVersion;
 
   /// No description provided for @appearanceLightSubtitle.

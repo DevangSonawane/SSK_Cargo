@@ -527,7 +527,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featureComingSoon => 'This feature is coming soon.';
 
   @override
-  String get sskVersion => 'SSK Logistics v1.0.0';
+  String get sskVersion => 'Gadidost V1.0.0';
 
   @override
   String get appearanceLightSubtitle => 'Liquid glass light mode';
