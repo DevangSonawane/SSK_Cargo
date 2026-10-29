@@ -1801,6 +1801,19 @@ class SskApiClient {
     );
   }
 
+  /// Returns billing parties previously used by the signed-in client.
+  Future<Map<String, dynamic>> getBillingParties({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/billing-parties', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/billing-parties',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getDistanceEstimate({
     required String accessToken,
     required String pickup,

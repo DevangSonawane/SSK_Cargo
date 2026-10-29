@@ -17,6 +17,10 @@ class BookingData {
     this.unloadingStops = const [],
     this.material = '',
     this.additionalNotes = '',
+    this.billedTo = 'self',
+    this.billingPartyName = '',
+    this.billingPartyGstin = '',
+    this.ewayBillNumber = '',
     this.weight = 0,
     this.quantity = 1,
     this.weightUnit = 'tons',
@@ -69,6 +73,10 @@ class BookingData {
   final List<BookingStop> unloadingStops;
   final String material;
   final String additionalNotes;
+  final String billedTo;
+  final String billingPartyName;
+  final String billingPartyGstin;
+  final String ewayBillNumber;
   final double weight;
   final int quantity;
   final String weightUnit;
@@ -130,6 +138,10 @@ class BookingData {
     List<BookingStop>? unloadingStops,
     String? material,
     String? additionalNotes,
+    String? billedTo,
+    String? billingPartyName,
+    String? billingPartyGstin,
+    String? ewayBillNumber,
     double? weight,
     int? quantity,
     String? weightUnit,
@@ -174,6 +186,10 @@ class BookingData {
       unloadingStops: unloadingStops ?? this.unloadingStops,
       material: material ?? this.material,
       additionalNotes: additionalNotes ?? this.additionalNotes,
+      billedTo: billedTo ?? this.billedTo,
+      billingPartyName: billingPartyName ?? this.billingPartyName,
+      billingPartyGstin: billingPartyGstin ?? this.billingPartyGstin,
+      ewayBillNumber: ewayBillNumber ?? this.ewayBillNumber,
       weight: weight ?? this.weight,
       quantity: quantity ?? this.quantity,
       weightUnit: weightUnit ?? this.weightUnit,

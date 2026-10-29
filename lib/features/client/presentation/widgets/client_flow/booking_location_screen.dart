@@ -73,6 +73,18 @@ class _EligibleBroker {
   final int truckCount;
 }
 
+class _BillingParty {
+  const _BillingParty({required this.name, required this.gstin});
+
+  factory _BillingParty.fromJson(Map<String, dynamic> json) => _BillingParty(
+    name: (json['name'] ?? '').toString().trim(),
+    gstin: (json['gstin'] ?? '').toString().trim().toUpperCase(),
+  );
+
+  final String name;
+  final String gstin;
+}
+
 extension _EmptyStringFallback on String {
   String ifEmpty(String fallback) => isEmpty ? fallback : this;
 }
@@ -113,6 +125,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _toController;
   late final TextEditingController _weightController;
   late final TextEditingController _amountController;
+  late final TextEditingController _billingPartyNameController;
+  late final TextEditingController _billingPartyGstinController;
+  late final TextEditingController _ewayBillController;
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
   CameraPosition? _brokerMapCameraPosition;
@@ -175,6 +190,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   String? _haltingNote;
   bool _weightUnknown = false;
   String? _weightError;
+  String? _billingPartyError;
+  String? _ewayBillError;
+  bool _loadingBillingParties = false;
+  bool _billingPartiesLoaded = false;
+  List<_BillingParty> _billingParties = const [];
   late BookingData _draft;
   late int _vehicleIndex;
   bool _autoLocationFlowStarted = false;
@@ -256,6 +276,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ? _priceInputText(_draft.amount.toString())
           : _priceInputText(_vehicle.price),
     );
+    _billingPartyNameController = TextEditingController(
+      text: _draft.billingPartyName,
+    );
+    _billingPartyGstinController = TextEditingController(
+      text: _draft.billingPartyGstin,
+    );
+    _ewayBillController = TextEditingController(text: _draft.ewayBillNumber);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _step == _BookingFlowStep.location) {
         unawaited(_startLocationStream());
@@ -292,6 +319,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _toController.dispose();
     _weightController.dispose();
     _amountController.dispose();
+    _billingPartyNameController.dispose();
+    _billingPartyGstinController.dispose();
+    _ewayBillController.dispose();
     super.dispose();
   }
 
@@ -812,6 +842,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _applyDraftDrop(drop);
 
     if (mounted) {
+      if (!_validateBillingParty()) return;
       await _resolveDistanceAndContinue();
     }
   }
@@ -840,6 +871,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _advanceFromWeightStep({required bool unknown}) async {
+    final ewayBillNumber = _ewayBillController.text.trim();
+    if (ewayBillNumber.isEmpty) {
+      setState(() => _ewayBillError = 'E-Way Bill No. is required.');
+      return;
+    }
     final rawWeight = _weightController.text.trim();
     final parsedWeight = double.tryParse(rawWeight);
 
@@ -859,11 +895,75 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         quantity: 1,
         material: '',
         additionalNotes: '',
+        ewayBillNumber: ewayBillNumber,
       );
       _selectedTruck = null;
       _step = _BookingFlowStep.brokerSelection;
     });
     unawaited(_loadEligibleBrokers());
+  }
+
+  Future<void> _loadBillingParties() async {
+    if (_billingPartiesLoaded || _loadingBillingParties) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _loadingBillingParties = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBillingParties(accessToken: session.tokens.accessToken);
+      final data = response['data'] is Map
+          ? (response['data'] as Map).cast<String, dynamic>()
+          : response;
+      final rawParties = data['parties'];
+      final parties = rawParties is List
+          ? rawParties
+                .whereType<Map>()
+                .map(
+                  (item) =>
+                      _BillingParty.fromJson(item.cast<String, dynamic>()),
+                )
+                .where(
+                  (party) => party.name.isNotEmpty && party.gstin.isNotEmpty,
+                )
+                .toList(growable: false)
+          : const <_BillingParty>[];
+      if (mounted) {
+        setState(() {
+          _billingParties = parties;
+          _billingPartiesLoaded = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _billingPartiesLoaded = true);
+    } finally {
+      if (mounted) setState(() => _loadingBillingParties = false);
+    }
+  }
+
+  bool _validateBillingParty() {
+    if (_draft.billedTo != 'receiver') return true;
+    final name = _billingPartyNameController.text.trim();
+    final gstin = _billingPartyGstinController.text.trim().toUpperCase();
+    if (name.isEmpty ||
+        !RegExp(
+          r'^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
+        ).hasMatch(gstin)) {
+      setState(() {
+        _billingPartyError = name.isEmpty
+            ? 'Supplier Name is required when the receiver pays GST.'
+            : 'Enter a valid 15-character GSTIN.';
+      });
+      return false;
+    }
+    setState(() {
+      _billingPartyError = null;
+      _draft = _draft.copyWith(
+        billingPartyName: name,
+        billingPartyGstin: gstin,
+      );
+    });
+    return true;
   }
 
   Future<void> _pickScheduledDateTime() async {
@@ -2229,6 +2329,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<void> _next() async {
     switch (_step) {
       case _BookingFlowStep.location:
+        if (!_validateBillingParty()) return;
         if (_toController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -3500,6 +3601,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'weight_unit': _draft.weightUnit,
       'quantity': _draft.quantity,
       'material': _draft.material,
+      'billed_to': _draft.billedTo,
+      if (_draft.billedTo == 'receiver') ...{
+        'billing_party_name': _draft.billingPartyName.trim(),
+        'billing_party_gstin': _draft.billingPartyGstin.trim().toUpperCase(),
+      },
+      'eway_bill_number': _draft.ewayBillNumber.trim(),
       if (_draft.additionalNotes.trim().isNotEmpty)
         'notes': _draft.additionalNotes.trim(),
       'transport_type': _draft.transportType,
@@ -5241,8 +5348,140 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           },
         ),
         const SizedBox(height: 14),
+        _buildBillingPartyCard(context),
+        const SizedBox(height: 14),
         _buildLocationMap(context),
       ],
+    );
+  }
+
+  Widget _buildBillingPartyCard(BuildContext context) {
+    final receiverPays = _draft.billedTo == 'receiver';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.colors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Who pays GST?',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: context.colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'self', label: Text('You Pay')),
+              ButtonSegment(value: 'receiver', label: Text('Receiver Pays')),
+            ],
+            selected: {_draft.billedTo},
+            onSelectionChanged: (selection) {
+              final billedTo = selection.first;
+              setState(() {
+                _billingPartyError = null;
+                _draft = _draft.copyWith(billedTo: billedTo);
+              });
+              if (billedTo == 'receiver') unawaited(_loadBillingParties());
+            },
+          ),
+          if (receiverPays) ...[
+            const SizedBox(height: 14),
+            if (_loadingBillingParties)
+              const Center(child: CircularProgressIndicator())
+            else ...[
+              if (_billingParties.isNotEmpty) ...[
+                Text(
+                  'Saved billing parties',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final party in _billingParties)
+                      ChoiceChip(
+                        label: Text(party.name),
+                        selected:
+                            _billingPartyNameController.text.trim() ==
+                                party.name &&
+                            _billingPartyGstinController.text
+                                    .trim()
+                                    .toUpperCase() ==
+                                party.gstin,
+                        onSelected: (_) {
+                          setState(() {
+                            _billingPartyNameController.text = party.name;
+                            _billingPartyGstinController.text = party.gstin;
+                            _billingPartyError = null;
+                          });
+                        },
+                      ),
+                    ChoiceChip(
+                      label: const Text('Add New'),
+                      selected: false,
+                      onSelected: (_) {
+                        setState(() {
+                          _billingPartyNameController.clear();
+                          _billingPartyGstinController.clear();
+                          _billingPartyError = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+              ],
+              TextField(
+                controller: _billingPartyNameController,
+                textCapitalization: TextCapitalization.words,
+                onChanged: (_) {
+                  if (_billingPartyError != null) {
+                    setState(() => _billingPartyError = null);
+                  }
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Supplier Name',
+                  hintText: 'Receiver / consignee name',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _billingPartyGstinController,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) {
+                  if (_billingPartyError != null) {
+                    setState(() => _billingPartyError = null);
+                  }
+                },
+                decoration: const InputDecoration(
+                  labelText: 'GST Number',
+                  hintText: '27ABCDE1234F1Z5',
+                ),
+              ),
+              if (_billingPartyError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _billingPartyError!,
+                  style: const TextStyle(
+                    color: Color(0xFFE23A4B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ],
+      ),
     );
   }
 
@@ -5314,6 +5553,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             onChanged: (value) => unawaited(_setExpressDelivery(value)),
           ),
         ],
+        const SizedBox(height: 18),
+        TextField(
+          controller: _ewayBillController,
+          onChanged: (_) {
+            if (_ewayBillError != null) {
+              setState(() => _ewayBillError = null);
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'E-Way Bill No.',
+            hintText: 'Enter E-Way Bill number',
+            prefixIcon: const Icon(AppIcons.receipt_long_rounded),
+            errorText: _ewayBillError,
+          ),
+        ),
         const SizedBox(height: 18),
         Container(
           width: double.infinity,
