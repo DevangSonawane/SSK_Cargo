@@ -302,6 +302,10 @@ class ClientBooking {
     required this.stops,
     required this.raw,
     this.truckBodyType = '',
+    this.billedTo = 'self',
+    this.billingPartyName = '',
+    this.billingPartyGstin = '',
+    this.ewayBillNumber = '',
   });
 
   factory ClientBooking.fromJson(Map<String, dynamic> json) {
@@ -512,6 +516,21 @@ class ClientBooking {
           _readString(vehicle, const ['truckBodyType', 'truck_body_type']),
         ]),
       ),
+      billedTo: _readString(json, const ['billedTo', 'billed_to']).isEmpty
+          ? 'self'
+          : _readString(json, const ['billedTo', 'billed_to']),
+      billingPartyName: _readString(json, const [
+        'billingPartyName',
+        'billing_party_name',
+      ]),
+      billingPartyGstin: _readString(json, const [
+        'billingPartyGstin',
+        'billing_party_gstin',
+      ]),
+      ewayBillNumber: _readString(json, const [
+        'ewayBillNumber',
+        'eway_bill_number',
+      ]),
     );
   }
 
@@ -543,6 +562,10 @@ class ClientBooking {
   final List<TripRouteStop> stops;
   final Map<String, dynamic> raw;
   final String truckBodyType;
+  final String billedTo;
+  final String billingPartyName;
+  final String billingPartyGstin;
+  final String ewayBillNumber;
 
   String get displayTitle => material.isNotEmpty
       ? material

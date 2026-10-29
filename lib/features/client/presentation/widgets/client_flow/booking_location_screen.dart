@@ -74,15 +74,24 @@ class _EligibleBroker {
 }
 
 class _BillingParty {
-  const _BillingParty({required this.name, required this.gstin});
+  const _BillingParty({
+    required this.id,
+    required this.name,
+    required this.gstin,
+    this.createdAt,
+  });
 
   factory _BillingParty.fromJson(Map<String, dynamic> json) => _BillingParty(
+    id: (json['id'] ?? json['gstin'] ?? '').toString().trim(),
     name: (json['name'] ?? '').toString().trim(),
     gstin: (json['gstin'] ?? '').toString().trim().toUpperCase(),
+    createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
   );
 
   final String name;
   final String gstin;
+  final String id;
+  final DateTime? createdAt;
 }
 
 extension _EmptyStringFallback on String {
@@ -195,6 +204,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _loadingBillingParties = false;
   bool _billingPartiesLoaded = false;
   List<_BillingParty> _billingParties = const [];
+  String? _selectedBillingPartyId;
+  bool _addingNewBillingParty = false;
   late BookingData _draft;
   late int _vehicleIndex;
   bool _autoLocationFlowStarted = false;
@@ -283,6 +294,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       text: _draft.billingPartyGstin,
     );
     _ewayBillController = TextEditingController(text: _draft.ewayBillNumber);
+    unawaited(_loadBillingParties());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _step == _BookingFlowStep.location) {
         unawaited(_startLocationStream());
@@ -928,9 +940,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 )
                 .toList(growable: false)
           : const <_BillingParty>[];
+      final newestFirst = [...parties]
+        ..sort(
+          (a, b) => (b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+              .compareTo(a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)),
+        );
       if (mounted) {
         setState(() {
-          _billingParties = parties;
+          _billingParties = newestFirst;
           _billingPartiesLoaded = true;
         });
       }
@@ -964,6 +981,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       );
     });
     return true;
+  }
+
+  void _showBookingCreateError(Object error) {
+    final message = switch (error) {
+      ApiException(code: 'BILLING_PARTY_REQUIRED') =>
+        'Supplier Name and GST Number are required when the receiver pays.',
+      ApiException(code: 'EWAY_BILL_REQUIRED') =>
+        'E-Way Bill number is required.',
+      ApiException() => error.message,
+      _ => error.toString().replaceFirst('Exception: ', ''),
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _pickScheduledDateTime() async {
@@ -1301,11 +1332,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _submitting = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
-        ),
-      );
+      _showBookingCreateError(error);
     }
   }
 
@@ -1430,11 +1457,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _submitting = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
-        ),
-      );
+      _showBookingCreateError(error);
     }
   }
 
@@ -3310,11 +3333,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _submitting = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
-        ),
-      );
+      _showBookingCreateError(error);
     }
   }
 
@@ -3515,13 +3534,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _draft = _draft.copyWith(brokerId: truckId, amount: amount);
     });
 
-    final response = await ref
-        .read(apiClientProvider)
-        .createBooking(
-          accessToken: session.tokens.accessToken,
-          booking: _bookingPayload(),
-          idempotencyKey: _buildIdempotencyKey(),
-        );
+    final Map<String, dynamic> response;
+    try {
+      response = await ref
+          .read(apiClientProvider)
+          .createBooking(
+            accessToken: session.tokens.accessToken,
+            booking: _bookingPayload(),
+            idempotencyKey: _buildIdempotencyKey(),
+          );
+    } on ApiException catch (error) {
+      if (mounted) {
+        _showBookingCreateError(error);
+      }
+      rethrow;
+    }
     final bookingNumber = _extractBookingNumber(response);
     final bookingId = _extractBookingId(response);
     final resolvedBookingNumber = bookingNumber.isNotEmpty
@@ -5412,14 +5439,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       ChoiceChip(
                         label: Text(party.name),
                         selected:
-                            _billingPartyNameController.text.trim() ==
-                                party.name &&
-                            _billingPartyGstinController.text
-                                    .trim()
-                                    .toUpperCase() ==
-                                party.gstin,
+                            !_addingNewBillingParty &&
+                            _selectedBillingPartyId == party.id,
                         onSelected: (_) {
                           setState(() {
+                            _addingNewBillingParty = false;
+                            _selectedBillingPartyId = party.id;
                             _billingPartyNameController.text = party.name;
                             _billingPartyGstinController.text = party.gstin;
                             _billingPartyError = null;
@@ -5431,6 +5456,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       selected: false,
                       onSelected: (_) {
                         setState(() {
+                          _addingNewBillingParty = true;
+                          _selectedBillingPartyId = null;
                           _billingPartyNameController.clear();
                           _billingPartyGstinController.clear();
                           _billingPartyError = null;
@@ -5441,33 +5468,41 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 ),
                 const SizedBox(height: 14),
               ],
-              TextField(
-                controller: _billingPartyNameController,
-                textCapitalization: TextCapitalization.words,
-                onChanged: (_) {
-                  if (_billingPartyError != null) {
-                    setState(() => _billingPartyError = null);
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Supplier Name',
-                  hintText: 'Receiver / consignee name',
+              if (_addingNewBillingParty ||
+                  _billingParties.isEmpty ||
+                  _selectedBillingPartyId == null) ...[
+                TextField(
+                  controller: _billingPartyNameController,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) {
+                    setState(() {
+                      _addingNewBillingParty = true;
+                      _selectedBillingPartyId = null;
+                      _billingPartyError = null;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Supplier Name',
+                    hintText: 'Receiver / consignee name',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _billingPartyGstinController,
-                textCapitalization: TextCapitalization.characters,
-                onChanged: (_) {
-                  if (_billingPartyError != null) {
-                    setState(() => _billingPartyError = null);
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: 'GST Number',
-                  hintText: '27ABCDE1234F1Z5',
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _billingPartyGstinController,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) {
+                    setState(() {
+                      _addingNewBillingParty = true;
+                      _selectedBillingPartyId = null;
+                      _billingPartyError = null;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'GST Number',
+                    hintText: '27ABCDE1234F1Z5',
+                  ),
                 ),
-              ),
+              ],
               if (_billingPartyError != null) ...[
                 const SizedBox(height: 8),
                 Text(
