@@ -301,6 +301,21 @@ class _DriverDeliveryCompletionFlowScreenState
           _step = _resolveStepFrom(trip);
         }
         _razorpayPaid = _paymentStatus == 'paid' ? true : _razorpayPaid;
+        // Web parity: reuse a QR the backend already holds for this trip
+        // instead of always creating a fresh one.
+        if (_razorpayQrImageUrl == null) {
+          final qrStatus = _mapStr(trip, const [
+            'razorpayQrStatus',
+            'razorpay_qr_status',
+          ]).toLowerCase();
+          final qrImage = _mapStr(trip, const [
+            'razorpayQrImageUrl',
+            'razorpay_qr_image_url',
+          ]);
+          if (qrStatus == 'active' && qrImage.isNotEmpty) {
+            _razorpayQrImageUrl = qrImage;
+          }
+        }
       });
       _afterTripUpdate();
     } catch (_) {
@@ -351,6 +366,15 @@ class _DriverDeliveryCompletionFlowScreenState
         !_autoRunDone) {
       _autoRunDone = true;
       unawaited(_runCompletion());
+    }
+    // Web parity (the `activeSource === "razorpay"` effect): create/poll the
+    // verified QR whenever it's the active tab — including when it's the
+    // default or only source, not just after the driver taps the toggle.
+    // Without this the QR area spun forever.
+    if (_step == 'payments' &&
+        _activeQrSource == 'razorpay' &&
+        !_razorpayQrError) {
+      unawaited(_syncRazorpayQr());
     }
   }
 
