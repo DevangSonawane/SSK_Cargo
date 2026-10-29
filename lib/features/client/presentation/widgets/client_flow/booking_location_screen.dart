@@ -94,6 +94,27 @@ class _BillingParty {
   final DateTime? createdAt;
 }
 
+class _GstPayerLabel extends StatelessWidget {
+  const _GstPayerLabel({required this.label, required this.selected});
+
+  final String label;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      label,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: selected ? Colors.white : context.colors.textSecondary,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
+}
+
 extension _EmptyStringFallback on String {
   String ifEmpty(String fallback) => isEmpty ? fallback : this;
 }
@@ -854,7 +875,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _applyDraftDrop(drop);
 
     if (mounted) {
-      if (!_validateBillingParty()) return;
       await _resolveDistanceAndContinue();
     }
   }
@@ -883,6 +903,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _advanceFromWeightStep({required bool unknown}) async {
+    if (!_validateBillingParty()) return;
     final ewayBillNumber = _ewayBillController.text.trim();
     if (ewayBillNumber.isEmpty) {
       setState(() => _ewayBillError = 'E-Way Bill No. is required.');
@@ -2352,7 +2373,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<void> _next() async {
     switch (_step) {
       case _BookingFlowStep.location:
-        if (!_validateBillingParty()) return;
         if (_toController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -3860,6 +3880,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final showBottomButton = switch (_step) {
       _BookingFlowStep.location => true,
       _BookingFlowStep.payment => false,
@@ -3988,12 +4009,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             ),
                           ],
                         ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: _buildWeightBottomActions(context),
-                        ),
+                        if (!keyboardVisible)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: _buildWeightBottomActions(context),
+                          ),
                       ],
                     )
                   : Column(
@@ -5375,8 +5397,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           },
         ),
         const SizedBox(height: 14),
-        _buildBillingPartyCard(context),
-        const SizedBox(height: 14),
         _buildLocationMap(context),
       ],
     );
@@ -5384,139 +5404,311 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildBillingPartyCard(BuildContext context) {
     final receiverPays = _draft.billedTo == 'receiver';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.colors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Who pays GST?',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: context.colors.textPrimary,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                context.colors.surface.withValues(alpha: 0.86),
+                context.colors.brandFill.withValues(alpha: 0.58),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ),
-          const SizedBox(height: 10),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'self', label: Text('You Pay')),
-              ButtonSegment(value: 'receiver', label: Text('Receiver Pays')),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0B1F3A).withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
             ],
-            selected: {_draft.billedTo},
-            onSelectionChanged: (selection) {
-              final billedTo = selection.first;
-              setState(() {
-                _billingPartyError = null;
-                _draft = _draft.copyWith(billedTo: billedTo);
-              });
-              if (billedTo == 'receiver') unawaited(_loadBillingParties());
-            },
           ),
-          if (receiverPays) ...[
-            const SizedBox(height: 14),
-            if (_loadingBillingParties)
-              const Center(child: CircularProgressIndicator())
-            else ...[
-              if (_billingParties.isNotEmpty) ...[
-                Text(
-                  'Saved billing parties',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: context.colors.textSecondary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Who pays GST?',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.34),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.58),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final party in _billingParties)
-                      ChoiceChip(
-                        label: Text(party.name),
-                        selected:
-                            !_addingNewBillingParty &&
-                            _selectedBillingPartyId == party.id,
-                        onSelected: (_) {
-                          setState(() {
-                            _addingNewBillingParty = false;
-                            _selectedBillingPartyId = party.id;
-                            _billingPartyNameController.text = party.name;
-                            _billingPartyGstinController.text = party.gstin;
-                            _billingPartyError = null;
-                          });
-                        },
+                child: SizedBox(
+                  height: 40,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final segmentWidth = constraints.maxWidth / 2;
+                      return Stack(
+                        children: [
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            left: receiverPays ? segmentWidth : 0,
+                            top: 0,
+                            bottom: 0,
+                            width: segmentWidth,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    AppColors.brandBright,
+                                    AppColors.brandDark,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(11),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.brand.withValues(
+                                      alpha: 0.28,
+                                    ),
+                                    blurRadius: 9,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    _billingPartyError = null;
+                                    _draft = _draft.copyWith(billedTo: 'self');
+                                  }),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: _GstPayerLabel(
+                                    label: 'You Pay',
+                                    selected: !receiverPays,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _billingPartyError = null;
+                                      _draft = _draft.copyWith(
+                                        billedTo: 'receiver',
+                                      );
+                                    });
+                                    unawaited(_loadBillingParties());
+                                  },
+                                  behavior: HitTestBehavior.opaque,
+                                  child: _GstPayerLabel(
+                                    label: 'Receiver Pays',
+                                    selected: receiverPays,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              if (receiverPays) ...[
+                const SizedBox(height: 10),
+                if (_loadingBillingParties)
+                  const Center(child: CircularProgressIndicator())
+                else ...[
+                  if (_billingParties.isNotEmpty) ...[
+                    Text(
+                      'Saved billing parties',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: context.colors.textSecondary,
                       ),
-                    ChoiceChip(
-                      label: const Text('Add New'),
-                      selected: false,
-                      onSelected: (_) {
-                        setState(() {
-                          _addingNewBillingParty = true;
-                          _selectedBillingPartyId = null;
-                          _billingPartyNameController.clear();
-                          _billingPartyGstinController.clear();
-                          _billingPartyError = null;
-                        });
-                      },
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final party in _billingParties)
+                          ChoiceChip(
+                            label: Text(
+                              party.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            selected:
+                                !_addingNewBillingParty &&
+                                _selectedBillingPartyId == party.id,
+                            showCheckmark: false,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            shape: const StadiumBorder(),
+                            side: BorderSide(color: context.colors.line),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.68,
+                            ),
+                            selectedColor: AppColors.brandTint,
+                            labelStyle: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color:
+                                      !_addingNewBillingParty &&
+                                          _selectedBillingPartyId == party.id
+                                      ? AppColors.brandDark
+                                      : context.colors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                            onSelected: (_) {
+                              setState(() {
+                                _addingNewBillingParty = false;
+                                _selectedBillingPartyId = party.id;
+                                _billingPartyNameController.text = party.name;
+                                _billingPartyGstinController.text = party.gstin;
+                                _billingPartyError = null;
+                              });
+                            },
+                          ),
+                        ChoiceChip(
+                          label: const Text('+'),
+                          tooltip: 'Add new billing party',
+                          selected: _addingNewBillingParty,
+                          showCheckmark: false,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 5,
+                          ),
+                          shape: const StadiumBorder(),
+                          side: BorderSide(color: context.colors.brandBorder),
+                          backgroundColor: Colors.white.withValues(alpha: 0.68),
+                          selectedColor: AppColors.brandTint,
+                          labelStyle: const TextStyle(
+                            color: AppColors.brandDark,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                          onSelected: (_) {
+                            setState(() {
+                              _addingNewBillingParty = true;
+                              _selectedBillingPartyId = null;
+                              _billingPartyNameController.clear();
+                              _billingPartyGstinController.clear();
+                              _billingPartyError = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  TextField(
+                    controller: _billingPartyNameController,
+                    textCapitalization: TextCapitalization.words,
+                    onChanged: (_) {
+                      setState(() {
+                        _addingNewBillingParty = true;
+                        _selectedBillingPartyId = null;
+                        _billingPartyError = null;
+                      });
+                    },
+                    decoration: _weightStepInputDecoration(
+                      context,
+                      label: 'Supplier Name',
+                      hint: 'Receiver / consignee name',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _billingPartyGstinController,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(15),
+                      TextInputFormatter.withFunction(
+                        (oldValue, newValue) => newValue.copyWith(
+                          text: newValue.text.toUpperCase(),
+                          selection: newValue.selection,
+                        ),
+                      ),
+                    ],
+                    onChanged: (_) {
+                      setState(() {
+                        _addingNewBillingParty = true;
+                        _selectedBillingPartyId = null;
+                        _billingPartyError = null;
+                      });
+                    },
+                    decoration: _weightStepInputDecoration(
+                      context,
+                      label: 'GST Number',
+                      hint: '27ABCDE1234F1Z5',
+                    ),
+                  ),
+                  if (_billingPartyError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _billingPartyError!,
+                      style: const TextStyle(
+                        color: Color(0xFFE23A4B),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 14),
-              ],
-              if (_addingNewBillingParty ||
-                  _billingParties.isEmpty ||
-                  _selectedBillingPartyId == null) ...[
-                TextField(
-                  controller: _billingPartyNameController,
-                  textCapitalization: TextCapitalization.words,
-                  onChanged: (_) {
-                    setState(() {
-                      _addingNewBillingParty = true;
-                      _selectedBillingPartyId = null;
-                      _billingPartyError = null;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Supplier Name',
-                    hintText: 'Receiver / consignee name',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _billingPartyGstinController,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (_) {
-                    setState(() {
-                      _addingNewBillingParty = true;
-                      _selectedBillingPartyId = null;
-                      _billingPartyError = null;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'GST Number',
-                    hintText: '27ABCDE1234F1Z5',
-                  ),
-                ),
-              ],
-              if (_billingPartyError != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _billingPartyError!,
-                  style: const TextStyle(
-                    color: Color(0xFFE23A4B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                ],
               ],
             ],
-          ],
-        ],
+          ),
+        ),
       ),
+    );
+  }
+
+  InputDecoration _weightStepInputDecoration(
+    BuildContext context, {
+    required String label,
+    required String hint,
+    Widget? prefixIcon,
+    String? errorText,
+  }) {
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: color),
+    );
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: prefixIcon,
+      errorText: errorText,
+      filled: true,
+      fillColor: context.colors.surface,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 42),
+      border: border(context.colors.line),
+      enabledBorder: border(context.colors.line),
+      focusedBorder: border(AppColors.brand),
+      errorBorder: border(const Color(0xFFE23A4B)),
+      focusedErrorBorder: border(const Color(0xFFE23A4B)),
     );
   }
 
@@ -5588,7 +5780,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             onChanged: (value) => unawaited(_setExpressDelivery(value)),
           ),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
+        _buildBillingPartyCard(context),
+        const SizedBox(height: 12),
         TextField(
           controller: _ewayBillController,
           onChanged: (_) {
@@ -5596,20 +5790,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               setState(() => _ewayBillError = null);
             }
           },
-          decoration: InputDecoration(
-            labelText: 'E-Way Bill No.',
-            hintText: 'Enter E-Way Bill number',
+          decoration: _weightStepInputDecoration(
+            context,
+            label: 'E-Way Bill No.',
+            hint: 'Enter E-Way Bill number',
             prefixIcon: const Icon(AppIcons.receipt_long_rounded),
             errorText: _ewayBillError,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
           decoration: BoxDecoration(
             color: context.colors.brandFill,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _weightError != null
                   ? const Color(0xFFE23A4B)
@@ -5629,8 +5824,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               Row(
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
@@ -5647,19 +5842,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       l10n.clientBookingMaterialWeight,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context.colors.textPrimary,
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 7, 14, 7),
                 decoration: BoxDecoration(
                   color: context.colors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: context.colors.line),
                 ),
                 child: Row(
