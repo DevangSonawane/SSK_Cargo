@@ -69,4 +69,30 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.core:core:1.13.1")
+    // Flutter's plugin loader resolves empty API jars for these plugins with
+    // the current AGP setup. Their release runtime variants contain the plugin
+    // entry points referenced by GeneratedPluginRegistrant.
+    implementation(project(path = ":jni_flutter", configuration = "releaseRuntimeElements"))
+    implementation(project(path = ":package_info_plus", configuration = "releaseRuntimeElements"))
+    compileOnly(
+        files(
+            rootProject.layout.buildDirectory.file(
+                "jni_flutter/intermediates/runtime_library_classes_jar/release/bundleLibRuntimeToJarRelease/classes.jar",
+            ),
+        ),
+    )
+    compileOnly(
+        files(
+            rootProject.layout.buildDirectory.file(
+                "package_info_plus/intermediates/runtime_library_classes_jar/release/bundleLibRuntimeToJarRelease/classes.jar",
+            ),
+        ),
+    )
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(
+        ":jni_flutter:bundleLibRuntimeToJarRelease",
+        ":package_info_plus:bundleLibRuntimeToJarRelease",
+    )
 }

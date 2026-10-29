@@ -1,60 +1,46 @@
-# GadiDost — Google Play Store Listing
+# Google Play Store Listing — Gadidost
 
-## App name
+## App title
 
-```text
-GadiDost
-```
+Gadidost - Truck Booking & Transport | SSK Cargo
 
 ## Short description
 
-```text
-Book, manage and track freight deliveries with drivers, brokers and clients.
-```
+Book trucks for reliable, all-India transport with Gadidost and SSK Cargo.
 
 ## Full description
 
-```text
-GadiDost is a freight and transport management app that helps clients, brokers and drivers manage deliveries in one place.
+Gadidost makes Truck Booking simple for businesses and individuals who need dependable transport. Find the right vehicle for local, intercity, and All India Transport needs, then arrange your shipment with confidence through SSK Cargo.
 
-Clients can create and manage booking requests, follow delivery progress, communicate with booking participants, review delivery proof and access invoices.
+Choose from a Mini Truck, Tata Ace, 14ft truck, 20ft truck, Container, and other suitable vehicles for your load. Whether you are moving goods for a shop, factory, warehouse, home, or business, Gadidost helps you plan transport that fits your requirement.
 
-Brokers can manage bookings, drivers and vehicles, monitor active trips, coordinate delivery activity and handle invoices.
+Book transport for Sampla, Rohtak, Bahadurgarh, Delhi, Faridabad, Gurgaon, Sonipat, and routes across India. From a single consignment to regular freight movement, Gadidost supports convenient truck booking for your logistics needs.
 
-Drivers can view assigned deliveries, update trip progress, share live location while on a trip, upload proof-of-delivery photos and communicate through booking-related chat.
+Why choose Gadidost?
 
-Key features:
-• Create and manage freight bookings
-• Track active deliveries and vehicle location
-• Booking-related in-app chat
-• Driver, vehicle and delivery management
-• Proof-of-delivery photo uploads
-• Delivery updates, notifications and incident reporting
-• Invoices and payment-related delivery actions
+- Easy Truck Booking for local and long-distance deliveries
+- Vehicle options including Mini Truck, Tata Ace, 14ft, 20ft, and Container
+- Transport support for Sampla, Rohtak, Bahadurgarh, Delhi, Faridabd, Gurgaon, and Sonipat
+- All India Transport for business and personal shipments
+- A practical way to connect with SSK Cargo transport services
 
-GadiDost is built for transport teams that need clear coordination from booking to delivery.
-```
+Download Gadidost today for straightforward truck booking and transport planning.
 
-## Video
+## Client-required search terms
 
-```text
-Leave blank unless you have a public or unlisted, ad-free YouTube product video.
-```
+Truck Booking, Mini Truck, Tata Ace, 14ft, 20ft, Container, All India Transport, Sampla, Rohtak, Bahadurgarh, Delhi, Faridabd, Gurgaon, Sonipat
 
-## Visual asset checklist
+> The client-provided spelling “Faridabd” is retained exactly as supplied.
+
+## Release notes — version 1.0.0
+
+Paste the following into the **What's new in this release?** field in Play Console. It is under the 500-character per-language limit.
 
 ```text
-App icon: Upload a 512 x 512 PNG or JPEG (maximum 1 MB).
-
-Feature graphic: Upload a 1024 x 500 PNG or JPEG (maximum 15 MB).
-
-Phone screenshots: Upload 2–8 portrait screenshots. Use at least 4 screenshots at 1080 x 1920 px for better Play Store promotion eligibility.
-
-Suggested screenshots:
-1. Client booking / shipment dashboard
-2. Live delivery tracking map
-3. Driver delivery workflow
-4. Broker booking or fleet dashboard
-5. Booking chat
-6. Proof of delivery or invoice screen
+<en-US>
+• Improved truck booking experience.
+• Added vehicle options for Mini Truck, Tata Ace, 14ft, 20ft and Container transport.
+• Improved transport support for Sampla, Rohtak, Bahadurgarh, Delhi, Faridabd, Gurgaon and Sonipat.
+• Performance improvements and bug fixes.
+</en-US>
 ```
