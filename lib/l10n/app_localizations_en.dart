@@ -7960,4 +7960,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unserviceableViewAreas => 'View serviceable areas';
+
+  @override
+  String get bilty => 'Bilty';
+
+  @override
+  String get downloadBilty => 'Download Bilty';
+
+  @override
+  String get resendBilty => 'Resend Bilty';
+
+  @override
+  String get biltyEmailedToYou => 'Bilty emailed to you';
+
+  @override
+  String get biltyEmailedToClient => 'Bilty emailed to the client';
+
+  @override
+  String get biltyFileEmpty => 'Bilty file is empty.';
+
+  @override
+  String biltyDownloadedTo(Object path) {
+    return 'Bilty downloaded to $path.';
+  }
+
+  @override
+  String get biltyReadyToSaveOrShare => 'Bilty ready to save or share.';
+
+  @override
+  String get biltyDownloadFailed => 'Failed to download Bilty';
+
+  @override
+  String get biltySendFailed => 'Failed to send Bilty';
+
+  @override
+  String biltyForBooking(Object bookingRef) {
+    return 'Bilty $bookingRef';
+  }
 }

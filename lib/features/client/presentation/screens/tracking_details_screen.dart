@@ -21,6 +21,7 @@ import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 import '../../../shared/data/trip_route_stop.dart';
+import '../../../shared/presentation/bilty_actions.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../../../core/theme/app_tokens.dart';
 
@@ -810,6 +811,41 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     context.push('/client/tracking/invoice', extra: _shipment);
   }
 
+  bool _isDownloadingBilty = false;
+  bool _isSendingBilty = false;
+
+  Future<void> _downloadBilty() async {
+    final bookingId = _shipment.bookingId;
+    if (bookingId == null || _isDownloadingBilty) return;
+    setState(() => _isDownloadingBilty = true);
+    try {
+      await downloadBookingBilty(
+        context: context,
+        ref: ref,
+        bookingId: bookingId,
+        bookingRef: _shipment.trackingId,
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloadingBilty = false);
+    }
+  }
+
+  Future<void> _resendBilty() async {
+    final bookingId = _shipment.bookingId;
+    if (bookingId == null || _isSendingBilty) return;
+    setState(() => _isSendingBilty = true);
+    try {
+      await resendBookingBilty(
+        context: context,
+        ref: ref,
+        bookingId: bookingId,
+        successMessage: AppLocalizations.of(context)!.biltyEmailedToYou,
+      );
+    } finally {
+      if (mounted) setState(() => _isSendingBilty = false);
+    }
+  }
+
   Future<void> _downloadInvoice() async {
     final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
@@ -1524,6 +1560,44 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                       ),
                                   ],
                                 ),
+                              if (_isInvoiceReady) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _BiltyButton(
+                                        icon: AppIcons.receipt_long_rounded,
+                                        label: _isDownloadingBilty
+                                            ? AppLocalizations.of(
+                                                context,
+                                              )!.saving
+                                            : AppLocalizations.of(
+                                                context,
+                                              )!.downloadBilty,
+                                        onPressed: _isDownloadingBilty
+                                            ? null
+                                            : _downloadBilty,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _BiltyButton(
+                                        icon: AppIcons.mail_outline_rounded,
+                                        label: _isSendingBilty
+                                            ? AppLocalizations.of(
+                                                context,
+                                              )!.sending
+                                            : AppLocalizations.of(
+                                                context,
+                                              )!.resendBilty,
+                                        onPressed: _isSendingBilty
+                                            ? null
+                                            : _resendBilty,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               if (_isRatable &&
                                   !_isPayable &&
                                   shipment.bookingId != null &&
@@ -4714,6 +4788,38 @@ class _TimelineStepItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BiltyButton extends StatelessWidget {
+  const _BiltyButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: context.colors.textPrimary,
+          side: BorderSide(color: context.colors.line),
+          backgroundColor: context.colors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
       ),
     );
   }

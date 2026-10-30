@@ -7953,4 +7953,42 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get unserviceableViewAreas => 'सेवा क्षेत्र देखें';
+
+  @override
+  String get bilty => 'बिल्टी';
+
+  @override
+  String get downloadBilty => 'बिल्टी डाउनलोड करें';
+
+  @override
+  String get resendBilty => 'बिल्टी फिर से भेजें';
+
+  @override
+  String get biltyEmailedToYou => 'बिल्टी आपको ईमेल कर दी गई है';
+
+  @override
+  String get biltyEmailedToClient => 'बिल्टी क्लाइंट को ईमेल कर दी गई है';
+
+  @override
+  String get biltyFileEmpty => 'बिल्टी फ़ाइल खाली है।';
+
+  @override
+  String biltyDownloadedTo(Object path) {
+    return 'बिल्टी $path में डाउनलोड हो गई।';
+  }
+
+  @override
+  String get biltyReadyToSaveOrShare =>
+      'बिल्टी सेव या शेयर करने के लिए तैयार है।';
+
+  @override
+  String get biltyDownloadFailed => 'बिल्टी डाउनलोड नहीं हो सकी';
+
+  @override
+  String get biltySendFailed => 'बिल्टी नहीं भेजी जा सकी';
+
+  @override
+  String biltyForBooking(Object bookingRef) {
+    return 'बिल्टी $bookingRef';
+  }
 }

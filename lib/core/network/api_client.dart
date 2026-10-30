@@ -465,6 +465,38 @@ class SskApiClient {
     );
   }
 
+  /// Bilty (Lorry Receipt) PDF — a separate document from the GST invoice,
+  /// available once the booking is Delivered/Completed.
+  Future<Response<List<int>>> getBookingBilty({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/bookings/$id/bilty', name: 'SSK.API');
+    return _dio.get<List<int>>(
+      '/api/bookings/$id/bilty',
+      options: Options(
+        headers: {'Authorization': 'Bearer $accessToken'},
+        responseType: ResponseType.bytes,
+      ),
+    );
+  }
+
+  /// Re-emails the Bilty to the client's own address on file (no compose
+  /// step). 422 when the client has no email, 502 when the provider fails.
+  Future<Map<String, dynamic>> sendBookingBilty({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('POST /api/bookings/$id/bilty/send', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$id/bilty/send',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> markBookingToBeBilled({
     required String accessToken,
     required String id,

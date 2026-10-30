@@ -3026,5 +3026,16 @@
   "unserviceablePincode": "पिनकोड {pincode}",
   "unserviceableChangePickup": "लोडिंग स्थान बदलें",
   "unserviceableChangeDrop": "अनलोडिंग स्थान बदलें",
-  "unserviceableViewAreas": "सेवा क्षेत्र देखें"
+  "unserviceableViewAreas": "सेवा क्षेत्र देखें",
+  "bilty": "बिल्टी",
+  "downloadBilty": "बिल्टी डाउनलोड करें",
+  "resendBilty": "बिल्टी फिर से भेजें",
+  "biltyEmailedToYou": "बिल्टी आपको ईमेल कर दी गई है",
+  "biltyEmailedToClient": "बिल्टी क्लाइंट को ईमेल कर दी गई है",
+  "biltyFileEmpty": "बिल्टी फ़ाइल खाली है।",
+  "biltyDownloadedTo": "बिल्टी {path} में डाउनलोड हो गई।",
+  "biltyReadyToSaveOrShare": "बिल्टी सेव या शेयर करने के लिए तैयार है।",
+  "biltyDownloadFailed": "बिल्टी डाउनलोड नहीं हो सकी",
+  "biltySendFailed": "बिल्टी नहीं भेजी जा सकी",
+  "biltyForBooking": "बिल्टी {bookingRef}"
 }

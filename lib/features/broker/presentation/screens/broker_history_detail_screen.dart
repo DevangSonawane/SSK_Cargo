@@ -15,6 +15,7 @@ import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../../../shared/data/trip_route_stop.dart';
+import '../../../shared/presentation/bilty_actions.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -99,6 +100,8 @@ class _BrokerHistoryDetailScreenState
   bool _downloading = false;
   bool _emailing = false;
   bool _notifying = false;
+  bool _downloadingBilty = false;
+  bool _sendingBilty = false;
   bool _collecting = false;
 
   // Take-over panel state (web `JobDetail.jsx` override parity).
@@ -289,6 +292,36 @@ class _BrokerHistoryDetailScreenState
       _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
     } finally {
       if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  Future<void> _downloadBilty(ClientBooking booking) async {
+    if (_downloadingBilty) return;
+    setState(() => _downloadingBilty = true);
+    try {
+      await downloadBookingBilty(
+        context: context,
+        ref: ref,
+        bookingId: booking.id,
+        bookingRef: _bookingRef(booking),
+      );
+    } finally {
+      if (mounted) setState(() => _downloadingBilty = false);
+    }
+  }
+
+  Future<void> _resendBilty(ClientBooking booking) async {
+    if (_sendingBilty) return;
+    setState(() => _sendingBilty = true);
+    try {
+      await resendBookingBilty(
+        context: context,
+        ref: ref,
+        bookingId: booking.id,
+        successMessage: AppLocalizations.of(context)!.biltyEmailedToClient,
+      );
+    } finally {
+      if (mounted) setState(() => _sendingBilty = false);
     }
   }
 
@@ -631,6 +664,11 @@ class _BrokerHistoryDetailScreenState
           emailing: _emailing,
           onNotifyClient: () => _notifyClient(booking),
           notifying: _notifying,
+          showBilty: isBiltyReady(booking.status),
+          onDownloadBilty: () => _downloadBilty(booking),
+          downloadingBilty: _downloadingBilty,
+          onResendBilty: () => _resendBilty(booking),
+          sendingBilty: _sendingBilty,
           onDelete: () => _deleteBooking(booking),
           deleting: _deleting,
           showCompleteDelivery: statusKey == 'delivered',
@@ -716,6 +754,11 @@ class _DetailTopCard extends StatelessWidget {
     required this.emailing,
     required this.onNotifyClient,
     required this.notifying,
+    required this.showBilty,
+    required this.onDownloadBilty,
+    required this.downloadingBilty,
+    required this.onResendBilty,
+    required this.sendingBilty,
     required this.onDelete,
     required this.deleting,
     required this.showCompleteDelivery,
@@ -731,6 +774,11 @@ class _DetailTopCard extends StatelessWidget {
   final bool emailing;
   final VoidCallback onNotifyClient;
   final bool notifying;
+  final bool showBilty;
+  final VoidCallback onDownloadBilty;
+  final bool downloadingBilty;
+  final VoidCallback onResendBilty;
+  final bool sendingBilty;
   final VoidCallback onDelete;
   final bool deleting;
   final bool showCompleteDelivery;
@@ -830,6 +878,18 @@ class _DetailTopCard extends StatelessWidget {
                 label: notifying ? l10n.sending : l10n.notify,
                 onTap: notifying ? null : onNotifyClient,
               ),
+              if (showBilty) ...[
+                _WrapAction(
+                  icon: AppIcons.receipt_long_rounded,
+                  label: downloadingBilty ? l10n.saving : l10n.bilty,
+                  onTap: downloadingBilty ? null : onDownloadBilty,
+                ),
+                _WrapAction(
+                  icon: AppIcons.mail_outline_rounded,
+                  label: sendingBilty ? l10n.sending : l10n.resendBilty,
+                  onTap: sendingBilty ? null : onResendBilty,
+                ),
+              ],
               _WrapAction(
                 icon: AppIcons.delete_outline_rounded,
                 label: deleting ? l10n.removing : l10n.remove,

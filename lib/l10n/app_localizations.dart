@@ -14392,6 +14392,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View serviceable areas'**
   String get unserviceableViewAreas;
+
+  /// No description provided for @bilty.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty'**
+  String get bilty;
+
+  /// No description provided for @downloadBilty.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Bilty'**
+  String get downloadBilty;
+
+  /// No description provided for @resendBilty.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Bilty'**
+  String get resendBilty;
+
+  /// No description provided for @biltyEmailedToYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty emailed to you'**
+  String get biltyEmailedToYou;
+
+  /// No description provided for @biltyEmailedToClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty emailed to the client'**
+  String get biltyEmailedToClient;
+
+  /// No description provided for @biltyFileEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty file is empty.'**
+  String get biltyFileEmpty;
+
+  /// No description provided for @biltyDownloadedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty downloaded to {path}.'**
+  String biltyDownloadedTo(Object path);
+
+  /// No description provided for @biltyReadyToSaveOrShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty ready to save or share.'**
+  String get biltyReadyToSaveOrShare;
+
+  /// No description provided for @biltyDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to download Bilty'**
+  String get biltyDownloadFailed;
+
+  /// No description provided for @biltySendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send Bilty'**
+  String get biltySendFailed;
+
+  /// No description provided for @biltyForBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Bilty {bookingRef}'**
+  String biltyForBooking(Object bookingRef);
 }
 
 class _AppLocalizationsDelegate

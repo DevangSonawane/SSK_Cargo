@@ -3050,5 +3050,26 @@
   },
   "unserviceableChangePickup": "Change loading location",
   "unserviceableChangeDrop": "Change unloading location",
-  "unserviceableViewAreas": "View serviceable areas"
+  "unserviceableViewAreas": "View serviceable areas",
+  "bilty": "Bilty",
+  "downloadBilty": "Download Bilty",
+  "resendBilty": "Resend Bilty",
+  "biltyEmailedToYou": "Bilty emailed to you",
+  "biltyEmailedToClient": "Bilty emailed to the client",
+  "biltyFileEmpty": "Bilty file is empty.",
+  "biltyDownloadedTo": "Bilty downloaded to {path}.",
+  "@biltyDownloadedTo": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "biltyReadyToSaveOrShare": "Bilty ready to save or share.",
+  "biltyDownloadFailed": "Failed to download Bilty",
+  "biltySendFailed": "Failed to send Bilty",
+  "biltyForBooking": "Bilty {bookingRef}",
+  "@biltyForBooking": {
+    "placeholders": {
+      "bookingRef": {}
+    }
+  }
 }
