@@ -86,55 +86,32 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   Future<AuthSession> login({
     required String email,
     required String password,
-  }) async {
-    final revision = ++_sessionRevision;
-    unawaited(
-      _ref.read(clientPushNotificationServiceProvider).clearForSession(),
-    );
-    state = const AsyncLoading<AuthSession?>();
-    try {
-      final response = await _apiClient.login(email: email, password: password);
-      if (!mounted || revision != _sessionRevision) {
-        throw StateError('Sign-in superseded by a session change');
-      }
-      final session = AuthSession.fromLoginResponse(response);
-      state = AsyncData<AuthSession?>(session);
-      _activateDriverForBookings(session);
-      unawaited(
-        _ref
-            .read(clientPushNotificationServiceProvider)
-            .syncForSession(session),
-      );
-      unawaited(
-        _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
-      );
-      // Drivers see the background tracking disclosure before any GPS prompt.
-      if (session.user.role.trim().toLowerCase() != 'driver') {
-        unawaited(_ref.read(userLocationProvider.notifier).prefetch());
-      }
-      return session;
-    } catch (error, stackTrace) {
-      if (mounted && revision == _sessionRevision) {
-        state = AsyncError<AuthSession?>(error, stackTrace);
-      }
-      rethrow;
-    }
-  }
+  }) => _signIn(() => _apiClient.login(email: email, password: password));
 
   Future<AuthSession> loginWithGoogle({
     required String idToken,
     required String role,
-  }) async {
+  }) => _signIn(() => _apiClient.googleLogin(idToken: idToken, role: role));
+
+  /// Signs in with a phone number whose OTP has been verified.
+  Future<AuthSession> loginWithPhoneOtp({
+    required String phone,
+    required String otp,
+    required String role,
+  }) => _signIn(
+    () => _apiClient.verifyLoginOtp(phone: phone, otp: otp, role: role),
+  );
+
+  Future<AuthSession> _signIn(
+    Future<Map<String, dynamic>> Function() request,
+  ) async {
     final revision = ++_sessionRevision;
     unawaited(
       _ref.read(clientPushNotificationServiceProvider).clearForSession(),
     );
     state = const AsyncLoading<AuthSession?>();
     try {
-      final response = await _apiClient.googleLogin(
-        idToken: idToken,
-        role: role,
-      );
+      final response = await request();
       if (!mounted || revision != _sessionRevision) {
         throw StateError('Sign-in superseded by a session change');
       }

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,7 +13,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../data/otp_service.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/liquid_segmented_toggle.dart';
+import 'phone_otp_login_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key, required this.expectedRole});
@@ -30,11 +34,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _googleSignInInitialization;
   bool _isSubmitting = false;
   bool _isGoogleSubmitting = false;
   bool _obscurePassword = true;
+  bool _isSendingOtp = false;
+  _LoginMode _mode = _LoginMode.email;
 
   @override
   void initState() {
@@ -54,7 +61,247 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendLoginOtp() async {
+    if (_isSendingOtp) return;
+    final phone = normalizeIndianPhone(_phoneController.text);
+    if (phone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid 10-digit mobile number.'),
+          backgroundColor: Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _isSendingOtp = true);
+    try {
+      await ref.read(otpServiceProvider).sendOtp(phone: phone);
+      if (!mounted) return;
+      context.push(
+        '/login/otp',
+        extra: PhoneOtpLoginArgs(phone: phone, role: widget.expectedRole),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSendingOtp = false);
+    }
+  }
+
+  void _setMode(_LoginMode mode) {
+    FocusScope.of(context).unfocus();
+    setState(() => _mode = mode);
+  }
+
+  Widget _buildAuthForm(AppLocalizations l10n) {
+    final isPhone = _mode == _LoginMode.phone;
+    final busy = isPhone ? _isSendingOtp : _isSubmitting;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LiquidSegmentedToggle(
+            labels: const ['Email', 'Phone'],
+            selectedIndex: _mode.index,
+            onChanged: (i) => _setMode(_LoginMode.values[i]),
+          ),
+          const SizedBox(height: 18),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 420),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.topCenter,
+                children: [...previous, ?current],
+              ),
+              transitionBuilder: (child, animation) {
+                // Incoming fields slide in from the side of the tab tapped;
+                // outgoing ones slide away the opposite way.
+                final fromRight =
+                    (child.key == const ValueKey(_LoginMode.phone));
+                final dx = fromRight ? 0.18 : -0.18;
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: Offset(dx, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: isPhone ? _phoneFields() : _emailFields(l10n),
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 54,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: const StadiumBorder(),
+                backgroundColor: const Color(0xFF2FA56E),
+                elevation: 0,
+              ),
+              onPressed: busy ? null : (isPhone ? _sendLoginOtp : _submit),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween(begin: 0.85, end: 1.0).animate(animation),
+                    child: child,
+                  ),
+                ),
+                child: busy
+                    ? const SizedBox(
+                        key: ValueKey('loading'),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        key: ValueKey(_mode),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isPhone ? 'Send OTP' : l10n.login,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                          if (isPhone) ...[
+                            const SizedBox(width: 8),
+                            const Icon(
+                              AppIcons.arrow_forward_rounded,
+                              size: 18,
+                            ),
+                          ],
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emailFields(AppLocalizations l10n) {
+    return Column(
+      key: const ValueKey(_LoginMode.email),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _FieldLabel('Email Address'),
+        TextField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.email],
+          style: const TextStyle(color: Color(0xFF1B2A3A)),
+          cursorColor: const Color(0xFF2FA56E),
+          decoration: _softDecoration(
+            hint: 'you@example.com',
+            icon: AppIcons.mail_outline_rounded,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _FieldLabel(l10n.password),
+        TextField(
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.password],
+          onSubmitted: (_) => _submit(),
+          style: const TextStyle(color: Color(0xFF1B2A3A)),
+          cursorColor: const Color(0xFF2FA56E),
+          decoration: _softDecoration(
+            hint: '••••••••',
+            icon: AppIcons.lock_outline_rounded,
+            suffixIcon: IconButton(
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(
+                _obscurePassword
+                    ? AppIcons.visibility_off_outlined
+                    : AppIcons.visibility_outlined,
+              ),
+              tooltip: _obscurePassword ? l10n.showPassword : l10n.hidePassword,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: _isSubmitting ? null : _openForgotPasswordSheet,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: const Color(0xFF2FA56E),
+            ),
+            child: const Text(
+              'Forgot password?',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _phoneFields() {
+    return Column(
+      key: const ValueKey(_LoginMode.phone),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _FieldLabel('Mobile Number'),
+        TextField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.telephoneNumberNational],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
+          onSubmitted: (_) => _sendLoginOtp(),
+          style: const TextStyle(
+            color: Color(0xFF1B2A3A),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
+          ),
+          cursorColor: const Color(0xFF2FA56E),
+          decoration: _softDecoration(
+            hint: '98765 43210',
+            icon: AppIcons.phone_outlined,
+            prefix: const _CountryCode(),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _submit() async {
@@ -318,7 +565,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.62),
+                                color: Colors.white.withValues(alpha: 0.80),
                                 borderRadius: BorderRadius.circular(34),
                                 border: Border.all(
                                   color: Colors.white.withValues(alpha: 0.66),
@@ -350,132 +597,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: TextField(
-                                      controller: _emailController,
-                                      keyboardType: TextInputType.emailAddress,
-                                      textInputAction: TextInputAction.next,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1B2A3A),
-                                      ),
-                                      cursorColor: Color(0xFF2FA56E),
-                                      decoration: _pillDecoration(
-                                        label: l10n.email,
-                                        icon: AppIcons.email_rounded,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: TextField(
-                                      controller: _passwordController,
-                                      obscureText: _obscurePassword,
-                                      textInputAction: TextInputAction.done,
-                                      onSubmitted: (_) => _submit(),
-                                      style: const TextStyle(
-                                        color: Color(0xFF1B2A3A),
-                                      ),
-                                      cursorColor: Color(0xFF2FA56E),
-                                      decoration: _pillDecoration(
-                                        label: l10n.password,
-                                        icon: AppIcons.lock_rounded,
-                                        suffixIcon: IconButton(
-                                          onPressed: () {
-                                            setState(
-                                              () => _obscurePassword =
-                                                  !_obscurePassword,
-                                            );
-                                          },
-                                          icon: Icon(
-                                            _obscurePassword
-                                                ? AppIcons
-                                                      .visibility_off_outlined
-                                                : AppIcons.visibility_outlined,
-                                          ),
-                                          tooltip: _obscurePassword
-                                              ? l10n.showPassword
-                                              : l10n.hidePassword,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      height: 52,
-                                      child: FilledButton(
-                                        style: FilledButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          shape: const StadiumBorder(),
-                                          backgroundColor: const Color(
-                                            0xFF2FA56E,
-                                          ),
-                                        ),
-                                        onPressed: _isSubmitting
-                                            ? null
-                                            : _submit,
-                                        child: AnimatedSwitcher(
-                                          duration: const Duration(
-                                            milliseconds: 180,
-                                          ),
-                                          child: _isSubmitting
-                                              ? const SizedBox(
-                                                  key: ValueKey('loading'),
-                                                  width: 20,
-                                                  height: 20,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2.2,
-                                                        color: Colors.white,
-                                                      ),
-                                                )
-                                              : Text(
-                                                  l10n.login,
-                                                  key: const ValueKey('label'),
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w800,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
-                                      onPressed: _isSubmitting
-                                          ? null
-                                          : _openForgotPasswordSheet,
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        foregroundColor: const Color(
-                                          0xFF2FA56E,
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'Forgot password?',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 4),
+                                  _buildAuthForm(l10n),
+                                  const SizedBox(height: 16),
+                                  const _OrDivider(),
+                                  const SizedBox(height: 14),
                                   Row(
                                     children: [
                                       Expanded(
@@ -518,13 +644,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                           ),
                                                         ),
                                                   )
-                                                : SvgPicture.asset(
-                                                    'assets/google_logo.svg',
-                                                    key: const ValueKey(
+                                                : const _SocialLabel(
+                                                    key: ValueKey(
                                                       'google-icon',
                                                     ),
-                                                    width: 20,
-                                                    height: 20,
+                                                    asset:
+                                                        'assets/google_logo.svg',
+                                                    label: 'Google',
                                                   ),
                                           ),
                                         ),
@@ -559,10 +685,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             ),
                                             shape: const StadiumBorder(),
                                           ),
-                                          child: SvgPicture.asset(
-                                            'assets/apple_logo.svg',
-                                            width: 20,
-                                            height: 20,
+                                          child: const _SocialLabel(
+                                            asset: 'assets/apple_logo.svg',
+                                            label: 'Apple',
                                           ),
                                         ),
                                       ),
@@ -1034,5 +1159,151 @@ InputDecoration _pillDecoration({
       borderSide: const BorderSide(color: Color(0xFF2FA56E), width: 1.4),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+  );
+}
+
+enum _LoginMode { email, phone }
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 7),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.normal,
+          color: Color(0xFF1B2A3A),
+        ),
+      ),
+    );
+  }
+}
+
+class _CountryCode extends StatelessWidget {
+  const _CountryCode();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🇮🇳', style: TextStyle(fontSize: 18)),
+          const SizedBox(width: 6),
+          const Text(
+            '+91',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1B2A3A),
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(width: 1.2, height: 22, color: const Color(0xFFD7DDE5)),
+          const SizedBox(width: 4),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    const line = Expanded(
+      child: Divider(color: Color(0xFFDDE3EA), thickness: 1, height: 1),
+    );
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          line,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              'Or continue with',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          line,
+        ],
+      ),
+    );
+  }
+}
+
+class _SocialLabel extends StatelessWidget {
+  const _SocialLabel({super.key, required this.asset, required this.label});
+
+  final String asset;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(asset, width: 20, height: 20),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
+}
+
+/// Soft filled field from the login card design: no resting border, green
+/// ring on focus.
+InputDecoration _softDecoration({
+  required String hint,
+  required IconData icon,
+  Widget? suffixIcon,
+  Widget? prefix,
+}) {
+  final radius = BorderRadius.circular(18);
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(
+      color: Color(0xFF98A2B3),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0,
+    ),
+    prefixIcon: prefix ?? Icon(icon, size: 20),
+    prefixIconConstraints: prefix == null
+        ? null
+        : const BoxConstraints(minWidth: 0, minHeight: 0),
+    prefixIconColor: const Color(0xFF667085),
+    suffixIconColor: const Color(0xFF667085),
+    suffixIcon: suffixIcon,
+    filled: true,
+    fillColor: const Color(0xFFF2F5F8),
+    border: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: const BorderSide(color: Colors.transparent),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: const BorderSide(color: Color(0xFF2FA56E), width: 1.6),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
   );
 }

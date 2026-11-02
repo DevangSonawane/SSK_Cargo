@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/delete_account_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/phone_otp_login_screen.dart';
 import '../../features/auth/presentation/screens/role_login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.dart';
@@ -96,6 +97,29 @@ BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
   return null;
 }
 
+Widget _slideFadeTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  final curved = CurvedAnimation(
+    parent: animation,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInCubic,
+  );
+  return FadeTransition(
+    opacity: curved,
+    child: SlideTransition(
+      position: Tween(
+        begin: const Offset(0.12, 0),
+        end: Offset.zero,
+      ).animate(curved),
+      child: child,
+    ),
+  );
+}
+
 Widget _lightFlow(Widget child) => Theme(data: AppTheme.light, child: child);
 Widget _clientGated(Widget child) => ClientVerificationGate(child: child);
 
@@ -115,6 +139,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const NoTransitionPage(
           child: LoginScreen(expectedRole: AppRole.client),
         ),
+      ),
+      GoRoute(
+        path: '/login/otp',
+        pageBuilder: (context, state) {
+          final args = state.extra as PhoneOtpLoginArgs?;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            transitionDuration: const Duration(milliseconds: 380),
+            child: _lightFlow(
+              args == null
+                  ? const LoginScreen(expectedRole: AppRole.client)
+                  : PhoneOtpLoginScreen(
+                      phone: args.phone,
+                      expectedRole: args.role,
+                    ),
+            ),
+            transitionsBuilder: _slideFadeTransition,
+          );
+        },
       ),
       GoRoute(
         path: '/role-login',

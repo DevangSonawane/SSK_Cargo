@@ -100,6 +100,25 @@ class SskApiClient {
     );
   }
 
+  /// Phone + OTP sign-in (`POST /api/auth/otp/verify` with
+  /// `purpose: "login"`). Returns the same payload shape as [login].
+  Future<Map<String, dynamic>> verifyLoginOtp({
+    required String phone,
+    required String otp,
+    required String role,
+  }) async {
+    developer.log(
+      'POST /api/auth/otp/verify purpose=login role=$role',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/otp/verify',
+        data: {'phone': phone, 'otp': otp, 'purpose': 'login', 'role': role},
+      ),
+    );
+  }
+
   /// Exchanges the refresh token for fresh tokens (web `AuthContext`
   /// `refreshTokens` parity: `POST /api/auth/refresh-token`). Unauthenticated
   /// call, and `/api/auth/` paths never broadcast 401s.
