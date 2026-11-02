@@ -563,7 +563,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 12),
                             ],
                             Container(
-                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                              padding: const EdgeInsets.fromLTRB(
+                                24,
+                                18,
+                                24,
+                                16,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.80),
                                 borderRadius: BorderRadius.circular(34),
