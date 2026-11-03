@@ -7,25 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:420579105285:android:1d35eae383d64d0e4c9a6c",
-        "android_client_info": {
-          "package_name": "com.example.ssk"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCyYepaMwZLax5eJGeygMVhT76bJUsnpRY"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:420579105285:android:f1d1a711513e448a4c9a6c",
         "android_client_info": {
           "package_name": "com.gadidost.play"

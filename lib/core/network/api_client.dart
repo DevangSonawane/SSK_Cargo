@@ -100,21 +100,18 @@ class SskApiClient {
     );
   }
 
-  /// Phone + OTP sign-in (`POST /api/auth/otp/verify` with
-  /// `purpose: "login"`). Returns the same payload shape as [login].
-  Future<Map<String, dynamic>> verifyLoginOtp({
-    required String phone,
-    required String otp,
-    required String role,
-  }) async {
+  /// Phone + OTP sign-in: exchanges a Firebase Phone Auth ID token for a
+  /// session (`POST /api/auth/firebase-login`). Login-only — 404s when no
+  /// account has the verified number. Same payload shape as [login].
+  Future<Map<String, dynamic>> firebaseLogin({required String idToken}) async {
     developer.log(
-      'POST /api/auth/otp/verify purpose=login role=$role',
+      'POST /api/auth/firebase-login idTokenLength=${idToken.length}',
       name: 'SSK.API',
     );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
-        '/api/auth/otp/verify',
-        data: {'phone': phone, 'otp': otp, 'purpose': 'login', 'role': role},
+        '/api/auth/firebase-login',
+        data: {'id_token': idToken},
       ),
     );
   }
@@ -143,6 +140,7 @@ class SskApiClient {
     required String password,
     String? phone,
     required String role,
+    String? idToken,
   }) async {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
@@ -153,6 +151,9 @@ class SskApiClient {
           'password': password,
           if (phone != null && phone.isNotEmpty) 'phone': phone,
           'role': role,
+          // Firebase ID token proving ownership of [phone] (mandatory for
+          // new client/broker/driver accounts).
+          if (idToken != null && idToken.isNotEmpty) 'id_token': idToken,
         },
       ),
     );
@@ -3082,19 +3083,22 @@ class SskApiClient {
     }
   }
 
-  /// The body's `errors.code` value when the server sends a single-error map
-  /// shape (`{"errors": {"code": "PINCODE_REQUIRED"}}`) rather than the 422
+  /// The body's `errors.code` (or `data.code`) value when the server sends a
+  /// single-error map shape (`{"errors": {"code": "PINCODE_REQUIRED"}}`,
+  /// `{"data": {"code": "PHONE_VERIFICATION_INVALID"}}`) rather than the 422
   /// field-error list. Lets callers branch on business error codes without
   /// string-matching messages (web `response?.errors?.code` parity).
   String? _extractErrorCode(Object? responseData) {
     if (responseData is! Map<String, dynamic>) {
       return null;
     }
-    final errors = responseData['errors'];
-    if (errors is Map<String, dynamic>) {
-      final code = errors['code']?.toString().trim();
-      if (code != null && code.isNotEmpty && code.toLowerCase() != 'null') {
-        return code;
+    for (final key in const ['errors', 'data']) {
+      final container = responseData[key];
+      if (container is Map<String, dynamic>) {
+        final code = container['code']?.toString().trim();
+        if (code != null && code.isNotEmpty && code.toLowerCase() != 'null') {
+          return code;
+        }
       }
     }
     return null;

@@ -93,14 +93,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String role,
   }) => _signIn(() => _apiClient.googleLogin(idToken: idToken, role: role));
 
-  /// Signs in with a phone number whose OTP has been verified.
-  Future<AuthSession> loginWithPhoneOtp({
-    required String phone,
-    required String otp,
-    required String role,
-  }) => _signIn(
-    () => _apiClient.verifyLoginOtp(phone: phone, otp: otp, role: role),
-  );
+  /// Signs in with the Firebase ID token from a verified phone OTP.
+  Future<AuthSession> loginWithFirebasePhone({required String idToken}) =>
+      _signIn(() => _apiClient.firebaseLogin(idToken: idToken));
 
   Future<AuthSession> _signIn(
     Future<Map<String, dynamic>> Function() request,
@@ -145,6 +140,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String password,
     String? phone,
     required String role,
+    String? idToken,
   }) async {
     await _apiClient.register(
       name: name,
@@ -152,6 +148,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       password: password,
       phone: phone,
       role: role,
+      idToken: idToken,
     );
   }
 

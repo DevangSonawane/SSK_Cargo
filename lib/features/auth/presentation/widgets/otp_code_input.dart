@@ -45,9 +45,13 @@ class OtpCodeInput extends StatefulWidget {
 
 class _OtpCodeInputState extends State<OtpCodeInput>
     with TickerProviderStateMixin {
-  static const double _boxSize = 52;
-  static const double _gap = 10;
+  static const double _maxBoxSize = 52;
+  static const double _gap = 8;
   static const double _circleSize = 60;
+
+  /// Shrinks below [_maxBoxSize] when the row would not fit (6 boxes on a
+  /// narrow phone).
+  double _boxSize = _maxBoxSize;
 
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
@@ -142,7 +146,21 @@ class _OtpCodeInputState extends State<OtpCodeInput>
 
   @override
   Widget build(BuildContext context) {
-    final totalWidth = widget.length * _boxSize + (widget.length - 1) * _gap;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gaps = (widget.length - 1) * _gap;
+        _boxSize = constraints.maxWidth.isFinite
+            ? ((constraints.maxWidth - gaps) / widget.length).clamp(
+                36.0,
+                _maxBoxSize,
+              )
+            : _maxBoxSize;
+        return _buildInput(widget.length * _boxSize + gaps);
+      },
+    );
+  }
+
+  Widget _buildInput(double totalWidth) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _locked ? null : _focusNode.requestFocus,

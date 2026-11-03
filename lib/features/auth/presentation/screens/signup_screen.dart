@@ -115,7 +115,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
-  Future<void> _createAccount() async {
+  /// Creates the account with the Firebase [idToken] that proves ownership
+  /// of [_phone] (the backend rejects signups without it). The token is used
+  /// straight away and never stored, so editing the number always needs a
+  /// fresh OTP.
+  Future<void> _createAccount(String idToken) async {
     if (_isSubmitting) return;
     final password = _passwordController.text;
 
@@ -133,6 +137,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         phone: _phone,
         password: password,
         role: 'client',
+        idToken: idToken,
       );
       final session = await auth.login(email: email, password: password);
       ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(
@@ -143,13 +148,31 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!mounted) return;
       context.go('/client/home');
     } on ApiException catch (error) {
-      if (mounted) _fail(error.message);
+      if (!mounted) return;
+      if (_isPhoneVerificationError(error)) {
+        // Expired/mismatched token: the code screen shows this and lets the
+        // user verify again.
+        throw OtpException(switch (error.code) {
+          'PHONE_VERIFICATION_INVALID' =>
+            'Verification expired. Tap "Resend code" to get a new one.',
+          'PHONE_VERIFICATION_MISMATCH' =>
+            'This code was for a different number. Please verify again.',
+          _ => 'Please verify your number to continue.',
+        });
+      }
+      _goTo(_SignupStep.details);
+      _fail(error.message);
     } catch (error) {
-      if (mounted) _fail(error.toString());
+      if (!mounted) return;
+      _goTo(_SignupStep.details);
+      _fail(error.toString());
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
+
+  bool _isPhoneVerificationError(ApiException error) =>
+      error.code?.startsWith('PHONE_VERIFICATION_') ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +239,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               title: 'Verify your number',
               continuingLabel: 'Verified',
               onChangeNumber: () => _goTo(_SignupStep.details),
-              onVerified: (_) => _createAccount(),
+              onVerified: _createAccount,
             ),
           ),
         ),

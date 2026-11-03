@@ -13,10 +13,11 @@ const _red = Color(0xFFE23A4B);
 const _ink = Color(0xFF1B2A3A);
 const _muted = Color(0xFF667085);
 
-/// Phone-OTP entry: digit boxes, status line, resend timer and test hint.
+/// Phone-OTP entry: digit boxes, status line and resend timer.
 ///
-/// Verifies the code through [otpServiceProvider]; once the success
-/// animation finishes it awaits [onVerified]. If that throws, the error is
+/// Verifies the code with Firebase through [otpServiceProvider] (or picks up
+/// Android auto-verification); once the success animation finishes it awaits
+/// [onVerified] with the Firebase ID token. If that throws, the error is
 /// shown and the user can enter the code again.
 class OtpVerificationView extends ConsumerStatefulWidget {
   const OtpVerificationView({
@@ -30,7 +31,7 @@ class OtpVerificationView extends ConsumerStatefulWidget {
   });
 
   final String phone;
-  final Future<void> Function(String code) onVerified;
+  final Future<void> Function(String idToken) onVerified;
   final VoidCallback? onChangeNumber;
   final String title;
   final String continuingLabel;
@@ -50,18 +51,28 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
   bool _resending = false;
   int _secondsLeft = _resendSeconds;
   int _inputGeneration = 0;
-  String _code = '';
+  String? _idToken;
   Timer? _timer;
+  StreamSubscription<OtpAutoVerification>? _autoSub;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
+    final otp = ref.read(otpServiceProvider);
+    _autoSub = otp.autoVerifications.listen(_onAutoVerified);
+    final early = otp.takeAutoVerification(widget.phone);
+    if (early != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _onAutoVerified(early);
+      });
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _autoSub?.cancel();
     super.dispose();
   }
 
@@ -75,32 +86,61 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
     });
   }
 
-  Future<void> _verify(String code) async {
-    if (_status != OtpInputStatus.idle) return;
+  /// Android verified the number by itself — skip straight to success.
+  void _onAutoVerified(OtpAutoVerification result) {
+    if (result.phone != widget.phone ||
+        _status == OtpInputStatus.success ||
+        _continuing) {
+      return;
+    }
     setState(() {
-      _code = code;
-      _status = OtpInputStatus.verifying;
+      _idToken = result.idToken;
       _error = null;
-    });
-    final ok = await ref
-        .read(otpServiceProvider)
-        .verifyOtp(phone: widget.phone, code: code);
-    if (!mounted) return;
-    setState(() {
-      _status = ok ? OtpInputStatus.success : OtpInputStatus.error;
-      _error = ok ? null : 'That code isn\'t right. Try again.';
+      _status = OtpInputStatus.success;
     });
   }
 
+  Future<void> _verify(String code) async {
+    if (_status != OtpInputStatus.idle) return;
+    setState(() {
+      _status = OtpInputStatus.verifying;
+      _error = null;
+    });
+    try {
+      final idToken = await ref
+          .read(otpServiceProvider)
+          .verifyOtp(phone: widget.phone, code: code);
+      if (!mounted || _status == OtpInputStatus.success) return;
+      setState(() {
+        _idToken = idToken;
+        _status = OtpInputStatus.success;
+      });
+    } on OtpException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.message;
+        if (error.wrongCode) {
+          _status = OtpInputStatus.error;
+        } else {
+          _status = OtpInputStatus.idle;
+          _inputGeneration++;
+        }
+      });
+    }
+  }
+
   Future<void> _continue() async {
+    final idToken = _idToken;
+    if (idToken == null) return;
     setState(() => _continuing = true);
     try {
-      await widget.onVerified(_code);
+      await widget.onVerified(idToken);
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _continuing = false;
         _status = OtpInputStatus.idle;
+        _idToken = null;
         _inputGeneration++;
         _error = error is ApiException
             ? error.message
@@ -110,7 +150,10 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
   }
 
   Future<void> _resend() async {
-    setState(() => _resending = true);
+    setState(() {
+      _resending = true;
+      _error = null;
+    });
     try {
       await ref.read(otpServiceProvider).sendOtp(phone: widget.phone);
       if (!mounted) return;
@@ -121,6 +164,8 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
           backgroundColor: _green,
         ),
       );
+    } on OtpException catch (error) {
+      if (mounted) setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _resending = false);
     }
@@ -128,7 +173,6 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
 
   @override
   Widget build(BuildContext context) {
-    final isMock = ref.watch(otpServiceProvider).isMock;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -201,10 +245,6 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
           opacity: _status == OtpInputStatus.success || _continuing ? 0 : 1,
           child: _resendRow(),
         ),
-        if (isMock) ...[
-          const SizedBox(height: 18),
-          const _TestModeHint(),
-        ],
       ],
     );
   }
@@ -308,10 +348,7 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
                   ),
                   child: const Text(
                     'Resend code',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                 )
               : Text(
@@ -393,38 +430,6 @@ class _PhoneBadgeState extends State<_PhoneBadge>
             color: Colors.white,
             size: 22,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TestModeHint extends StatelessWidget {
-  const _TestModeHint();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E6),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFFCD9A0)),
-      ),
-      child: const Text.rich(
-        TextSpan(
-          text: 'Test mode · use code ',
-          children: [
-            TextSpan(
-              text: kMockOtpCode,
-              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
-            ),
-          ],
-        ),
-        style: TextStyle(
-          color: Color(0xFF8A5A0B),
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

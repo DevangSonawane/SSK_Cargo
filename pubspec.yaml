@@ -59,6 +59,7 @@ dependencies:
   receipt_printer: ^1.0.2
   flutter_local_notifications: ^22.3.2
   flutter_widget_from_html_core: ^0.17.4
+  firebase_auth: ^6.7.1
 
 dev_dependencies:
   flutter_test:

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../data/auth_models.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/otp_verification_view.dart';
 
@@ -38,13 +40,32 @@ class PhoneOtpLoginScreen extends ConsumerWidget {
     });
   }
 
-  Future<void> _signIn(BuildContext context, WidgetRef ref, String code) async {
+  Future<void> _signIn(
+    BuildContext context,
+    WidgetRef ref,
+    String idToken,
+  ) async {
     final auth = ref.read(authSessionProvider.notifier);
-    final session = await auth.loginWithPhoneOtp(
-      phone: phone,
-      otp: code,
-      role: expectedRole.name,
-    );
+    final AuthSession session;
+    try {
+      session = await auth.loginWithFirebasePhone(idToken: idToken);
+    } on ApiException catch (error) {
+      // firebase-login is login-only: an unknown number 404s.
+      if (error.statusCode == 404 &&
+          expectedRole == AppRole.client &&
+          context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No account with this number yet.'),
+            action: SnackBarAction(
+              label: 'Create account',
+              onPressed: () => context.go('/signup'),
+            ),
+          ),
+        );
+      }
+      rethrow;
+    }
     final role = appRoleFromApiRole(session.user.role);
     if (role != expectedRole) {
       await auth.forceLocalLogout();
@@ -104,7 +125,7 @@ class PhoneOtpLoginScreen extends ConsumerWidget {
                   child: OtpVerificationView(
                     phone: phone,
                     onChangeNumber: () => _back(context),
-                    onVerified: (code) => _signIn(context, ref, code),
+                    onVerified: (idToken) => _signIn(context, ref, idToken),
                   ),
                 ),
               ),
