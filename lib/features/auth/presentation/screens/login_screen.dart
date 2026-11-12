@@ -30,7 +30,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const String _googleWebClientId =
       '567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com';
-  static const String _registerUrl = 'https://gadidostbroker.asynk.in/register';
+  static const String _registerUrl = 'https://shipper.gadidost.com/register';
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
