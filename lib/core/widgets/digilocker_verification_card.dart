@@ -5,11 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../kyc/digilocker_return.dart';
 import '../network/api_client.dart';
 import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_tokens.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+
+export '../kyc/digilocker_return.dart' show kDigilockerRedirectUrl;
 
 /// Document keys, matching the backend's `verification_results` and the web
 /// client's `REQUIRED` map (Onboarding.jsx).
@@ -98,21 +102,19 @@ class DigilockerVerificationSnapshot {
   final Map<String, String> statuses;
 }
 
-/// Where DigiLocker sends the user afterwards. Must be https (the backend
-/// 422s anything else). The app can't receive the redirect itself — no app
-/// link is registered — so this is the backend's onboarding page: the user
-/// finishes in the browser, comes back to the app manually, and taps
-/// "Check status" (the verification id is already held in memory).
-const String kDigilockerRedirectUrl =
-    'https://apigadidosti.asynk.in/onboarding';
-
 /// One DigiLocker sign-in covers every document this role needs, with
 /// number-entry fallbacks only for documents DigiLocker couldn't supply —
 /// a faithful port of the web client's Onboarding.jsx flow:
 ///
-/// start → browser → back in app → status (pending: 4 × 3 s poll, then a
-/// manual "Check status" button; failed: message + start again;
-/// done: verified settles, missing falls back to entering the number).
+/// start → in-app browser tab (Custom Tabs / SFSafariViewController) →
+/// DigiLocker redirects to [kDigilockerRedirectUrl], an App Link that brings
+/// the app back → status (pending: 4 × 3 s poll, then a manual "Check
+/// status" button; failed: message + start again; done: verified settles,
+/// missing falls back to entering the number).
+///
+/// The `verificationId` is persisted ([DigilockerSessionStore]) and re-checked
+/// whenever the app resumes, so the result is never lost if the link doesn't
+/// fire, Android kills the app mid-trip, or the user logs in again.
 class DigilockerVerificationCard extends ConsumerStatefulWidget {
   const DigilockerVerificationCard({
     super.key,
@@ -122,6 +124,7 @@ class DigilockerVerificationCard extends ConsumerStatefulWidget {
     this.initialValues = const {},
     this.initialStatuses = const {},
     this.onChanged,
+    this.onDigilockerDone,
   });
 
   /// `'driver'` or `'broker'`.
@@ -132,13 +135,19 @@ class DigilockerVerificationCard extends ConsumerStatefulWidget {
   final Map<String, String> initialStatuses;
   final ValueChanged<DigilockerVerificationSnapshot>? onChanged;
 
+  /// Fired once a DigiLocker session resolves (`done`), after [onChanged]
+  /// has reported the new statuses. `true` when every required document is
+  /// now verified — the host submits KYC straight away (no review step).
+  final ValueChanged<bool>? onDigilockerDone;
+
   @override
   ConsumerState<DigilockerVerificationCard> createState() =>
       _DigilockerVerificationCardState();
 }
 
 class _DigilockerVerificationCardState
-    extends ConsumerState<DigilockerVerificationCard> {
+    extends ConsumerState<DigilockerVerificationCard>
+    with WidgetsBindingObserver {
   late final List<String> _required;
   final Map<String, String> _statuses = {};
   final Map<String, String?> _messages = {};
@@ -164,6 +173,14 @@ class _DigilockerVerificationCardState
   late final TextEditingController _businessRegController;
 
   bool get _isDriver => widget.role.trim().toLowerCase() == 'driver';
+
+  /// True between opening DigiLocker and resolving the session: the user is
+  /// (or was) away in the browser tab. Drives the resume / return-link check.
+  bool _awaitingReturn = false;
+  ProviderSubscription<DigilockerReturnEvent?>? _returnSub;
+
+  String get _userId =>
+      ref.read(authSessionProvider).valueOrNull?.user.id ?? '';
 
   @override
   void initState() {
@@ -193,16 +210,75 @@ class _DigilockerVerificationCardState
     _businessRegController = TextEditingController(
       text: initial('business_registration_number'),
     );
-    // Report the prefilled state so the host screen starts in sync.
+    WidgetsBinding.instance.addObserver(this);
+    // The App Link fired: DigiLocker is done on its side. Close the browser
+    // tab (iOS; Android's Custom Tab is closed by the OS returning to us) and
+    // resolve right away.
+    _returnSub = ref.listenManual<DigilockerReturnEvent?>(
+      digilockerReturnProvider,
+      (previous, next) {
+        if (next == null) return;
+        _onReturnedFromDigilocker(next.verificationId);
+      },
+    );
+    // Report the prefilled state so the host screen starts in sync, then pick
+    // up any session left unresolved by an earlier run of the app.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _emit();
+      if (!mounted) return;
+      _emit();
+      _resumePendingSession();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Back from the browser tab without the link firing (iOS Done button,
+    // user switched apps, link not verified yet): check anyway.
+    if (state == AppLifecycleState.resumed &&
+        _awaitingReturn &&
+        _verificationId != null &&
+        _sessionStatus != 'loading') {
+      _checkDigilocker(_verificationId!, 0);
+    }
+  }
+
+  Future<void> _onReturnedFromDigilocker(String? linkVerificationId) async {
+    if (!mounted) return;
+    try {
+      if (await supportsCloseForLaunchMode(LaunchMode.inAppBrowserView)) {
+        await closeInAppWebView();
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    final id = (linkVerificationId != null && linkVerificationId.isNotEmpty)
+        ? linkVerificationId
+        : _verificationId;
+    if (id == null || id.isEmpty) return;
+    await _checkDigilocker(id, 0);
+  }
+
+  Future<void> _resumePendingSession() async {
+    if (_allVerified || _verificationId != null) return;
+    final pending = await DigilockerSessionStore.load(
+      userId: _userId,
+      role: widget.role,
+    );
+    if (!mounted || pending == null || _verificationId != null) return;
+    _awaitingReturn = true;
+    await _checkDigilocker(pending.verificationId, 0);
+  }
+
+  void _clearPending() {
+    _awaitingReturn = false;
+    DigilockerSessionStore.clear(userId: _userId, role: widget.role);
   }
 
   @override
   void dispose() {
     // Invalidate any in-flight poll chain.
     _pollToken++;
+    WidgetsBinding.instance.removeObserver(this);
+    _returnSub?.close();
     _aadhaarController.dispose();
     _panController.dispose();
     _licenseController.dispose();
@@ -262,11 +338,11 @@ class _DigilockerVerificationCardState
       _required.every((key) => _statuses[key] == 'verified');
 
   // One DigiLocker sign-in covers every document this role needs (a browser
-  // round trip, not inline entry): start → the user leaves for DigiLocker →
-  // they come back to the app manually → Check status resolves it. Typed
-  // fallback values live in these controllers, which survive the trip since
-  // the app itself is never torn down (web stashes them in sessionStorage
-  // because a redirect reloads the page — no equivalent hazard here).
+  // round trip, not inline entry): start → DigiLocker opens in an in-app
+  // browser tab → its redirect to the App Link brings the user back (or the
+  // app resumes) → status resolves it. Typed fallback values live in these
+  // controllers, which survive the trip as long as the app isn't killed;
+  // the verification id itself is persisted so the result never is lost.
   Future<void> _startDigilocker() async {
     if (_sessionStatus == 'loading') return;
     final l10n = AppLocalizations.of(context)!;
@@ -288,12 +364,33 @@ class _DigilockerVerificationCardState
       if (url.isEmpty || verificationId.isEmpty) {
         throw ApiException(l10n.coreDigilockerNoLoginLink);
       }
-      final opened = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
+      // Persist first: if Android kills the app while the user is in
+      // DigiLocker, the next launch can still read the result.
+      await DigilockerSessionStore.save(
+        userId: _userId,
+        role: widget.role,
+        verificationId: verificationId,
       );
+      // Custom Tabs (Android) / SFSafariViewController (iOS): stays on top
+      // of the app, and a verified App Link redirect hands control back.
+      var opened = false;
+      try {
+        opened = await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.inAppBrowserView,
+        );
+      } catch (_) {
+        opened = false;
+      }
+      if (!opened) {
+        opened = await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        );
+      }
       if (!mounted) return;
       if (!opened) {
+        _clearPending();
         setState(() {
           _sessionStatus = 'error';
           _sessionMessage = l10n.coreDigilockerOpenBrowserFailed;
@@ -301,10 +398,15 @@ class _DigilockerVerificationCardState
         });
         return;
       }
-      setState(() => _verificationId = verificationId);
-      // Same poll the web client runs on return: a few quick tries, then a
-      // manual button rather than spinning forever.
-      await _checkDigilocker(verificationId, 0);
+      // Don't poll now — the user is only just starting in DigiLocker, and a
+      // 12 s poll would give up long before they finish. Wait for the return
+      // link / app resume instead, with a manual "Check status" meanwhile.
+      _awaitingReturn = true;
+      setState(() {
+        _verificationId = verificationId;
+        _sessionStatus = 'error';
+        _sessionMessage = l10n.coreDigilockerAwaitingReturn;
+      });
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -360,6 +462,7 @@ class _DigilockerVerificationCardState
         return;
       }
       if (status == 'failed') {
+        _clearPending();
         setState(() {
           _sessionStatus = 'error';
           _sessionMessage =
@@ -372,6 +475,7 @@ class _DigilockerVerificationCardState
       }
       // Done: verified documents are settled; missing ones fall back to
       // entering the number.
+      _clearPending();
       final documents = data['documents'];
       final docsMap = documents is Map<String, dynamic> ? documents : const {};
       setState(() {
@@ -397,6 +501,7 @@ class _DigilockerVerificationCardState
         _verificationId = null;
       });
       _emit();
+      widget.onDigilockerDone?.call(_allVerified);
     } on ApiException catch (error) {
       if (!mounted || token != _pollToken) return;
       setState(() {

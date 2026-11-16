@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
+import '../kyc/digilocker_return.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/delete_account_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
@@ -128,6 +129,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    // DigiLocker's redirect (an App Link) reopens the app on
+    // /kyc/digilocker/return?verification_id=… — not a screen. Swallow it so
+    // the KYC screen underneath keeps its state, and let the DigiLocker card
+    // resolve the session. On a cold start this falls back to /splash; the
+    // card then picks the persisted session up when KYC is reopened.
+    onEnter: (context, currentState, nextState, goRouter) {
+      if (nextState.uri.path == kDigilockerReturnPath) {
+        ref.read(digilockerReturnProvider.notifier).state =
+            DigilockerReturnEvent(
+              verificationId: nextState.uri.queryParameters['verification_id'],
+              at: DateTime.now(),
+            );
+        return const Block.stop();
+      }
+      return const Allow();
+    },
     routes: [
       GoRoute(
         path: '/splash',

@@ -1818,6 +1818,7 @@
   "coreDigilockerOpenBrowserFailed": "DigiLocker के लिए ब्राउज़र नहीं खुल सका।",
   "coreDigilockerOptionalNote": "वैकल्पिक",
   "coreDigilockerPendingRetry": "सत्यापन अभी बाकी है। कृपया थोड़ी देर में फिर कोशिश करें।",
+  "coreDigilockerAwaitingReturn": "DigiLocker में प्रक्रिया पूरी करें और Allow पर टैप करें। आप अपने-आप यहाँ वापस आ जाएँगे। अगर नहीं, तो ऐप पर लौटें और Check status पर टैप करें।",
   "coreDigilockerUnreachable": "DigiLocker अभी उपलब्ध नहीं है",
   "coreDigilockerVehicleDetails": "वाहन विवरण",
   "coreDigilockerVehicleInsuranceHint": "वाहन बीमा संख्या",

@@ -363,8 +363,20 @@ class _DriverKycRegistrationScreenState
     }
   }
 
-  Future<void> _submitKyc() async {
-    if (!(_confirmCheckboxController.value)) {
+  /// DigiLocker verified every required document: submit right away — no
+  /// review step, no confirm checkbox — so `kyc_status` flips to verified
+  /// without the user walking through the rest of the wizard. Only for a
+  /// first submission or a resubmission after rejection.
+  void _onDigilockerDone(bool allVerified) {
+    if (!allVerified || _saving || !mounted) return;
+    final status = (_statusLabel ?? '').trim().toLowerCase();
+    final canSubmit = !_hasSubmission || _isRejectedStatus(status);
+    if (!canSubmit) return;
+    _submitKyc(skipConfirm: true);
+  }
+
+  Future<void> _submitKyc({bool skipConfirm = false}) async {
+    if (!skipConfirm && !(_confirmCheckboxController.value)) {
       setState(() {
         _step = _KycStep.review;
         _errorMessage = AppLocalizations.of(context)!.driverKycConfirmAccuracy;
@@ -1193,10 +1205,14 @@ class _DriverKycRegistrationScreenState
       return const SizedBox.shrink();
     }
 
-    final label = _step == _KycStep.review
+    final label = (_step == _KycStep.review || _digiAllVerified)
         ? l10n.brokerKycSubmitKyc
         : l10n.brokerKycContinue;
-    final action = _step == _KycStep.details
+    final action = _digiAllVerified && _step != _KycStep.review
+        // Everything already verified through DigiLocker: nothing to upload
+        // or review — submit directly.
+        ? () => _submitKyc(skipConfirm: true)
+        : _step == _KycStep.details
         ? () {
             setState(() {
               _errorMessage = null;
@@ -1310,6 +1326,7 @@ class _DriverKycRegistrationScreenState
                   },
                   initialStatuses: _digiStatuses,
                   onChanged: _onDigiChanged,
+                  onDigilockerDone: _onDigilockerDone,
                 );
               },
             ),

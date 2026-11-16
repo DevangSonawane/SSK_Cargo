@@ -7565,6 +7565,12 @@ abstract class AppLocalizations {
   /// **'Verification is still pending. Please try again in a moment.'**
   String get coreDigilockerPendingRetry;
 
+  /// No description provided for @coreDigilockerAwaitingReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish in DigiLocker and tap Allow. You\'ll come back here automatically. If not, return to the app and tap Check status.'**
+  String get coreDigilockerAwaitingReturn;
+
   /// No description provided for @coreDigilockerUnreachable.
   ///
   /// In en, this message translates to:

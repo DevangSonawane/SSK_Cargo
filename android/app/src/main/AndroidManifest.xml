@@ -54,6 +54,20 @@
                     android:scheme="gadidost"
                     android:host="track" />
             </intent-filter>
+            <!-- DigiLocker KYC return (App Link). DigiLocker redirects to
+                 https://apigadidosti.asynk.in/kyc/digilocker/return after the
+                 user taps Allow; Android opens the app instead of the browser.
+                 Verification needs the backend to serve
+                 /.well-known/assetlinks.json for this package + signing keys. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="apigadidosti.asynk.in"
+                    android:pathPrefix="/kyc/digilocker/return" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

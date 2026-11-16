@@ -451,34 +451,60 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
+                // Title shrinks (ellipsis) and the button stays compact so
+                // the row fits narrow phones instead of overflowing right.
                 Row(
                   children: [
-                    Text(
-                      AppLocalizations.of(context)!.brokerTrackingYourDrivers,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              AppLocalizations.of(context)!
+                                  .brokerTrackingYourDrivers,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '(${driversAsync.valueOrNull?.length ?? 0})',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '(${driversAsync.valueOrNull?.length ?? 0})',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
                     FilledButton.icon(
                       onPressed: () => context.push('/broker/drivers/add'),
-                      icon: const Icon(AppIcons.add),
-                      label: Text(AppLocalizations.of(context)!.addDriver),
+                      icon: const Icon(AppIcons.add, size: 18),
+                      label: Text(
+                        AppLocalizations.of(context)!.addDriver,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.brand,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        minimumSize: const Size(0, 40),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        textStyle: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                         ),
                         shape: const StadiumBorder(),
                       ),

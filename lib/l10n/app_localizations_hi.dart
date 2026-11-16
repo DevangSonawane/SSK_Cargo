@@ -4184,6 +4184,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'सत्यापन अभी बाकी है। कृपया थोड़ी देर में फिर कोशिश करें।';
 
   @override
+  String get coreDigilockerAwaitingReturn =>
+      'DigiLocker में प्रक्रिया पूरी करें और Allow पर टैप करें। आप अपने-आप यहाँ वापस आ जाएँगे। अगर नहीं, तो ऐप पर लौटें और Check status पर टैप करें।';
+
+  @override
   String get coreDigilockerUnreachable => 'DigiLocker अभी उपलब्ध नहीं है';
 
   @override

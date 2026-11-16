@@ -1818,6 +1818,7 @@
   "coreDigilockerOpenBrowserFailed": "Could not open your browser for DigiLocker.",
   "coreDigilockerOptionalNote": "Optional",
   "coreDigilockerPendingRetry": "Verification is still pending. Please try again in a moment.",
+  "coreDigilockerAwaitingReturn": "Finish in DigiLocker and tap Allow. You'll come back here automatically. If not, return to the app and tap Check status.",
   "coreDigilockerUnreachable": "DigiLocker is unreachable right now",
   "coreDigilockerVehicleDetails": "Vehicle details",
   "coreDigilockerVehicleInsuranceHint": "Vehicle insurance number",

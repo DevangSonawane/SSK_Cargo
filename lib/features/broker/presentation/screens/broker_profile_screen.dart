@@ -189,7 +189,12 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                         ? AppColors.brand
                         : AppColors.warningText,
                     highlighted: !_loadingKyc && !_kycApproved,
-                    onTap: () => context.push('/broker/kyc-registration'),
+                    onTap: () async {
+                      // Re-read on return so the tile turns green right
+                      // after an auto-submitted DigiLocker KYC.
+                      await context.push('/broker/kyc-registration');
+                      if (mounted) _refresh();
+                    },
                   ),
                   _ProfileMenuTile(
                     title: l10n.changePasswordTitleCase,

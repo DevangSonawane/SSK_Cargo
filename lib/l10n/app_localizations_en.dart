@@ -4184,6 +4184,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Verification is still pending. Please try again in a moment.';
 
   @override
+  String get coreDigilockerAwaitingReturn =>
+      'Finish in DigiLocker and tap Allow. You\'ll come back here automatically. If not, return to the app and tap Check status.';
+
+  @override
   String get coreDigilockerUnreachable => 'DigiLocker is unreachable right now';
 
   @override

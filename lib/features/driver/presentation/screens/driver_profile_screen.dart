@@ -242,7 +242,12 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                         ? AppColors.brand
                         : AppColors.warningText,
                     highlighted: !_loadingKyc && !_kycApproved,
-                    onTap: () => context.push('/driver/kyc-registration'),
+                    onTap: () async {
+                      // Re-read on return so the tile turns green right
+                      // after an auto-submitted DigiLocker KYC.
+                      await context.push('/driver/kyc-registration');
+                      if (mounted) _refresh();
+                    },
                   ),
                   _ProfileMenuTile(
                     title: l10n.earnings,
