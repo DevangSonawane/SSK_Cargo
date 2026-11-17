@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 enum _HistoryTab { all, completed, cancelled }
 
@@ -138,7 +139,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -203,7 +204,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
                 ),
                 error: (error, _) => _HistoryEmptyState(
                   title: l10n.brokerHistoryCouldNotLoadJobHistory,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
                 data: (_) {
                   if (visibleBookings.isEmpty) {

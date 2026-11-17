@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Bilty (Lorry Receipt) actions shared by the client and broker booking
 /// screens. The Bilty is the transporter's goods receipt — a separate
@@ -146,7 +147,7 @@ Future<void> resendBookingBilty({
     if (!context.mounted) return;
     _snack(
       context,
-      error.message.isEmpty ? l10n.biltySendFailed : error.message,
+      error.message.isEmpty ? l10n.biltySendFailed : userFacingError(error),
       error: true,
     );
   } catch (_) {

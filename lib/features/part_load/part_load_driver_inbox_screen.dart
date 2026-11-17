@@ -25,6 +25,7 @@ import '../auth/presentation/controllers/auth_controller.dart';
 import 'part_load_api.dart';
 import 'part_load_models.dart';
 import 'part_load_providers.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class PartLoadDriverInboxScreen extends StatelessWidget {
   const PartLoadDriverInboxScreen({super.key});
@@ -169,7 +170,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+          SnackBar(content: Text(userFacingError(e))),
         );
       }
       ref.invalidate(partLoadInboxProvider);
@@ -204,7 +205,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
           ? _PartLoadEmptyStateCard(
               icon: AppIcons.wifi_off_rounded,
               title: 'Could not load requests',
-              subtitle: error.toString().replaceFirst('Exception: ', ''),
+              subtitle: userFacingError(error),
             )
           : RefreshIndicator(
               onRefresh: () async => ref.invalidate(partLoadInboxProvider),
@@ -215,7 +216,7 @@ class _PartLoadInboxListState extends ConsumerState<PartLoadInboxList> {
                   _PartLoadEmptyStateCard(
                     icon: AppIcons.wifi_off_rounded,
                     title: 'Could not load requests',
-                    subtitle: error.toString().replaceFirst('Exception: ', ''),
+                    subtitle: userFacingError(error),
                   ),
                 ],
               ),

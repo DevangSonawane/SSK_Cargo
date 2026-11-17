@@ -18,6 +18,7 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 const double _brokerTrackingBottomNavClearance = 64;
 
@@ -621,7 +622,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       border: Border.all(color: AppColors.line),
                     ),
                     child: Text(
-                      error.toString().replaceFirst('Exception: ', ''),
+                      userFacingError(error),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.dangerText,
                       ),
@@ -765,7 +766,7 @@ Future<void> _showDriverActions(
               ScaffoldMessenger.of(dialogContext).showSnackBar(
                 SnackBar(
                   content: Text(
-                    error.toString().replaceFirst('ApiException: ', ''),
+                    userFacingError(error),
                   ),
                   backgroundColor: AppColors.dangerIcon,
                 ),
@@ -1031,7 +1032,7 @@ Future<void> _confirmDeleteDriver(
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        content: Text(userFacingError(error)),
       ),
     );
   }
@@ -1111,7 +1112,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     }
   }
 
@@ -1177,7 +1178,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                       Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Text(
-                      error.toString().replaceFirst('Exception: ', ''),
+                      userFacingError(error),
                     ),
                   ),
                   data: (requests) {
@@ -1679,12 +1680,12 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -1775,7 +1776,7 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -1835,7 +1836,7 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -1866,7 +1867,7 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -1906,12 +1907,12 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -2012,7 +2013,7 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -2045,7 +2046,7 @@ class _BrokerDriverTripSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }

@@ -3196,12 +3196,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deliveryFlowImagePickerError(Object error) {
-    return 'Image picker error: $error';
+    return 'Couldn\'t add the photo. $error';
   }
 
   @override
   String deliveryFlowVideoCameraError(Object error) {
-    return 'Video camera error: $error';
+    return 'Couldn\'t record the video. $error';
   }
 
   @override
@@ -3281,12 +3281,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String photoUploadImagePickerError(Object error) {
-    return 'Image picker error: $error';
+    return 'Couldn\'t add the photo. $error';
   }
 
   @override
   String photoUploadVideoCameraError(Object error) {
-    return 'Video camera error: $error';
+    return 'Couldn\'t record the video. $error';
   }
 
   @override
@@ -8001,4 +8001,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String biltyForBooking(Object bookingRef) {
     return 'Bilty $bookingRef';
   }
+
+  @override
+  String get errorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get errorNoInternet =>
+      'No internet connection. Please check your network and try again.';
+
+  @override
+  String get errorTimeout =>
+      'This is taking longer than usual. Please try again.';
+
+  @override
+  String get errorServer =>
+      'Our server is having trouble right now. Please try again in a few minutes.';
+
+  @override
+  String get errorSessionExpired =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get errorTooManyRequests =>
+      'Too many attempts. Please wait a moment and try again.';
+
+  @override
+  String get errorNotAllowed => 'You don\'t have permission to do this.';
+
+  @override
+  String get errorNotFound => 'We couldn\'t find what you were looking for.';
+
+  @override
+  String get errorCheckDetails =>
+      'Please check the details you entered and try again.';
+
+  @override
+  String get errorOtpWrong => 'That code isn\'t right. Please try again.';
+
+  @override
+  String get errorOtpExpired =>
+      'The code has expired. Please request a new one.';
+
+  @override
+  String get errorInvalidPhone => 'That mobile number doesn\'t look right.';
+
+  @override
+  String get errorVerificationUnavailable =>
+      'We couldn\'t verify your number right now. Please try again later.';
 }

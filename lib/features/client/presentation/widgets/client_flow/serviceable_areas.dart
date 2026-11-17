@@ -702,7 +702,7 @@ bool _isUnserviceableError(Object error) =>
         RegExp(
           r'not (currently )?service|not serviceable',
           caseSensitive: false,
-        ).hasMatch(error.message));
+        ).hasMatch(userFacingError(error)));
 
 Future<_UnserviceableAction?> _showUnserviceableLocationSheet(
   BuildContext context, {

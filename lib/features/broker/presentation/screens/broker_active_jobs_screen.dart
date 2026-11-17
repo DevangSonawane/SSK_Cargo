@@ -11,6 +11,7 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 const int _activeJobsFetchPageLimit = 100;
 const int _activeJobsFetchMaxPages = 50;
@@ -244,7 +245,7 @@ class _BrokerActiveJobsScreenState
                 ),
                 error: (error, _) => _ActiveEmptyState(
                   title: l10n.brokerActiveJobsCouldNotLoadActiveJobs,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
                 data: (jobs) {
                   if (jobs.isEmpty) {
@@ -455,7 +456,7 @@ class _BrokerActiveJobsScreenState
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -623,7 +624,7 @@ class _BrokerActiveJobsScreenState
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );

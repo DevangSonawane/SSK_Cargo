@@ -20,6 +20,7 @@ import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../widgets/history_segment_bar.dart';
 import '../widgets/trip_summary_card.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverRiderScreen extends ConsumerStatefulWidget {
   const DriverRiderScreen({super.key});
@@ -69,7 +70,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
                 _AllTripsHeader(onBack: () => context.pop()),
                 const SizedBox(height: 120),
                 Text(
-                  error.toString().replaceFirst('Exception: ', ''),
+                  userFacingError(error),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: AppColors.dangerText,
@@ -325,7 +326,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 height: MediaQuery.sizeOf(context).height * 0.55,
                 child: Center(
                   child: Text(
-                    error.toString().replaceFirst('Exception: ', ''),
+                    userFacingError(error),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.dangerText),
                   ),

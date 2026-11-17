@@ -12,6 +12,7 @@ import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_tokens.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 export '../kyc/digilocker_return.dart' show kDigilockerRedirectUrl;
 
@@ -411,14 +412,14 @@ class _DigilockerVerificationCardState
       if (!mounted) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = error.message;
+        _sessionMessage = userFacingError(error);
         _verificationId = null;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = error.toString().replaceFirst('Exception: ', '');
+        _sessionMessage = userFacingError(error);
         _verificationId = null;
       });
     }
@@ -506,14 +507,14 @@ class _DigilockerVerificationCardState
       if (!mounted || token != _pollToken) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = error.message;
+        _sessionMessage = userFacingError(error);
         _verificationId = verificationId;
       });
     } catch (error) {
       if (!mounted || token != _pollToken) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = error.toString().replaceFirst('Exception: ', '');
+        _sessionMessage = userFacingError(error);
         _verificationId = verificationId;
       });
     }
@@ -544,7 +545,7 @@ class _DigilockerVerificationCardState
       );
       ref.invalidate(kycStatusProvider);
     } on ApiException catch (error) {
-      _setDoc('pan', 'error', error.message);
+      _setDoc('pan', 'error', userFacingError(error));
     } finally {
       if (mounted) setState(() => _verifyingPan = false);
     }
@@ -574,7 +575,7 @@ class _DigilockerVerificationCardState
       );
       ref.invalidate(kycStatusProvider);
     } on ApiException catch (error) {
-      _setDoc('drivingLicense', 'error', error.message);
+      _setDoc('drivingLicense', 'error', userFacingError(error));
     } finally {
       if (mounted) setState(() => _verifyingDl = false);
     }

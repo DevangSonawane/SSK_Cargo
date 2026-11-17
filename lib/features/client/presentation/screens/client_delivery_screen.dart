@@ -16,6 +16,7 @@ import 'tracking_details_screen.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ClientDeliveryScreen extends ConsumerStatefulWidget {
   const ClientDeliveryScreen({super.key});
@@ -198,7 +199,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                 error: (error, _) => _EmptyState(
                   icon: AppIcons.error_outline_rounded,
                   title: l10n.couldNotLoadBookings,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                   actionLabel: l10n.tryAgain,
                   onAction: _refreshBookings,
                 ),

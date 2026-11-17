@@ -9,6 +9,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 const double _vehiclesBottomNavClearance = 64;
 
@@ -138,7 +139,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -257,7 +258,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                   _FleetEmptyState(
                     icon: AppIcons.error_outline_rounded,
                     title: l10n.brokerVehiclesCouldNotLoadTrucks,
-                    subtitle: error.toString().replaceFirst('Exception: ', ''),
+                    subtitle: userFacingError(error),
                     actionLabel: 'Try again',
                     onAction: refreshTrucks,
                   ),

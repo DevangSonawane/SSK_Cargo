@@ -8,6 +8,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../widgets/driver_currency.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverEarningsScreen extends ConsumerStatefulWidget {
   const DriverEarningsScreen({super.key});
@@ -43,7 +44,7 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
                 height: MediaQuery.sizeOf(context).height * 0.55,
                 child: Center(
                   child: Text(
-                    error.toString().replaceFirst('Exception: ', ''),
+                    userFacingError(error),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.dangerText),
                   ),

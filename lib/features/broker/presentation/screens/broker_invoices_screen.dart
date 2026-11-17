@@ -9,6 +9,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BrokerInvoicesScreen extends ConsumerStatefulWidget {
   const BrokerInvoicesScreen({super.key});
@@ -57,7 +58,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               );
             } catch (error) {
               if (!mounted) return;
-              messenger.showSnackBar(SnackBar(content: Text(error.toString())));
+              messenger.showSnackBar(SnackBar(content: Text(userFacingError(error))));
             }
           },
           onEmail: () async {
@@ -83,7 +84,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               );
             } catch (error) {
               if (!mounted) return;
-              messenger.showSnackBar(SnackBar(content: Text(error.toString())));
+              messenger.showSnackBar(SnackBar(content: Text(userFacingError(error))));
             }
           },
         );
@@ -117,7 +118,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               _EmptyState(
                 icon: AppIcons.receipt_long_rounded,
                 title: l10n.brokerInvoicesCouldNotLoadInvoices,
-                subtitle: error.toString().replaceFirst('Exception: ', ''),
+                subtitle: userFacingError(error),
               ),
             ],
           ),

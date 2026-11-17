@@ -1380,13 +1380,13 @@
       "count": {}
     }
   },
-  "deliveryFlowImagePickerError": "इमेज पिकर त्रुटि: {error}",
+  "deliveryFlowImagePickerError": "फ़ोटो नहीं जोड़ी जा सकी। {error}",
   "@deliveryFlowImagePickerError": {
     "placeholders": {
       "error": {}
     }
   },
-  "deliveryFlowVideoCameraError": "वीडियो कैमरा त्रुटि: {error}",
+  "deliveryFlowVideoCameraError": "वीडियो रिकॉर्ड नहीं हो सका। {error}",
   "@deliveryFlowVideoCameraError": {
     "placeholders": {
       "error": {}
@@ -1486,13 +1486,13 @@
       "count": {}
     }
   },
-  "photoUploadImagePickerError": "इमेज पिकर त्रुटि: {error}",
+  "photoUploadImagePickerError": "फ़ोटो नहीं जोड़ी जा सकी। {error}",
   "@photoUploadImagePickerError": {
     "placeholders": {
       "error": {}
     }
   },
-  "photoUploadVideoCameraError": "वीडियो कैमरा त्रुटि: {error}",
+  "photoUploadVideoCameraError": "वीडियो रिकॉर्ड नहीं हो सका। {error}",
   "@photoUploadVideoCameraError": {
     "placeholders": {
       "error": {}
@@ -3038,5 +3038,18 @@
   "biltyReadyToSaveOrShare": "बिल्टी सेव या शेयर करने के लिए तैयार है।",
   "biltyDownloadFailed": "बिल्टी डाउनलोड नहीं हो सकी",
   "biltySendFailed": "बिल्टी नहीं भेजी जा सकी",
-  "biltyForBooking": "बिल्टी {bookingRef}"
+  "biltyForBooking": "बिल्टी {bookingRef}",
+  "errorGeneric": "कुछ गलत हो गया। कृपया फिर से कोशिश करें।",
+  "errorNoInternet": "इंटरनेट कनेक्शन नहीं है। कृपया अपना नेटवर्क जांचें और फिर से कोशिश करें।",
+  "errorTimeout": "इसमें सामान्य से अधिक समय लग रहा है। कृपया फिर से कोशिश करें।",
+  "errorServer": "हमारे सर्वर में अभी समस्या है। कृपया कुछ मिनट बाद फिर से कोशिश करें।",
+  "errorSessionExpired": "आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।",
+  "errorTooManyRequests": "बहुत अधिक प्रयास। कृपया थोड़ा रुककर फिर से कोशिश करें।",
+  "errorNotAllowed": "आपको यह करने की अनुमति नहीं है।",
+  "errorNotFound": "आप जो ढूंढ रहे थे वह हमें नहीं मिला।",
+  "errorCheckDetails": "कृपया दर्ज किए गए विवरण जांचें और फिर से कोशिश करें।",
+  "errorOtpWrong": "यह कोड सही नहीं है। कृपया फिर से कोशिश करें।",
+  "errorOtpExpired": "कोड की समय-सीमा समाप्त हो गई है। कृपया नया कोड मंगाएं।",
+  "errorInvalidPhone": "यह मोबाइल नंबर सही नहीं लग रहा।",
+  "errorVerificationUnavailable": "हम अभी आपका नंबर सत्यापित नहीं कर सके। कृपया बाद में फिर से कोशिश करें।"
 }

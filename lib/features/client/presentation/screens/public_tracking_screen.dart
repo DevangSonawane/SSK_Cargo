@@ -12,6 +12,7 @@ import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class PublicTrackingScreen extends ConsumerStatefulWidget {
   const PublicTrackingScreen({super.key, required this.token});
@@ -84,13 +85,13 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
       if (!mounted || silent) return;
       setState(() {
         _loading = false;
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } catch (error) {
       if (!mounted || silent) return;
       setState(() {
         _loading = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
   }

@@ -15,6 +15,7 @@ import 'core/router/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/providers/app_providers.dart';
 import 'core/providers/locale_provider.dart';
+import 'core/utils/user_facing_error.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/app_socket_service.dart';
 import 'core/services/fcm_message_service.dart';
@@ -820,6 +821,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       scaffoldMessengerKey: _messengerKey,
       routerConfig: router,
       builder: (context, child) {
+        UserFacingErrorL10n.current = AppLocalizations.of(context);
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final systemBars = SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,

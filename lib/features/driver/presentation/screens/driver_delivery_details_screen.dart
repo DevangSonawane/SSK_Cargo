@@ -28,6 +28,7 @@ import '../../../part_load/part_load_active_trips.dart';
 import '../../../part_load/part_load_providers.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 import '../widgets/slide_to_confirm.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class _TripStop {
   const _TripStop({
@@ -308,7 +309,7 @@ class _DriverDeliveryDetailsScreenState
         setState(() => _optimisticAcceptingLoads = serverCurrent);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
     } finally {
       if (mounted && seq == _acceptingLoadsSeq) {
@@ -1041,12 +1042,12 @@ class _DriverDeliveryDetailsScreenState
       setState(() => _loadingTrip = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
       developer.log(
-        'Primary trip action failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
+        'Primary trip action failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${userFacingError(error)}',
         name: 'driver.deliveryDetails',
       );
     } catch (error) {
@@ -1054,7 +1055,7 @@ class _DriverDeliveryDetailsScreenState
       setState(() => _loadingTrip = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1139,7 +1140,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1147,7 +1148,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1288,10 +1289,10 @@ class _DriverDeliveryDetailsScreenState
         setState(() => _loadingTrip = false);
       }
       developer.log(
-        'Pickup OTP confirmation failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
+        'Pickup OTP confirmation failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${userFacingError(error)}',
         name: 'driver.deliveryDetails',
       );
-      return error.message;
+      return userFacingError(error);
     } catch (error) {
       if (mounted) {
         setState(() => _loadingTrip = false);
@@ -1300,7 +1301,7 @@ class _DriverDeliveryDetailsScreenState
         'Pickup OTP confirmation failed after ${stopwatch.elapsedMilliseconds}ms: $error',
         name: 'driver.deliveryDetails',
       );
-      return error.toString();
+      return userFacingError(error);
     }
   }
 
@@ -1890,7 +1891,7 @@ class _DriverDeliveryDetailsScreenState
     } on ApiException catch (error) {
       if (!mounted) return;
       developer.log(
-        'Decline trip failed. tripId=$_tripId message=${error.message}',
+        'Decline trip failed. tripId=$_tripId message=${userFacingError(error)}',
         name: 'driver.deliveryDetails',
       );
       // The button only shows while locally `confirmed` — a 409 means the
@@ -1904,7 +1905,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1912,7 +1913,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) setState(() => _decliningTrip = false);
     }
@@ -4043,7 +4044,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -4051,7 +4052,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -4348,7 +4349,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString();
+        _error = userFacingError(error);
       });
     }
   }

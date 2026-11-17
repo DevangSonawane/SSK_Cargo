@@ -11,6 +11,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 String _readTripString(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
@@ -192,14 +193,14 @@ class _DriverPodWaitingScreenState
       _autoCompleted = false;
       setState(() {
         _completing = false;
-        _completeError = error.message;
+        _completeError = userFacingError(error);
       });
     } catch (error) {
       if (!mounted) return;
       _autoCompleted = false;
       setState(() {
         _completing = false;
-        _completeError = error.toString();
+        _completeError = userFacingError(error);
       });
     }
   }

@@ -5,6 +5,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/client_kyc_gate_provider.dart';
 import '../../../../core/widgets/digilocker_verification_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Client KYC has no submit/review stage: Aadhaar + PAN come from one
 /// DigiLocker session and GST is verified manually; the backend finalises KYC
@@ -97,7 +98,7 @@ class _ClientVerificationScreenState
       if (mounted)
         setState(
           () => _message = e is ApiException
-              ? e.message
+              ? userFacingError(e)
               : 'GST verification failed.',
         );
     } finally {

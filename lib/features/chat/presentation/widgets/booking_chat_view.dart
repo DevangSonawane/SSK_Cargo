@@ -8,6 +8,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../../core/network/api_client.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/chat_models.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BookingChatView extends ConsumerStatefulWidget {
   const BookingChatView({
@@ -424,7 +425,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {

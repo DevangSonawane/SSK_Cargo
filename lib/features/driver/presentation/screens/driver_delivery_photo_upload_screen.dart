@@ -15,6 +15,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
   const DriverDeliveryPhotoUploadScreen({
@@ -226,7 +227,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(context)!.photoUploadImagePickerError('$error'),
+            AppLocalizations.of(context)!.photoUploadImagePickerError(userFacingError(error)),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -268,7 +269,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(context)!.photoUploadVideoCameraError('$error'),
+            AppLocalizations.of(context)!.photoUploadVideoCameraError(userFacingError(error)),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -313,13 +314,13 @@ class _DriverDeliveryPhotoUploadScreenState
           context.go('/driver/thank-you/${widget.tripId}');
         } on ApiException catch (error) {
           if (!mounted) return;
-          if (_isVerificationError(error.message)) {
+          if (_isVerificationError(userFacingError(error))) {
             _goToWaiting();
             return;
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.message),
+              content: Text(userFacingError(error)),
               backgroundColor: AppColors.dangerIcon,
             ),
           );
@@ -386,13 +387,13 @@ class _DriverDeliveryPhotoUploadScreenState
           context.go('/driver/thank-you/${widget.tripId}');
         } on ApiException catch (error) {
           if (!mounted) return;
-          if (_isVerificationError(error.message)) {
+          if (_isVerificationError(userFacingError(error))) {
             _goToWaiting();
             return;
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.message),
+              content: Text(userFacingError(error)),
               backgroundColor: AppColors.dangerIcon,
             ),
           );
@@ -404,7 +405,7 @@ class _DriverDeliveryPhotoUploadScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -412,7 +413,7 @@ class _DriverDeliveryPhotoUploadScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );

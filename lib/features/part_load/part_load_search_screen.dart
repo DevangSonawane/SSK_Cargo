@@ -21,6 +21,7 @@ import '../../l10n/app_localizations.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
 import 'part_load_api.dart';
 import 'part_load_models.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 enum _PartLoadPhase { candidates, pending, accepted }
 
@@ -223,7 +224,7 @@ class _PartLoadSearchScreenState extends ConsumerState<PartLoadSearchScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(userFacingError(e))),
       );
       await _fetchCandidates();
     } finally {

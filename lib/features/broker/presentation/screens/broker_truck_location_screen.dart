@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 final _brokerTruckLocationProvider = FutureProvider.autoDispose
     .family<_TruckLocationSnapshot, String>((ref, truckId) async {
@@ -85,7 +86,7 @@ class _BrokerTruckLocationScreenState
                 ),
                 error: (error, _) => _LocationEmptyState(
                   title: l10n.brokerTruckLocationCouldNotLoadTruckLocation,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
                 data: (snapshot) => _TruckLocationContent(snapshot: snapshot),
               ),

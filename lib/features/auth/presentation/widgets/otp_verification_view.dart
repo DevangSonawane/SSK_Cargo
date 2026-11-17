@@ -7,6 +7,7 @@ import 'package:gadidost/core/theme/app_icons.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/otp_service.dart';
 import 'otp_code_input.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 const _green = Color(0xFF2FA56E);
 const _red = Color(0xFFE23A4B);
@@ -118,7 +119,7 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
     } on OtpException catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.message;
+        _error = userFacingError(error);
         if (error.wrongCode) {
           _status = OtpInputStatus.error;
         } else {
@@ -143,8 +144,8 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
         _idToken = null;
         _inputGeneration++;
         _error = error is ApiException
-            ? error.message
-            : error.toString().replaceFirst('Bad state: ', '');
+            ? userFacingError(error)
+            : userFacingError(error);
       });
     }
   }
@@ -165,7 +166,7 @@ class _OtpVerificationViewState extends ConsumerState<OtpVerificationView> {
         ),
       );
     } on OtpException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) setState(() => _error = userFacingError(error));
     } finally {
       if (mounted) setState(() => _resending = false);
     }

@@ -6,6 +6,7 @@ import 'package:gadidost/l10n/app_localizations.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Inline re-login sheet shown over the current page when the session dies
 /// (web `SessionExpiredModal.jsx` parity). Deliberately does NOT log out or
@@ -84,11 +85,11 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
       Navigator.of(context).pop(true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _error = error.message);
+      setState(() => _error = userFacingError(error));
     } catch (error) {
       if (!mounted) return;
       setState(
-        () => _error = error.toString().replaceFirst('Exception: ', ''),
+        () => _error = userFacingError(error),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

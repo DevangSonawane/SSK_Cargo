@@ -3194,12 +3194,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String deliveryFlowImagePickerError(Object error) {
-    return 'इमेज पिकर त्रुटि: $error';
+    return 'फ़ोटो नहीं जोड़ी जा सकी। $error';
   }
 
   @override
   String deliveryFlowVideoCameraError(Object error) {
-    return 'वीडियो कैमरा त्रुटि: $error';
+    return 'वीडियो रिकॉर्ड नहीं हो सका। $error';
   }
 
   @override
@@ -3279,12 +3279,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String photoUploadImagePickerError(Object error) {
-    return 'इमेज पिकर त्रुटि: $error';
+    return 'फ़ोटो नहीं जोड़ी जा सकी। $error';
   }
 
   @override
   String photoUploadVideoCameraError(Object error) {
-    return 'वीडियो कैमरा त्रुटि: $error';
+    return 'वीडियो रिकॉर्ड नहीं हो सका। $error';
   }
 
   @override
@@ -7995,4 +7995,51 @@ class AppLocalizationsHi extends AppLocalizations {
   String biltyForBooking(Object bookingRef) {
     return 'बिल्टी $bookingRef';
   }
+
+  @override
+  String get errorGeneric => 'कुछ गलत हो गया। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get errorNoInternet =>
+      'इंटरनेट कनेक्शन नहीं है। कृपया अपना नेटवर्क जांचें और फिर से कोशिश करें।';
+
+  @override
+  String get errorTimeout =>
+      'इसमें सामान्य से अधिक समय लग रहा है। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get errorServer =>
+      'हमारे सर्वर में अभी समस्या है। कृपया कुछ मिनट बाद फिर से कोशिश करें।';
+
+  @override
+  String get errorSessionExpired =>
+      'आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।';
+
+  @override
+  String get errorTooManyRequests =>
+      'बहुत अधिक प्रयास। कृपया थोड़ा रुककर फिर से कोशिश करें।';
+
+  @override
+  String get errorNotAllowed => 'आपको यह करने की अनुमति नहीं है।';
+
+  @override
+  String get errorNotFound => 'आप जो ढूंढ रहे थे वह हमें नहीं मिला।';
+
+  @override
+  String get errorCheckDetails =>
+      'कृपया दर्ज किए गए विवरण जांचें और फिर से कोशिश करें।';
+
+  @override
+  String get errorOtpWrong => 'यह कोड सही नहीं है। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get errorOtpExpired =>
+      'कोड की समय-सीमा समाप्त हो गई है। कृपया नया कोड मंगाएं।';
+
+  @override
+  String get errorInvalidPhone => 'यह मोबाइल नंबर सही नहीं लग रहा।';
+
+  @override
+  String get errorVerificationUnavailable =>
+      'हम अभी आपका नंबर सत्यापित नहीं कर सके। कृपया बाद में फिर से कोशिश करें।';
 }

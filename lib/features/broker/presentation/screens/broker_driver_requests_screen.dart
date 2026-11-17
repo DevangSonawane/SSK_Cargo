@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BrokerDriverRequestsScreen extends ConsumerStatefulWidget {
   const BrokerDriverRequestsScreen({super.key});
@@ -57,7 +58,7 @@ class _BrokerDriverRequestsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() => _actioningIds.remove(request.id));
@@ -154,7 +155,7 @@ class _BrokerDriverRequestsScreenState
             children: [
               _EmptyState(
                 title: l10n.brokerDriverReqCouldNotLoadDriverRequests,
-                subtitle: error.toString().replaceFirst('Exception: ', ''),
+                subtitle: userFacingError(error),
               ),
             ],
           ),

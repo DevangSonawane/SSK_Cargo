@@ -334,7 +334,7 @@ class _LocationDetailsScreenState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = userFacingError(error);
         _suggestions = const [];
       });
     } finally {
@@ -386,7 +386,7 @@ class _LocationDetailsScreenState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -545,7 +545,7 @@ class _LocationDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -1158,7 +1158,7 @@ class _MapLocationPickerScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {

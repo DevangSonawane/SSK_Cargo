@@ -13,6 +13,7 @@ import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class AddDriverScreen extends ConsumerStatefulWidget {
   const AddDriverScreen({super.key, this.existingDriver});
@@ -296,13 +297,13 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       // A deleted driver's email stays reserved server-side, so recreating
       // with the same email 409s. Don't dead-end on a snackbar: explain and
       // offer the way out (the existing record can be edited instead).
-      if (!_isEditing && _isEmailTakenMessage(error.message)) {
+      if (!_isEditing && _isEmailTakenMessage(userFacingError(error))) {
         await _showEmailTakenDialog(email);
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -310,7 +311,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );

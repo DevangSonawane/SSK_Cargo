@@ -202,7 +202,7 @@ class _BrokerOfferNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -239,7 +239,7 @@ class _BrokerOfferNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
       await _loadOffers(silent: true);
     } finally {
@@ -271,7 +271,7 @@ class _BrokerOfferNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -974,7 +974,7 @@ class _BrokerNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1172,7 +1172,7 @@ class _BrokerNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1210,7 +1210,7 @@ class _BrokerNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1271,7 +1271,7 @@ class _BrokerNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1322,7 +1322,7 @@ class _BrokerNegotiationSheetState
       } on ApiException catch (error) {
         if (!mounted) return;
         setState(() {
-          _errorMessage = error.message;
+          _errorMessage = userFacingError(error);
         });
       } finally {
         if (mounted) {
@@ -1351,7 +1351,7 @@ class _BrokerNegotiationSheetState
         if (mounted)
           setState(() {
             _paymentSubmitting = false;
-            _errorMessage = error.message;
+            _errorMessage = userFacingError(error);
           });
       }
       return;
@@ -1383,12 +1383,12 @@ class _BrokerNegotiationSheetState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1937,7 +1937,7 @@ class _FindTruckNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -1974,7 +1974,7 @@ class _FindTruckNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -2038,7 +2038,7 @@ class _FindTruckNegotiationSheetState
         return;
       }
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {

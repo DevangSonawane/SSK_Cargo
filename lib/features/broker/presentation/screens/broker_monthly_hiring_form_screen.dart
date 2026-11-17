@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class _TruckChoice {
   const _TruckChoice({
@@ -190,7 +191,7 @@ class _BrokerMonthlyHiringFormScreenState
     } catch (error) {
       if (!mounted) return;
       setState(
-        () => _error = error.toString().replaceFirst('ApiException: ', ''),
+        () => _error = userFacingError(error),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

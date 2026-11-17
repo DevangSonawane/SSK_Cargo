@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/gps_tracking_models.dart';
 import '../../data/gps_tracking_repository.dart';
 import '../widgets/gps_sidebar_drawer.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class GpsVehiclesScreen extends ConsumerStatefulWidget {
   const GpsVehiclesScreen({super.key});
@@ -82,7 +83,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
         return;
       }
       setState(() {
-        _error = error.message;
+        _error = userFacingError(error);
         _loading = false;
       });
     } catch (error) {
@@ -90,7 +91,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
         return;
       }
       setState(() {
-        _error = error.toString();
+        _error = userFacingError(error);
         _loading = false;
       });
     }

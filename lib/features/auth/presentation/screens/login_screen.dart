@@ -17,6 +17,7 @@ import '../../data/otp_service.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/liquid_segmented_toggle.dart';
 import 'phone_otp_login_screen.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key, required this.expectedRole});
@@ -90,7 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -358,13 +359,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context.go(_routeForRole(session.user.role));
     } on ApiException catch (error) {
       developer.log(
-        'Login failed status=${error.statusCode} message=${error.message}',
+        'Login failed status=${error.statusCode} message=${userFacingError(error)}',
         name: 'SSK.Auth',
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -373,7 +374,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -435,7 +436,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -443,7 +444,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       final message = error.code == GoogleSignInExceptionCode.canceled
           ? l10n.googleSignInCancelled
-          : error.description ?? l10n.googleSignInFailed;
+          : l10n.googleSignInFailed;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -454,7 +455,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -944,7 +945,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('ApiException: ', '');
+        _error = userFacingError(error);
       });
     }
   }
@@ -982,7 +983,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('ApiException: ', '');
+        _error = userFacingError(error);
       });
     }
   }

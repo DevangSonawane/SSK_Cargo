@@ -11,6 +11,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'broker_settlements_screen.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 final _brokerEarningsProvider = FutureProvider.autoDispose<_EarningsBundle>((
   ref,
@@ -103,7 +104,7 @@ class BrokerEarningsScreen extends ConsumerWidget {
                 error: (error, _) => _EarningsStateCard(
                   icon: AppIcons.payments_outlined,
                   title: l10n.brokerEarningsFailedToLoadEarnings,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                   actionLabel: 'Try again',
                   onAction: () => ref.invalidate(_brokerEarningsProvider),
                 ),

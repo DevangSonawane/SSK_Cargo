@@ -13,6 +13,7 @@ import 'package:gadidost/l10n/app_localizations.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ManageAccountScreen extends ConsumerStatefulWidget {
   const ManageAccountScreen({super.key});
@@ -108,7 +109,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         await _loadBrokerProfile(session.tokens.accessToken);
       }
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = userFacingError(error);
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -225,7 +226,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -233,7 +234,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );

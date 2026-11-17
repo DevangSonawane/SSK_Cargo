@@ -514,7 +514,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -1019,8 +1019,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         'Supplier Name and GST Number are required when the receiver pays.',
       ApiException(code: 'EWAY_BILL_REQUIRED') =>
         'E-Way Bill number is required.',
-      ApiException() => error.message,
-      _ => error.toString().replaceFirst('Exception: ', ''),
+      ApiException() => userFacingError(error),
+      _ => userFacingError(error),
     };
     ScaffoldMessenger.of(
       context,
@@ -1105,10 +1105,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       setState(() {
         _loadingEligibleBrokers = false;
-        _eligibleBrokersError = error.toString().replaceFirst(
-          'ApiException: ',
-          '',
-        );
+        _eligibleBrokersError = userFacingError(error);
       });
     }
   }
@@ -1754,7 +1751,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -1785,12 +1782,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -2154,7 +2151,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) {
         return;
@@ -2164,7 +2161,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }
@@ -2247,14 +2244,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       await _loadFindTruckDriverRequests(silent: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      _findTruckCardErrors[request.id] = error.message;
+      _findTruckCardErrors[request.id] = userFacingError(error);
       _bumpLiveFeed();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
-      final message = error.toString().replaceFirst('Exception: ', '');
+      final message = userFacingError(error);
       _findTruckCardErrors[request.id] = message;
       _bumpLiveFeed();
       ScaffoldMessenger.of(
@@ -2300,17 +2297,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       await _loadFindTruckDriverRequests(silent: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      _findTruckCardErrors[request.id] = error.message;
+      _findTruckCardErrors[request.id] = userFacingError(error);
       // Restore the card via reload so the failure is visible inline.
       await _loadFindTruckDriverRequests(silent: true);
       _bumpLiveFeed();
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
-      final message = error.toString().replaceFirst('Exception: ', '');
+      final message = userFacingError(error);
       _findTruckCardErrors[request.id] = message;
       await _loadFindTruckDriverRequests(silent: true);
       _bumpLiveFeed();
@@ -2360,15 +2357,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return true;
     } on ApiException catch (error) {
       if (!mounted) return false;
-      _findTruckCardErrors[request.id] = error.message;
+      _findTruckCardErrors[request.id] = userFacingError(error);
       _bumpLiveFeed();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       return false;
     } catch (error) {
       if (!mounted) return false;
-      final message = error.toString().replaceFirst('Exception: ', '');
+      final message = userFacingError(error);
       _findTruckCardErrors[request.id] = message;
       _bumpLiveFeed();
       ScaffoldMessenger.of(
@@ -2789,7 +2786,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
     } catch (error) {
       if (!mounted) {
@@ -2797,7 +2794,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -2848,7 +2845,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       } else if (error.code == 'PINCODE_REQUIRED') {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
     } catch (_) {
       // Booking create re-checks; don't block the weight step on a blip.
@@ -3167,7 +3164,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -3499,7 +3496,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
       return;
     }
@@ -3523,7 +3520,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
       return;
     }
@@ -3562,7 +3559,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -3570,7 +3567,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     }

@@ -9,6 +9,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
 import '../controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Authenticated account-deletion request, shared by client / broker / driver.
 ///
@@ -90,14 +91,14 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         name: 'SSK.Auth',
       );
       if (!mounted) return;
-      setState(() => _errorMessage = error.message);
+      setState(() => _errorMessage = userFacingError(error));
     } catch (error) {
       developer.log(
         'Account deletion request unexpected error: $error',
         name: 'SSK.Auth',
       );
       if (!mounted) return;
-      setState(() => _errorMessage = error.toString());
+      setState(() => _errorMessage = userFacingError(error));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

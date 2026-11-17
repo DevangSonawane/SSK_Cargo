@@ -20,6 +20,7 @@ import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../widgets/driver_currency.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
   const DriverOrderAcceptedScreen({super.key, this.initialRequest});
@@ -1158,12 +1159,12 @@ class _DriverOrderAcceptedScreenState
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       _forceDismissClientConfirmationDialog();
       if (mounted) {

@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 final _brokerTruckHistoryProvider = FutureProvider.autoDispose
     .family<_TruckHistoryBundle, String>((ref, truckId) async {
@@ -101,7 +102,7 @@ class _BrokerTruckHistoryScreenState
                 ),
                 error: (error, _) => _HistoryEmptyState(
                   title: l10n.brokerTruckHistoryCouldNotLoadTripHistory,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
                 data: (bundle) {
                   final trips = _filter(bundle.trips);

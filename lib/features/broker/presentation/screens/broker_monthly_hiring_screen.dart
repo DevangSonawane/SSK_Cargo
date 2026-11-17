@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// A monthly-hire vehicle listing (broker/driver side — web
 /// `MonthlyHiring.jsx` parity: list own listings, pause/resume, delete).
@@ -190,7 +191,7 @@ class _BrokerMonthlyHiringScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -243,7 +244,7 @@ class _BrokerMonthlyHiringScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {

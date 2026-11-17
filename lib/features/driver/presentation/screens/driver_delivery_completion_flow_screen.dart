@@ -18,6 +18,7 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../widgets/slide_to_confirm.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Single-screen delivery-completion wizard, mirroring the React web app's
 /// `DeliveryCompletionFlow.jsx` (Arrived -> Upload -> Payments? -> Complete).
@@ -452,7 +453,7 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -460,7 +461,7 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) setState(() => _confirmingArrival = false);
     }
@@ -517,7 +518,7 @@ class _DriverDeliveryCompletionFlowScreenState
           content: Text(
             AppLocalizations.of(
               context,
-            )!.deliveryFlowImagePickerError('$error'),
+            )!.deliveryFlowImagePickerError(userFacingError(error)),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -554,7 +555,7 @@ class _DriverDeliveryCompletionFlowScreenState
           content: Text(
             AppLocalizations.of(
               context,
-            )!.deliveryFlowVideoCameraError('$error'),
+            )!.deliveryFlowVideoCameraError(userFacingError(error)),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -646,7 +647,7 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -654,7 +655,7 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -841,7 +842,7 @@ class _DriverDeliveryCompletionFlowScreenState
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -849,7 +850,7 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) setState(() => _collectingPayment = false);
     }
@@ -883,14 +884,14 @@ class _DriverDeliveryCompletionFlowScreenState
       _autoRunDone = false;
       setState(() {
         _completing = false;
-        _completeError = error.message;
+        _completeError = userFacingError(error);
       });
     } catch (error) {
       if (!mounted) return;
       _autoRunDone = false;
       setState(() {
         _completing = false;
-        _completeError = error.toString();
+        _completeError = userFacingError(error);
       });
     }
   }

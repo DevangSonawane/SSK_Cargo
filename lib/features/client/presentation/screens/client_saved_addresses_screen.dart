@@ -13,6 +13,7 @@ import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/google_places_autocomplete_field.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ClientSavedAddressesScreen extends ConsumerStatefulWidget {
   const ClientSavedAddressesScreen({super.key});
@@ -98,7 +99,7 @@ class _ClientSavedAddressesScreenState
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -155,7 +156,7 @@ class _ClientSavedAddressesScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -193,7 +194,7 @@ class _ClientSavedAddressesScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -690,8 +691,8 @@ class _ClientSavedAddressEditorScreenState
       if (!mounted) return;
       setState(() {
         _errorMessage = error is ApiException
-            ? error.message
-            : error.toString();
+            ? userFacingError(error)
+            : userFacingError(error);
       });
     } finally {
       if (mounted) {
@@ -833,7 +834,7 @@ class _ClientSavedAddressEditorScreenState
       setState(() {
         _locating = false;
         _errorMessage = error is ApiException
-            ? error.message
+            ? userFacingError(error)
             : l10n.clientSavedCurrentLocationError;
       });
     }

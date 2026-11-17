@@ -14,6 +14,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import '../../../driver/data/driver_trip_handoff_utils.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BrokerRequestDetailScreen extends ConsumerStatefulWidget {
   const BrokerRequestDetailScreen({super.key, this.initialRequest});
@@ -609,7 +610,7 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -666,7 +667,7 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -764,7 +765,7 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1132,7 +1133,7 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -1746,7 +1747,7 @@ class _BrokerRequestDetailScreenState
                     border: Border.all(color: AppColors.line),
                   ),
                   child: Text(
-                    error.toString().replaceFirst('Exception: ', ''),
+                    userFacingError(error),
                     style: const TextStyle(color: AppColors.dangerIcon),
                   ),
                 ),
@@ -1764,7 +1765,7 @@ class _BrokerRequestDetailScreenState
                         border: Border.all(color: AppColors.line),
                       ),
                       child: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
+                        userFacingError(error),
                         style: const TextStyle(color: AppColors.dangerIcon),
                       ),
                     ),
@@ -1789,7 +1790,7 @@ class _BrokerRequestDetailScreenState
                     border: Border.all(color: AppColors.line),
                   ),
                   child: Text(
-                    error.toString().replaceFirst('Exception: ', ''),
+                    userFacingError(error),
                     style: const TextStyle(color: AppColors.dangerIcon),
                   ),
                 ),
@@ -1807,7 +1808,7 @@ class _BrokerRequestDetailScreenState
                         border: Border.all(color: AppColors.line),
                       ),
                       child: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
+                        userFacingError(error),
                         style: const TextStyle(color: AppColors.dangerIcon),
                       ),
                     ),

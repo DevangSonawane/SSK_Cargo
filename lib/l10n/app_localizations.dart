@@ -5770,13 +5770,13 @@ abstract class AppLocalizations {
   /// No description provided for @deliveryFlowImagePickerError.
   ///
   /// In en, this message translates to:
-  /// **'Image picker error: {error}'**
+  /// **'Couldn\'t add the photo. {error}'**
   String deliveryFlowImagePickerError(Object error);
 
   /// No description provided for @deliveryFlowVideoCameraError.
   ///
   /// In en, this message translates to:
-  /// **'Video camera error: {error}'**
+  /// **'Couldn\'t record the video. {error}'**
   String deliveryFlowVideoCameraError(Object error);
 
   /// No description provided for @driverEarningsAvgPerDelivery.
@@ -5872,13 +5872,13 @@ abstract class AppLocalizations {
   /// No description provided for @photoUploadImagePickerError.
   ///
   /// In en, this message translates to:
-  /// **'Image picker error: {error}'**
+  /// **'Couldn\'t add the photo. {error}'**
   String photoUploadImagePickerError(Object error);
 
   /// No description provided for @photoUploadVideoCameraError.
   ///
   /// In en, this message translates to:
-  /// **'Video camera error: {error}'**
+  /// **'Couldn\'t record the video. {error}'**
   String photoUploadVideoCameraError(Object error);
 
   /// No description provided for @sharedHaltingChargeWithHours.
@@ -14464,6 +14464,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bilty {bookingRef}'**
   String biltyForBooking(Object bookingRef);
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorGeneric;
+
+  /// No description provided for @errorNoInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please check your network and try again.'**
+  String get errorNoInternet;
+
+  /// No description provided for @errorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than usual. Please try again.'**
+  String get errorTimeout;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Our server is having trouble right now. Please try again in a few minutes.'**
+  String get errorServer;
+
+  /// No description provided for @errorSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get errorSessionExpired;
+
+  /// No description provided for @errorTooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait a moment and try again.'**
+  String get errorTooManyRequests;
+
+  /// No description provided for @errorNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to do this.'**
+  String get errorNotAllowed;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find what you were looking for.'**
+  String get errorNotFound;
+
+  /// No description provided for @errorCheckDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check the details you entered and try again.'**
+  String get errorCheckDetails;
+
+  /// No description provided for @errorOtpWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn\'t right. Please try again.'**
+  String get errorOtpWrong;
+
+  /// No description provided for @errorOtpExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The code has expired. Please request a new one.'**
+  String get errorOtpExpired;
+
+  /// No description provided for @errorInvalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'That mobile number doesn\'t look right.'**
+  String get errorInvalidPhone;
+
+  /// No description provided for @errorVerificationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t verify your number right now. Please try again later.'**
+  String get errorVerificationUnavailable;
 }
 
 class _AppLocalizationsDelegate

@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BrokerTruckAssignScreen extends ConsumerStatefulWidget {
   const BrokerTruckAssignScreen({super.key, required this.truckId});
@@ -52,7 +53,7 @@ class _BrokerTruckAssignScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -142,7 +143,7 @@ class _BrokerTruckAssignScreenState
                       child: Center(child: CircularProgressIndicator()),
                     ),
                     error: (error, _) => Text(
-                      error.toString().replaceFirst('Exception: ', ''),
+                      userFacingError(error),
                       style: const TextStyle(color: AppColors.dangerIcon),
                     ),
                     data: (drivers) {

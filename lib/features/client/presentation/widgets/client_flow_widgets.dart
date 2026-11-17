@@ -28,6 +28,7 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 part 'client_flow/location_flow.dart';
 part 'client_flow/booking_models_and_shared_widgets.dart';

@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 enum _InboxFilter { all, unread }
 
@@ -72,7 +73,7 @@ class _ClientNotificationsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() => _markingAllRead = false);
@@ -333,7 +334,7 @@ class _ClientNotificationsScreenState
         _StateCard(
           icon: AppIcons.notifications_off_outlined,
           title: AppLocalizations.of(context)!.clientNotificationsLoadError,
-          subtitle: async.error.toString().replaceFirst('Exception: ', ''),
+          subtitle: userFacingError(async.error),
           actionLabel: AppLocalizations.of(context)!.clientNotificationsTryAgain,
           onAction: _refresh,
         ),

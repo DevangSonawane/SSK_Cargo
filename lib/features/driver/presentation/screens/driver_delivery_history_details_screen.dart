@@ -14,6 +14,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverDeliveryHistoryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryHistoryDetailsScreen({
@@ -178,7 +179,7 @@ class _DriverDeliveryHistoryDetailsScreenState
       if (widget.initialSettlement == null) {
         if (mounted) {
           setState(() {
-            _error = error.toString().replaceFirst('Exception: ', '');
+            _error = userFacingError(error);
             _loading = false;
           });
         }
@@ -256,10 +257,10 @@ class _DriverDeliveryHistoryDetailsScreenState
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showSnack(error.message);
+      _showSnack(userFacingError(error));
     } catch (error) {
       if (!mounted) return;
-      _showSnack(error.toString().replaceFirst('Exception: ', ''));
+      _showSnack(userFacingError(error));
     } finally {
       if (mounted) {
         setState(() => _downloading = false);
@@ -306,10 +307,10 @@ class _DriverDeliveryHistoryDetailsScreenState
       _showSnack(AppLocalizations.of(context)!.historyDetailsInvoiceEmailed);
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showSnack(error.message);
+      _showSnack(userFacingError(error));
     } catch (error) {
       if (!mounted) return;
-      _showSnack(error.toString().replaceFirst('Exception: ', ''));
+      _showSnack(userFacingError(error));
     } finally {
       if (mounted) {
         setState(() => _emailing = false);
@@ -339,10 +340,10 @@ class _DriverDeliveryHistoryDetailsScreenState
       _showSnack(AppLocalizations.of(context)!.historyDetailsClientNotified);
     } on ApiException catch (error) {
       if (!mounted) return;
-      _showSnack(error.message);
+      _showSnack(userFacingError(error));
     } catch (error) {
       if (!mounted) return;
-      _showSnack(error.toString().replaceFirst('Exception: ', ''));
+      _showSnack(userFacingError(error));
     } finally {
       if (mounted) {
         setState(() => _notifying = false);

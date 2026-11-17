@@ -13,6 +13,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
   const BrokerHomeScreen({super.key});
@@ -322,7 +323,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -449,7 +450,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -647,7 +648,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 ),
                 error: (error, _) => _EmptyBookingsState(
                   title: AppLocalizations.of(context)!.brokerHomeCouldNotLoadBookings,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1471,7 +1472,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
           child: driversAsync.when(
             loading: () => _AssignmentLoadingState(),
             error: (error, _) => _AssignmentErrorState(
-              message: error.toString().replaceFirst('Exception: ', ''),
+              message: userFacingError(error),
               onRetry: () {
                 ref.invalidate(
                   brokerDriversApiProvider(
@@ -1483,7 +1484,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
             data: (drivers) => trucksAsync.when(
               loading: () => _AssignmentLoadingState(),
               error: (error, _) => _AssignmentErrorState(
-                message: error.toString().replaceFirst('Exception: ', ''),
+                message: userFacingError(error),
                 onRetry: () {
                   ref.invalidate(
                     brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),

@@ -6,6 +6,7 @@ import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/client_verification_gate.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// Client prepaid wallet and postpaid bills.  These intentionally use the
 /// server ledger as the source of truth; no balance/commission math is done
@@ -777,7 +778,7 @@ double _number(Object? value) =>
     value is num ? value.toDouble() : double.tryParse('${value ?? ''}') ?? 0;
 String _money(double amount) => '₹${amount.toStringAsFixed(2)}';
 String _message(Object? error) => error is ApiException
-    ? error.message
+    ? userFacingError(error)
     : 'Could not load data. Please try again.';
 
 class _BalanceCard extends StatelessWidget {

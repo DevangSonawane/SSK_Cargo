@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 /// New monthly-hiring enquiry form — web `MonthlyHiringForm.jsx` parity.
 /// Lead capture only: records the enquiry for the team to follow up on.
@@ -161,9 +162,9 @@ class _ClientMonthlyHiringFormScreenState
       ).showSnackBar(SnackBar(content: Text(l10n.enquirySubmitted)));
       context.pop(true);
     } on ApiException catch (error) {
-      _snack(error.message);
+      _snack(userFacingError(error));
     } catch (error) {
-      _snack(error.toString().replaceFirst('Exception: ', ''));
+      _snack(userFacingError(error));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

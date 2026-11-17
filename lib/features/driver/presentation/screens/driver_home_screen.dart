@@ -16,6 +16,7 @@ import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
 import '../widgets/driver_currency.dart';
 import '../widgets/slide_to_action.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -170,7 +171,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
     } finally {
       if (mounted && seq == _truckModeSeq) {
@@ -207,7 +208,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         setState(() => _optimisticAcceptingLoads = serverCurrent);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
       }
     } finally {
       if (mounted && seq == _acceptingLoadsSeq) {
@@ -370,7 +371,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -437,7 +438,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -690,7 +691,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 error: (error, _) => _EmptyStateCard(
                   icon: AppIcons.error_outline_rounded,
                   title: l10n.couldNotLoadRequests,
-                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  subtitle: userFacingError(error),
                 ),
                 data: (requests) {
                   // Hide duplicates of the already-accepted active trip —

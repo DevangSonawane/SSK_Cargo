@@ -11,6 +11,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 enum _DriverNotificationFilter { all, trips, chat, system }
 
@@ -82,7 +83,7 @@ class _DriverNotificationsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {
@@ -232,10 +233,7 @@ class _DriverNotificationsScreenState
           title: AppLocalizations.of(
             context,
           )!.brokerNotifCouldnTLoadYourNotifications,
-          subtitle: notificationsAsync.error.toString().replaceFirst(
-            'Exception: ',
-            '',
-          ),
+          subtitle: userFacingError(notificationsAsync.error),
           actionLabel: AppLocalizations.of(context)!.brokerNotifRetryAction,
           onAction: _refresh,
         ),

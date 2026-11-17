@@ -10,6 +10,7 @@ import '../../../../core/providers/app_providers.dart';
 import '../../data/otp_service.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/otp_verification_view.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 const _ink = Color(0xFF111827);
 const _muted = Color(0xFF6B7280);
@@ -109,7 +110,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       await ref.read(otpServiceProvider).sendOtp(phone: _phone);
       if (mounted) _goTo(_SignupStep.verify);
     } catch (error) {
-      if (mounted) _fail(error.toString());
+      if (mounted) _fail(userFacingError(error));
     } finally {
       if (mounted) setState(() => _isSendingOtp = false);
     }
@@ -161,11 +162,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         });
       }
       _goTo(_SignupStep.details);
-      _fail(error.message);
+      _fail(userFacingError(error));
     } catch (error) {
       if (!mounted) return;
       _goTo(_SignupStep.details);
-      _fail(error.toString());
+      _fail(userFacingError(error));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ClientPaymentMethodsScreen extends ConsumerStatefulWidget {
   const ClientPaymentMethodsScreen({super.key});
@@ -69,7 +70,7 @@ class _ClientPaymentMethodsScreenState
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -123,7 +124,7 @@ class _ClientPaymentMethodsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -159,7 +160,7 @@ class _ClientPaymentMethodsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {

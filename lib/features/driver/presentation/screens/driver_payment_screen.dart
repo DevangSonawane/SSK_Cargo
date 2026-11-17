@@ -13,6 +13,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class DriverPaymentScreen extends ConsumerStatefulWidget {
   const DriverPaymentScreen({super.key, required this.tripId});
@@ -282,13 +283,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       // Backend gates `completed` on client POD approval — park the driver
       // on the waiting screen instead of showing a raw 409.
-      if (_isVerificationError(error.message)) {
+      if (_isVerificationError(userFacingError(error))) {
         context.go('/driver/pod-waiting/${widget.tripId}');
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -296,7 +297,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -381,7 +382,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -389,7 +390,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -557,13 +558,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       context.go('/driver/thank-you/${widget.tripId}');
     } on ApiException catch (error) {
       if (!mounted) return;
-      if (_isVerificationError(error.message)) {
+      if (_isVerificationError(userFacingError(error))) {
         context.go('/driver/pod-waiting/${widget.tripId}');
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -571,7 +572,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );

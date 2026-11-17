@@ -9,6 +9,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ClientPaymentMethodAddScreen extends ConsumerStatefulWidget {
   const ClientPaymentMethodAddScreen({super.key});
@@ -204,12 +205,12 @@ class _ClientPaymentMethodAddScreenState
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.message;
+        _errorMessage = userFacingError(error);
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {

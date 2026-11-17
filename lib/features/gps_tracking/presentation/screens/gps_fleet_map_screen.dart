@@ -14,6 +14,7 @@ import '../../data/gps_tracking_models.dart';
 import '../../data/gps_tracking_repository.dart';
 import '../widgets/gps_map_bottom_nav_bar.dart';
 import '../widgets/gps_sidebar_drawer.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class GpsFleetMapScreen extends ConsumerStatefulWidget {
   const GpsFleetMapScreen({super.key});
@@ -175,7 +176,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
       }
       setState(() {
         _loading = false;
-        _error = error.message;
+        _error = userFacingError(error);
       });
     } catch (error) {
       if (!mounted) {
@@ -183,7 +184,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
       }
       setState(() {
         _loading = false;
-        _error = error.toString();
+        _error = userFacingError(error);
       });
     }
   }

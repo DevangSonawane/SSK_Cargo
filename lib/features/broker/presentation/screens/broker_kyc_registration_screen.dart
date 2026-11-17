@@ -14,6 +14,7 @@ import '../../../../core/providers/kyc_status_provider.dart';
 import '../../../../core/widgets/digilocker_verification_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 enum _KycStep { details, documents, review, submitted }
 
@@ -374,8 +375,8 @@ class _BrokerKycRegistrationScreenState
         _initialLoading = false;
         if (!silent) {
           _errorMessage = error is ApiException
-              ? error.message
-              : error.toString();
+              ? userFacingError(error)
+              : userFacingError(error);
         }
       });
     }
@@ -451,7 +452,7 @@ class _BrokerKycRegistrationScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -459,7 +460,7 @@ class _BrokerKycRegistrationScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );

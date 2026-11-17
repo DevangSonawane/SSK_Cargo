@@ -9,6 +9,7 @@ import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class GooglePlacesAutocompleteField extends ConsumerStatefulWidget {
   const GooglePlacesAutocompleteField({
@@ -152,7 +153,7 @@ class _GooglePlacesAutocompleteFieldState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = userFacingError(error);
         _suggestions = const [];
       });
     } finally {
@@ -201,7 +202,7 @@ class _GooglePlacesAutocompleteFieldState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {

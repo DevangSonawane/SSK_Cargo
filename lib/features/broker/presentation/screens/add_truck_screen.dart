@@ -12,6 +12,7 @@ import '../../../client/presentation/controllers/client_bookings_controller.dart
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class AddTruckScreen extends ConsumerStatefulWidget {
   const AddTruckScreen({super.key, this.existingTruck});
@@ -204,7 +205,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          content: Text(userFacingError(error)),
         ),
       );
     } finally {

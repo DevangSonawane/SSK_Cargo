@@ -16,6 +16,7 @@ import '../../core/theme/app_tokens.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
 import 'part_load_api.dart';
 import 'part_load_search_screen.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class PartLoadNewBookingScreen extends ConsumerStatefulWidget {
   const PartLoadNewBookingScreen({super.key});
@@ -87,7 +88,7 @@ class _PartLoadNewBookingScreenState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(userFacingError(e))),
       );
     } finally {
       if (mounted) setState(() => _sending = false);

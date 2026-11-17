@@ -9,6 +9,7 @@ import 'package:gadidost/l10n/app_localizations.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -91,13 +92,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       context.go(_loginRouteForRole(role));
     } on ApiException catch (error) {
       developer.log(
-        'Change password failed status=${error.statusCode} message=${error.message}',
+        'Change password failed status=${error.statusCode} message=${userFacingError(error)}',
         name: 'SSK.Auth',
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
@@ -109,7 +110,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(userFacingError(error)),
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );

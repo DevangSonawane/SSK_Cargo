@@ -159,7 +159,12 @@ class OtpService {
       'network-request-failed' => const OtpException(
         'No internet connection. Check your network and try again.',
       ),
-      _ => OtpException(error.message ?? 'Could not send the code.'),
+      // Anything else (app not authorized / Play Integrity / reCAPTCHA /
+      // internal) is a configuration problem — never show Firebase's raw
+      // technical text to the user.
+      _ => const OtpException(
+        'We couldn\'t verify your number right now. Please try again later.',
+      ),
     };
   }
 }

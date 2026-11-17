@@ -18,6 +18,7 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/bilty_actions.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:gadidost/core/utils/user_facing_error.dart';
 
 final _historyBookingDetailProvider = FutureProvider.autoDispose
     .family<ClientBooking, String>((ref, bookingId) async {
@@ -213,7 +214,7 @@ class _BrokerHistoryDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.message),
+          content: Text(userFacingError(error)),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -287,9 +288,9 @@ class _BrokerHistoryDetailScreenState
         _snack(l10n.invoiceDownloadFailedTryAgain, error: true);
       }
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } catch (error) {
-      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -354,9 +355,9 @@ class _BrokerHistoryDetailScreenState
           );
       _snack(l10n.invoiceEmailedSuccessfully);
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } catch (error) {
-      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _emailing = false);
     }
@@ -376,9 +377,9 @@ class _BrokerHistoryDetailScreenState
           );
       _snack(l10n.clientNotifiedInvoiceShared);
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } catch (error) {
-      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _notifying = false);
     }
@@ -417,7 +418,7 @@ class _BrokerHistoryDetailScreenState
       setState(() => _trip = trip);
       return trip != null;
     } on ApiException catch (error) {
-      if (!silent) _snack(error.message, error: true);
+      if (!silent) _snack(userFacingError(error), error: true);
       return false;
     } catch (_) {
       return false;
@@ -465,7 +466,7 @@ class _BrokerHistoryDetailScreenState
       if (updated != null) setState(() => _trip = updated);
       _snack(AppLocalizations.of(context)!.stopMarkedComplete);
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _completingStopIndex = null);
     }
@@ -530,7 +531,7 @@ class _BrokerHistoryDetailScreenState
       _snack(AppLocalizations.of(context)!.tripStatusUpdated);
       unawaited(_refresh(silent: true));
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _applyingForce = false);
     }
@@ -563,7 +564,7 @@ class _BrokerHistoryDetailScreenState
       _snack(paymentRecordedMessage);
       unawaited(_refresh(silent: true));
     } on ApiException catch (error) {
-      _snack(error.message, error: true);
+      _snack(userFacingError(error), error: true);
     } finally {
       if (mounted) setState(() => _collecting = false);
     }
@@ -615,10 +616,7 @@ class _BrokerHistoryDetailScreenState
                 error: (error, _) => booking == null
                     ? _DetailEmptyState(
                         title: l10n.couldNotLoadJobDetails,
-                        subtitle: error.toString().replaceFirst(
-                          'Exception: ',
-                          '',
-                        ),
+                        subtitle: userFacingError(error),
                         onRetry: _refresh,
                       )
                     : _buildContent(context, booking, reassignments),
