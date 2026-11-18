@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../kyc/digilocker_return.dart';
+import '../kyc/digilocker_webview_screen.dart';
 import '../network/api_client.dart';
 import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
@@ -372,42 +374,32 @@ class _DigilockerVerificationCardState
         role: widget.role,
         verificationId: verificationId,
       );
-      // Custom Tabs (Android) / SFSafariViewController (iOS): stays on top
-      // of the app, and a verified App Link redirect hands control back.
-      var opened = false;
-      try {
-        opened = await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.inAppBrowserView,
-        );
-      } catch (_) {
-        opened = false;
-      }
-      if (!opened) {
-        opened = await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
-      }
       if (!mounted) return;
-      if (!opened) {
-        _clearPending();
-        setState(() {
-          _sessionStatus = 'error';
-          _sessionMessage = l10n.coreDigilockerOpenBrowserFailed;
-          _verificationId = null;
-        });
-        return;
-      }
-      // Don't poll now — the user is only just starting in DigiLocker, and a
-      // 12 s poll would give up long before they finish. Wait for the return
-      // link / app resume instead, with a manual "Check status" meanwhile.
+      // In-app WebView: the app sees DigiLocker's redirect itself, so the
+      // user comes straight back with no App Link / backend setup needed
+      // (a Chrome tab left Play users stranded on the redirect page).
+      // While it's open the app stays resumed, so the resume check is off.
+      _awaitingReturn = false;
+      setState(() => _verificationId = verificationId);
+      final result = await DigilockerWebViewScreen.open(context, url);
+      if (!mounted) return;
       _awaitingReturn = true;
-      setState(() {
-        _verificationId = verificationId;
-        _sessionStatus = 'error';
-        _sessionMessage = l10n.coreDigilockerAwaitingReturn;
-      });
+      final id =
+          (result.verificationId != null && result.verificationId!.isNotEmpty)
+          ? result.verificationId!
+          : verificationId;
+      if (result.reachedRedirect) {
+        // Finished on DigiLocker's side: resolve now (short poll while
+        // Cashfree finishes processing), then the host auto-submits.
+        await _checkDigilocker(id, 0);
+      } else {
+        // Closed early: one quick look in case they did finish; otherwise
+        // this leaves the "Check status" retry in place.
+        await _checkDigilocker(id, 4);
+        if (mounted && _sessionStatus == 'error' && _verificationId != null) {
+          setState(() => _sessionMessage = l10n.coreDigilockerAwaitingReturn);
+        }
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -448,6 +440,9 @@ class _DigilockerVerificationCardState
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final status = data['status']?.toString().trim().toLowerCase() ?? '';
       final message = data['message']?.toString();
+      if (kDebugMode) {
+        debugPrint('SSK.KYC status poll #$attempt → $status ($message)');
+      }
       if (status == 'pending') {
         if (attempt < 4) {
           await Future<void>.delayed(const Duration(seconds: 3));
@@ -479,26 +474,56 @@ class _DigilockerVerificationCardState
       _clearPending();
       final documents = data['documents'];
       final docsMap = documents is Map<String, dynamic> ? documents : const {};
+      if (kDebugMode) {
+        debugPrint(
+          'SSK.KYC DigiLocker status=$status documents=$docsMap '
+          'message=$message',
+        );
+      }
+      var resolvedAny = false;
+      String? firstProblem;
       setState(() {
         for (final key in _required) {
           final entry = docsMap[key];
-          final docStatus = entry is Map<String, dynamic>
-              ? entry['status']?.toString().trim().toLowerCase()
+          if (entry is! Map<String, dynamic>) continue;
+          final docStatus = entry['status']?.toString().trim().toLowerCase();
+          final details = entry['details'];
+          final detailMessage = details is Map<String, dynamic>
+              ? details['message']?.toString()
               : null;
           if (docStatus == 'verified') {
             _statuses[key] = 'verified';
             _messages[key] = null;
+            resolvedAny = true;
           } else if (docStatus == 'missing') {
             _statuses[key] = 'missing';
-            final details = entry['details'];
-            final detailMessage = details is Map<String, dynamic>
-                ? details['message']?.toString()
-                : null;
             _messages[key] = detailMessage;
+            resolvedAny = true;
+          } else if (docStatus != null && docStatus.isNotEmpty) {
+            // Anything else ('failed', a name mismatch, already linked to
+            // another account…) used to be ignored, leaving the card
+            // unchanged with no hint why. Show it and open the fallback.
+            _statuses[key] = 'failed';
+            _messages[key] =
+                (detailMessage != null && detailMessage.trim().isNotEmpty)
+                ? detailMessage
+                : l10n.coreDigilockerNotComplete;
+            firstProblem ??= _messages[key];
+            resolvedAny = true;
           }
         }
-        _sessionStatus = 'idle';
-        _sessionMessage = null;
+        if (!resolvedAny) {
+          // 'done' (or an unknown status) with no usable documents: say so
+          // instead of silently going back to idle.
+          _sessionStatus = 'error';
+          _sessionMessage =
+              (message != null && message.trim().isNotEmpty)
+              ? message
+              : l10n.coreDigilockerNotComplete;
+        } else {
+          _sessionStatus = firstProblem == null ? 'idle' : 'error';
+          _sessionMessage = firstProblem;
+        }
         _verificationId = null;
       });
       _emit();
