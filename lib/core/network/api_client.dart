@@ -140,6 +140,7 @@ class SskApiClient {
     required String password,
     String? phone,
     required String role,
+    String? businessName,
     String? idToken,
   }) async {
     return _request(
@@ -151,9 +152,50 @@ class SskApiClient {
           'password': password,
           if (phone != null && phone.isNotEmpty) 'phone': phone,
           'role': role,
+          if (businessName != null && businessName.isNotEmpty)
+            'business_name': businessName,
           // Firebase ID token proving ownership of [phone] (mandatory for
           // new client/broker/driver accounts).
           if (idToken != null && idToken.isNotEmpty) 'id_token': idToken,
+        },
+      ),
+    );
+  }
+
+  /// Self-registration for an owner-operator driver: creates the user, the
+  /// driver profile and their own truck in one call (web parity:
+  /// `useAuth.jsx` `registerDriver` → `POST /api/auth/register/driver`).
+  Future<Map<String, dynamic>> registerDriver({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    required String registration,
+    required String category,
+    required String capacity,
+    String? make,
+    int? year,
+    String? insuranceExpiry,
+    required String idToken,
+  }) async {
+    developer.log('POST /api/auth/register/driver', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/register/driver',
+        data: {
+          'name': name,
+          'phone': phone,
+          'email': email,
+          'password': password,
+          'confirm_password': password,
+          'registration': registration,
+          'category': category,
+          'capacity': capacity,
+          if (make != null && make.isNotEmpty) 'make': make,
+          'year': ?year,
+          if (insuranceExpiry != null && insuranceExpiry.isNotEmpty)
+            'insurance_expiry': insuranceExpiry,
+          'id_token': idToken,
         },
       ),
     );

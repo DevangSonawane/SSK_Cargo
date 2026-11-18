@@ -52,14 +52,18 @@ class PhoneOtpLoginScreen extends ConsumerWidget {
     } on ApiException catch (error) {
       // firebase-login is login-only: an unknown number 404s.
       if (error.statusCode == 404 &&
-          expectedRole == AppRole.client &&
+          expectedRole != AppRole.admin &&
           context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('No account with this number yet.'),
             action: SnackBarAction(
               label: 'Create account',
-              onPressed: () => context.go('/signup'),
+              onPressed: () => context.go(switch (expectedRole) {
+                AppRole.broker => '/broker/signup',
+                AppRole.driver => '/driver/signup',
+                _ => '/signup',
+              }),
             ),
           ),
         );

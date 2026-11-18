@@ -405,6 +405,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             NoTransitionPage(child: _lightFlow(const SignupScreen())),
       ),
       GoRoute(
+        path: '/broker/signup',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const SignupScreen(role: AppRole.broker)),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/signup',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const SignupScreen(role: AppRole.driver)),
+        ),
+      ),
+      GoRoute(
         path: '/change-password',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ChangePasswordScreen()),

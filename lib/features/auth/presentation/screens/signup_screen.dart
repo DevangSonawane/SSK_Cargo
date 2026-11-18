@@ -19,12 +19,39 @@ const _line = Color(0xFFE5E7EB);
 const _green = Color(0xFF149468);
 const _red = Color(0xFFDC2626);
 
-enum _SignupStep { details, verify }
+enum _SignupStep { details, truck, verify }
 
-/// Client sign-up in two steps: account details → phone OTP. The new account
-/// is signed in straight away after verification.
+/// Truck types a self-registering driver can pick (web parity:
+/// `src/lib/truckTypes.js`, kept in sync with the backend by hand).
+const _truckTypes = <({String value, String label, String capacity})>[
+  (value: '3_wheeler', label: '3 Wheeler', capacity: '500 kg'),
+  (value: 'tata_ace', label: 'Tata Ace', capacity: '750 kg'),
+  (value: 'pickup_8ft', label: 'Pickup 8ft', capacity: '1 Ton'),
+  (value: 'pickup_10ft', label: 'Pickup 10ft', capacity: '1.2 Ton'),
+  (value: '14ft', label: '14ft Truck', capacity: '3.7 Ton'),
+  (value: '17ft', label: '17ft Truck', capacity: '4.5 Ton'),
+  (value: '19ft', label: '19ft Truck', capacity: '6 Ton'),
+  (value: '22ft', label: '22ft Truck', capacity: '7 Ton'),
+  (value: '32ft_sxl', label: '32ft SXL', capacity: '9 Ton'),
+  (value: '32ft_mxl', label: '32ft MXL', capacity: '18 Ton'),
+];
+
+final _registrationRegex = RegExp(
+  r'^[A-Z]{2}[-\s]?\d{1,2}[-\s]?[A-Z]{1,3}[-\s]?\d{1,4}$',
+  caseSensitive: false,
+);
+
+/// Sign-up for clients, brokers and drivers: account details → (driver
+/// only) their truck → phone OTP. The new account is signed in straight away
+/// after verification.
+///
+/// Mirrors the web registration (`Register.jsx`): brokers add a business
+/// name and use `POST /api/auth/register`; drivers register themselves with
+/// their own truck via `POST /api/auth/register/driver`.
 class SignupScreen extends ConsumerStatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, this.role = AppRole.client});
+
+  final AppRole role;
 
   @override
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
@@ -35,6 +62,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _businessController = TextEditingController();
+  final _registrationController = TextEditingController();
+  final _capacityController = TextEditingController();
+  final _makeController = TextEditingController();
+  final _yearController = TextEditingController();
 
   _SignupStep _step = _SignupStep.details;
   bool _forward = true;
@@ -42,11 +74,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _isSubmitting = false;
   bool _obscurePassword = true;
   String? _error;
+  String _truckCategory = '14ft';
+  DateTime? _insuranceExpiry;
+
+  bool get _isBroker => widget.role == AppRole.broker;
+  bool get _isDriver => widget.role == AppRole.driver;
+
+  List<_SignupStep> get _steps => _isDriver
+      ? _SignupStep.values
+      : const [_SignupStep.details, _SignupStep.verify];
+
+  String get _loginPath => switch (widget.role) {
+    AppRole.broker => '/broker/login',
+    AppRole.driver => '/driver/login',
+    _ => '/login',
+  };
 
   @override
   void initState() {
     super.initState();
     _passwordController.addListener(() => setState(() {}));
+    _capacityController.text = _capacityFor(_truckCategory);
   }
 
   @override
@@ -55,25 +103,34 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _businessController.dispose();
+    _registrationController.dispose();
+    _capacityController.dispose();
+    _makeController.dispose();
+    _yearController.dispose();
     super.dispose();
   }
 
   String get _phone => normalizeIndianPhone(_phoneController.text);
 
+  static String _capacityFor(String category) =>
+      _truckTypes.firstWhere((t) => t.value == category).capacity;
+
   void _goTo(_SignupStep step) {
     FocusScope.of(context).unfocus();
     setState(() {
-      _forward = step.index > _step.index;
+      _forward = _steps.indexOf(step) > _steps.indexOf(_step);
       _step = step;
       _error = null;
     });
   }
 
   void _back() {
-    if (_step == _SignupStep.details) {
-      context.go('/login');
+    final index = _steps.indexOf(_step);
+    if (index <= 0) {
+      context.go(_loginPath);
     } else {
-      _goTo(_SignupStep.values[_step.index - 1]);
+      _goTo(_steps[index - 1]);
     }
   }
 
@@ -82,26 +139,66 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _error = message);
   }
 
-  Future<void> _sendOtp() async {
-    if (_isSendingOtp) return;
-    final l10n = AppLocalizations.of(context)!;
+  /// Validates the account details. Returns an error message, or null.
+  String? _validateDetails(AppLocalizations l10n) {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (name.isEmpty ||
         email.isEmpty ||
         _phoneController.text.isEmpty ||
-        password.isEmpty) {
-      return _fail(l10n.signupAllFieldsRequired);
+        password.isEmpty ||
+        (_isBroker && _businessController.text.trim().isEmpty)) {
+      return l10n.signupAllFieldsRequired;
     }
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      return _fail('Enter a valid email address.');
+      return 'Enter a valid email address.';
     }
     if (_phone.length != 10) {
-      return _fail('Enter a valid 10-digit mobile number.');
+      return 'Enter a valid 10-digit mobile number.';
     }
-    if (password.length < 8) return _fail(l10n.signupPasswordHelper);
+    if (password.length < 8) return l10n.signupPasswordHelper;
+    return null;
+  }
 
+  String? _validateTruck() {
+    final registration = _registrationController.text.trim();
+    if (registration.isEmpty) return 'Truck registration number is required.';
+    if (!_registrationRegex.hasMatch(registration)) {
+      return 'Registration number looks invalid, e.g. MH-12-AB-1234.';
+    }
+    if (_capacityController.text.trim().isEmpty) {
+      return 'Capacity is required.';
+    }
+    final yearText = _yearController.text.trim();
+    if (yearText.isNotEmpty) {
+      final year = int.tryParse(yearText);
+      final maxYear = DateTime.now().year + 1;
+      if (year == null || year < 1990 || year > maxYear) {
+        return 'Enter a year between 1990 and $maxYear.';
+      }
+    }
+    return null;
+  }
+
+  void _submitDetails() {
+    final error = _validateDetails(AppLocalizations.of(context)!);
+    if (error != null) return _fail(error);
+    if (_isDriver) {
+      _goTo(_SignupStep.truck);
+    } else {
+      _sendOtp();
+    }
+  }
+
+  void _submitTruck() {
+    final error = _validateTruck();
+    if (error != null) return _fail(error);
+    _sendOtp();
+  }
+
+  Future<void> _sendOtp() async {
+    if (_isSendingOtp) return;
     setState(() {
       _isSendingOtp = true;
       _error = null;
@@ -114,6 +211,43 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     } finally {
       if (mounted) setState(() => _isSendingOtp = false);
     }
+  }
+
+  Future<void> _register(String idToken) {
+    final auth = ref.read(authSessionProvider.notifier);
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (_isDriver) {
+      final make = _makeController.text.trim();
+      final expiry = _insuranceExpiry;
+      return auth.registerDriver(
+        name: name,
+        email: email,
+        phone: _phone,
+        password: password,
+        registration: _registrationController.text.trim().toUpperCase(),
+        category: _truckCategory,
+        capacity: _capacityController.text.trim(),
+        make: make.isEmpty ? null : make,
+        year: int.tryParse(_yearController.text.trim()),
+        insuranceExpiry: expiry == null
+            ? null
+            : '${expiry.year.toString().padLeft(4, '0')}-'
+                  '${expiry.month.toString().padLeft(2, '0')}-'
+                  '${expiry.day.toString().padLeft(2, '0')}',
+        idToken: idToken,
+      );
+    }
+    return auth.register(
+      name: name,
+      email: email,
+      phone: _phone,
+      password: password,
+      role: widget.role.name,
+      businessName: _isBroker ? _businessController.text.trim() : null,
+      idToken: idToken,
+    );
   }
 
   /// Creates the account with the Firebase [idToken] that proves ownership
@@ -132,14 +266,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final email = _emailController.text.trim();
     final auth = ref.read(authSessionProvider.notifier);
     try {
-      await auth.register(
-        name: _nameController.text.trim(),
-        email: email,
-        phone: _phone,
-        password: password,
-        role: 'client',
-        idToken: idToken,
-      );
+      await _register(idToken);
       final session = await auth.login(email: email, password: password);
       ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(
         session.user.role,
@@ -147,7 +274,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ref.read(authExpiredMessageProvider.notifier).state = null;
       ref.read(bottomNavVisibleProvider.notifier).state = true;
       if (!mounted) return;
-      context.go('/client/home');
+      context.go(switch (session.user.role.trim().toLowerCase()) {
+        'broker' => '/broker/home',
+        'driver' => '/driver/home',
+        _ => '/client/home',
+      });
     } on ApiException catch (error) {
       if (!mounted) return;
       if (_isPhoneVerificationError(error)) {
@@ -161,19 +292,103 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           _ => 'Please verify your number to continue.',
         });
       }
-      _goTo(_SignupStep.details);
-      _fail(userFacingError(error));
+      _returnWithError(userFacingError(error));
     } catch (error) {
       if (!mounted) return;
-      _goTo(_SignupStep.details);
-      _fail(userFacingError(error));
+      _returnWithError(userFacingError(error));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
+  /// Sends the user back to the step the failure most likely belongs to.
+  void _returnWithError(String message) {
+    final lower = message.toLowerCase();
+    final truckRelated =
+        _isDriver &&
+        (lower.contains('truck') ||
+            lower.contains('vehicle') ||
+            lower.contains('registration number') ||
+            lower.contains('capacity') ||
+            lower.contains('insurance'));
+    _goTo(truckRelated ? _SignupStep.truck : _SignupStep.details);
+    _fail(message);
+  }
+
   bool _isPhoneVerificationError(ApiException error) =>
       error.code?.startsWith('PHONE_VERIFICATION_') ?? false;
+
+  Future<void> _pickTruckType() async {
+    FocusScope.of(context).unfocus();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(bottom: 12),
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                'Truck type',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: _ink,
+                ),
+              ),
+            ),
+            for (final type in _truckTypes)
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  type.label,
+                  style: const TextStyle(color: _ink, fontSize: 14.5),
+                ),
+                subtitle: Text(
+                  type.capacity,
+                  style: const TextStyle(color: _muted, fontSize: 12.5),
+                ),
+                trailing: type.value == _truckCategory
+                    ? const Icon(Icons.check_rounded, color: _green)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(type.value),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _truckCategory = picked;
+      _capacityController.text = _capacityFor(picked);
+    });
+  }
+
+  Future<void> _pickInsuranceExpiry() async {
+    FocusScope.of(context).unfocus();
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _insuranceExpiry ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 15),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: _green, onPrimary: Colors.white),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) setState(() => _insuranceExpiry = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +403,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _TopBar(step: _step, onBack: _isSubmitting ? null : _back),
+              _TopBar(
+                index: _steps.indexOf(_step),
+                total: _steps.length,
+                onBack: _isSubmitting ? null : _back,
+              ),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 360),
@@ -229,6 +448,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final l10n = AppLocalizations.of(context)!;
     return switch (_step) {
       _SignupStep.details => _detailsStep(l10n),
+      _SignupStep.truck => _truckStep(),
       _SignupStep.verify => Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
@@ -249,14 +469,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Widget _detailsStep(AppLocalizations l10n) {
+    final subtitle = switch (widget.role) {
+      AppRole.broker => 'Manage your fleet, drivers and trips in one place.',
+      AppRole.driver => 'Find loads and get paid for every trip.',
+      _ => 'Book trucks and track every shipment in one place.',
+    };
     return _StepLayout(
       title: 'Create your account',
-      subtitle: 'Book trucks and track every shipment in one place.',
+      subtitle: subtitle,
       error: _error,
       button: _PrimaryButton(
-        label: 'Create account',
+        label: _isDriver ? 'Continue' : 'Create account',
         loading: _isSendingOtp,
-        onPressed: _sendOtp,
+        onPressed: _submitDetails,
       ),
       below: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -266,7 +491,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             style: const TextStyle(color: _muted, fontSize: 13.5),
           ),
           TextButton(
-            onPressed: () => context.go('/login'),
+            onPressed: () => context.go(_loginPath),
             style: TextButton.styleFrom(
               foregroundColor: _ink,
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -287,7 +512,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ),
       children: [
         _Field(
-          label: 'Full name',
+          label: _isBroker ? 'Owner name' : 'Full name',
           controller: _nameController,
           hint: 'Your name',
           keyboardType: TextInputType.name,
@@ -301,6 +526,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           keyboardType: TextInputType.emailAddress,
           autofillHints: const [AutofillHints.email],
         ),
+        if (_isBroker)
+          _Field(
+            label: 'Business name',
+            controller: _businessController,
+            hint: 'Your business name',
+            keyboardType: TextInputType.text,
+            capitalization: TextCapitalization.words,
+            autofillHints: const [AutofillHints.organizationName],
+          ),
         _Field(
           label: 'Mobile number',
           controller: _phoneController,
@@ -328,7 +562,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           obscure: _obscurePassword,
           autofillHints: const [AutofillHints.newPassword],
           action: TextInputAction.done,
-          onSubmitted: (_) => _sendOtp(),
+          onSubmitted: (_) => _submitDetails(),
           suffix: GestureDetector(
             onTap: () => setState(() => _obscurePassword = !_obscurePassword),
             child: Padding(
@@ -347,13 +581,164 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ],
     );
   }
+
+  Widget _truckStep() {
+    final type = _truckTypes.firstWhere((t) => t.value == _truckCategory);
+    final expiry = _insuranceExpiry;
+    return _StepLayout(
+      title: 'Add your truck',
+      subtitle: 'This helps brokers find and verify your vehicle.',
+      error: _error,
+      button: _PrimaryButton(
+        label: 'Create account',
+        loading: _isSendingOtp,
+        onPressed: _submitTruck,
+      ),
+      children: [
+        _Field(
+          label: 'Registration number',
+          controller: _registrationController,
+          hint: 'MH-12-AB-1234',
+          keyboardType: TextInputType.text,
+          capitalization: TextCapitalization.characters,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\- ]')),
+            LengthLimitingTextInputFormatter(15),
+            _UpperCaseFormatter(),
+          ],
+        ),
+        _PickerField(
+          label: 'Truck type',
+          value: type.label,
+          onTap: _pickTruckType,
+          icon: Icons.keyboard_arrow_down_rounded,
+        ),
+        _Field(
+          label: 'Capacity',
+          controller: _capacityController,
+          hint: 'e.g. 10 Tons',
+          keyboardType: TextInputType.text,
+        ),
+        _Field(
+          label: 'Make / model (optional)',
+          controller: _makeController,
+          hint: 'e.g. Tata 1109',
+          keyboardType: TextInputType.text,
+          capitalization: TextCapitalization.words,
+        ),
+        _Field(
+          label: 'Year (optional)',
+          controller: _yearController,
+          hint: 'e.g. 2020',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(4),
+          ],
+          action: TextInputAction.done,
+        ),
+        _PickerField(
+          label: 'Insurance expiry (optional)',
+          value: expiry == null
+              ? null
+              : '${expiry.day.toString().padLeft(2, '0')}/'
+                    '${expiry.month.toString().padLeft(2, '0')}/'
+                    '${expiry.year}',
+          hint: 'Select date',
+          onTap: _pickInsuranceExpiry,
+          icon: Icons.calendar_today_outlined,
+        ),
+      ],
+    );
+  }
 }
 
-/// Back arrow, two hairline step markers and a step count.
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.step, required this.onBack});
+class _UpperCaseFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) => newValue.copyWith(text: newValue.text.toUpperCase());
+}
 
-  final _SignupStep step;
+/// Tappable field styled like [_Field], for values picked from a sheet or
+/// date picker.
+class _PickerField extends StatelessWidget {
+  const _PickerField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    required this.icon,
+    this.hint = '',
+  });
+
+  final String label;
+  final String? value;
+  final String hint;
+  final VoidCallback onTap;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(12);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: _ink,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Material(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: radius,
+              side: const BorderSide(color: _line),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: radius,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value ?? hint,
+                        style: TextStyle(
+                          color: value == null ? _faint : _ink,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Icon(icon, size: 18, color: _muted),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Back arrow, hairline step markers and a step count.
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    required this.index,
+    required this.total,
+    required this.onBack,
+  });
+
+  final int index;
+  final int total;
   final VoidCallback? onBack;
 
   @override
@@ -369,21 +754,21 @@ class _TopBar extends StatelessWidget {
             tooltip: 'Back',
           ),
           const Spacer(),
-          for (var i = 0; i < _SignupStep.values.length; i++)
+          for (var i = 0; i < total; i++)
             AnimatedContainer(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutCubic,
               margin: const EdgeInsets.only(left: 4),
-              width: i == step.index ? 22 : 10,
+              width: i == index ? 22 : 10,
               height: 3,
               decoration: BoxDecoration(
-                color: i <= step.index ? _ink : _line,
+                color: i <= index ? _ink : _line,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           const SizedBox(width: 12),
           Text(
-            '0${step.index + 1} / 02',
+            '0${index + 1} / 0$total',
             style: const TextStyle(
               color: _faint,
               fontSize: 12,

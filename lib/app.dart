@@ -139,7 +139,13 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       final ready =
           !auth.isLoading &&
           !_handlingUnauthorized &&
-          !{'/splash', '/login', '/signup'}.contains(path) &&
+          !{
+            '/splash',
+            '/login',
+            '/signup',
+            '/broker/signup',
+            '/driver/signup',
+          }.contains(path) &&
           ref.read(rootNavigatorKeyProvider).currentState != null &&
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
       _pushMessages.setSession(auth.valueOrNull, navigationReady: ready);

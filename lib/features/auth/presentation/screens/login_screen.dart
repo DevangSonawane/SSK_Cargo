@@ -9,7 +9,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -31,7 +30,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const String _googleWebClientId =
       '567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com';
-  static const String _registerUrl = 'https://shipper.gadidost.com/register';
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -466,17 +464,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _openRegister() async {
-    final uri = Uri.parse(_registerUrl);
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.couldNotOpenRegistration),
-        ),
-      );
-    }
-  }
+  String get _signupPath => switch (widget.expectedRole) {
+    AppRole.broker => '/broker/signup',
+    AppRole.driver => '/driver/signup',
+    _ => '/signup',
+  };
 
   /// Forgot-password OTP flow (web parity: `Login.jsx` forgot sheet —
   /// `POST /api/auth/forgot-password` then `POST /api/auth/reset-password`).
@@ -699,8 +691,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                     ],
                                   ),
-                                  if (widget.expectedRole ==
-                                      AppRole.client) ...[
+                                  if (widget.expectedRole != AppRole.admin) ...[
                                     const SizedBox(height: 18),
                                     Center(
                                       child: Wrap(
@@ -717,7 +708,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           ),
                                           TextButton(
                                             onPressed: () =>
-                                                context.go('/signup'),
+                                                context.go(_signupPath),
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,
                                               minimumSize: Size.zero,
@@ -748,64 +739,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                if (!keyboardVisible)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: widget.expectedRole == AppRole.client
-                        // Keep the same reserved footer height as the other
-                        // roles, so the centered login card does not move.
-                        ? const SizedBox(height: 52)
-                        : Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 430),
-                              child: Container(
-                                height: 52,
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.66),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.14,
-                                      ),
-                                      blurRadius: 14,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: TextButton(
-                                    onPressed: _openRegister,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF2FA56E),
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: Size.zero,
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: Text(
-                                      l10n.registerAsBrokerDriver,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                  ),
+                // Reserved footer height keeps the centered card in place.
+                if (!keyboardVisible) const SizedBox(height: 64),
               ],
             ),
           ),

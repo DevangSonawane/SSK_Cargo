@@ -140,6 +140,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String password,
     String? phone,
     required String role,
+    String? businessName,
     String? idToken,
   }) async {
     await _apiClient.register(
@@ -148,6 +149,35 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       password: password,
       phone: phone,
       role: role,
+      businessName: businessName,
+      idToken: idToken,
+    );
+  }
+
+  Future<void> registerDriver({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    required String registration,
+    required String category,
+    required String capacity,
+    String? make,
+    int? year,
+    String? insuranceExpiry,
+    required String idToken,
+  }) async {
+    await _apiClient.registerDriver(
+      name: name,
+      email: email,
+      phone: phone,
+      password: password,
+      registration: registration,
+      category: category,
+      capacity: capacity,
+      make: make,
+      year: year,
+      insuranceExpiry: insuranceExpiry,
       idToken: idToken,
     );
   }
