@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/auth/presentation/widgets/liquid_segmented_toggle.dart';
 import '../kyc/digilocker_return.dart';
 import '../kyc/digilocker_webview_screen.dart';
 import '../network/api_client.dart';
@@ -23,6 +24,7 @@ export '../kyc/digilocker_return.dart' show kDigilockerRedirectUrl;
 const String kDigiDocAadhaar = 'aadhaar';
 const String kDigiDocPan = 'pan';
 const String kDigiDocDrivingLicense = 'drivingLicense';
+const String kDigiDocGst = 'gst';
 
 /// Per-document result status. Mirrors the web `docs` map values.
 const String kDigiStatusIdle = 'idle';
@@ -32,12 +34,36 @@ const String kDigiStatusMissing = 'missing';
 const String kDigiStatusFailed = 'failed';
 const String kDigiStatusError = 'error';
 
+/// Which side of the broker/client "Aadhaar + PAN" / "GST" toggle is active
+/// (KYC guide Pt2: either path alone is enough). Drivers are always
+/// [KycPath.identity].
+enum KycPath { identity, gst }
+
 /// Documents one DigiLocker session covers, per role (guide + web client).
 List<String> digilockerRequiredDocs(String role) {
   if (role.trim().toLowerCase() == 'driver') {
     return const [kDigiDocAadhaar, kDigiDocPan, kDigiDocDrivingLicense];
   }
   return const [kDigiDocAadhaar, kDigiDocPan];
+}
+
+/// Every document key this role can verify — the DigiLocker set plus GST for
+/// broker/client (the GST alternative path).
+List<String> kycTrackedDocs(String role) {
+  if (role.trim().toLowerCase() == 'driver') {
+    return digilockerRequiredDocs(role);
+  }
+  return const [kDigiDocAadhaar, kDigiDocPan, kDigiDocGst];
+}
+
+/// Backend `isKycSatisfied`: driver needs Aadhaar + PAN + DL verified;
+/// broker/client need (Aadhaar and PAN) verified, or GST verified alone.
+bool isKycSatisfied(String role, Map<String, String> statuses) {
+  bool ok(String key) => statuses[key] == kDigiStatusVerified;
+  if (role.trim().toLowerCase() == 'driver') {
+    return ok(kDigiDocAadhaar) && ok(kDigiDocPan) && ok(kDigiDocDrivingLicense);
+  }
+  return (ok(kDigiDocAadhaar) && ok(kDigiDocPan)) || ok(kDigiDocGst);
 }
 
 /// Pulls already-known per-document results out of a
@@ -51,9 +77,7 @@ Map<String, String> parseVerificationStatuses(
   if (verificationResults == null) return known;
   for (final key in required) {
     final entry = verificationResults[key];
-    final status = entry is Map<String, dynamic>
-        ? entry['status']?.toString()
-        : null;
+    final status = entry is Map ? entry['status']?.toString() : null;
     if (status != null && status.trim().isNotEmpty) {
       known[key] = status.trim().toLowerCase();
     }
@@ -61,8 +85,8 @@ Map<String, String> parseVerificationStatuses(
   return known;
 }
 
-/// Web `needsFallback` for a single status value: the number-entry fallback
-/// (and its photo upload) shows only for these.
+/// Web `needsFallback` for a single status value: the photo upload shows
+/// only for these.
 bool digiNeedsFallback(String? status) {
   return const {'missing', 'failed', 'error', 'loading'}.contains(status);
 }
@@ -84,40 +108,49 @@ String? digiDocKeyForUploadKey(String uploadKey) {
       return null;
   }
 }
-/// change, so it can build the finish payload and the Finish / Submit-for-
-/// review label without owning any of this flow's state.
-/// Snapshot emitted to the hosting KYC screen whenever values or statuses
-/// change, so it can build the finish payload and the Finish / Submit-for-
-/// review label without owning any of this flow's state.
+
+/// Snapshot emitted to the hosting KYC screen whenever values, statuses or
+/// the selected path change, so it can build the finish payload and the
+/// Finish / Submit-for-review label without owning any of this flow's state.
 class DigilockerVerificationSnapshot {
   const DigilockerVerificationSnapshot({
     required this.values,
     required this.statuses,
+    this.path = KycPath.identity,
+    this.satisfied = false,
   });
 
   /// Typed field values keyed like the backend documents map
   /// (`pan_number`, `license_number`, `date_of_birth`, `aadhaar_number`,
-  /// `vehicle_registration_number`, …).
+  /// `gst_number`, `vehicle_registration_number`, …).
   final Map<String, String> values;
 
   /// Per-document result status keyed by document (`aadhaar` / `pan` /
-  /// `drivingLicense`).
+  /// `drivingLicense` / `gst`).
   final Map<String, String> statuses;
+
+  /// Active toggle side (broker/client). Always identity for drivers.
+  final KycPath path;
+
+  /// [isKycSatisfied] for this role and [statuses].
+  final bool satisfied;
 }
 
-/// One DigiLocker sign-in covers every document this role needs, with
-/// number-entry fallbacks only for documents DigiLocker couldn't supply —
-/// a faithful port of the web client's Onboarding.jsx flow:
+/// KYC verification for every role (KYC guide Pt2):
 ///
-/// start → in-app browser tab (Custom Tabs / SFSafariViewController) →
-/// DigiLocker redirects to [kDigilockerRedirectUrl], an App Link that brings
-/// the app back → status (pending: 4 × 3 s poll, then a manual "Check
-/// status" button; failed: message + start again; done: verified settles,
-/// missing falls back to entering the number).
+/// * **broker / client** — a segmented "Aadhaar + PAN" / "GST" toggle; only
+///   the active side renders and either side alone is enough.
+///   * Aadhaar + PAN: "Verify with DigiLocker" (one consent session for
+///     both), then manual paths — Aadhaar number → Send OTP → OTP → verify,
+///     and PAN number → verify.
+///   * GST: GSTIN → verify.
+/// * **driver** — no toggle: DigiLocker, Aadhaar OTP, PAN, and Driving
+///   License (number + date of birth).
 ///
-/// The `verificationId` is persisted ([DigilockerSessionStore]) and re-checked
-/// whenever the app resumes, so the result is never lost if the link doesn't
-/// fire, Android kills the app mid-trip, or the user logs in again.
+/// Every field goes through a real verify-* call so the backend's
+/// auto-verify can be reached. The DigiLocker `verificationId` is persisted
+/// ([DigilockerSessionStore]) and re-checked whenever the app resumes, so
+/// the result is never lost if Android kills the app mid-trip.
 class DigilockerVerificationCard extends ConsumerStatefulWidget {
   const DigilockerVerificationCard({
     super.key,
@@ -130,7 +163,7 @@ class DigilockerVerificationCard extends ConsumerStatefulWidget {
     this.onDigilockerDone,
   });
 
-  /// `'driver'` or `'broker'`.
+  /// `'driver'`, `'broker'` or `'client'`.
   final String role;
   final String accessToken;
   final String userName;
@@ -138,9 +171,10 @@ class DigilockerVerificationCard extends ConsumerStatefulWidget {
   final Map<String, String> initialStatuses;
   final ValueChanged<DigilockerVerificationSnapshot>? onChanged;
 
-  /// Fired once a DigiLocker session resolves (`done`), after [onChanged]
-  /// has reported the new statuses. `true` when every required document is
-  /// now verified — the host submits KYC straight away (no review step).
+  /// Fired after a DigiLocker session resolves or a manual check succeeds,
+  /// once [onChanged] has reported the new statuses. `true` when the role's
+  /// requirement ([isKycSatisfied]) is now met — the host may submit KYC
+  /// straight away.
   final ValueChanged<bool>? onDigilockerDone;
 
   @override
@@ -152,8 +186,10 @@ class _DigilockerVerificationCardState
     extends ConsumerState<DigilockerVerificationCard>
     with WidgetsBindingObserver {
   late final List<String> _required;
+  late final List<String> _tracked;
   final Map<String, String> _statuses = {};
   final Map<String, String?> _messages = {};
+  KycPath _path = KycPath.identity;
 
   // The DigiLocker session as a whole: idle | loading | error, plus its id
   // so a still-pending one can be re-checked by hand (web `dg` state).
@@ -164,8 +200,15 @@ class _DigilockerVerificationCardState
 
   bool _verifyingPan = false;
   bool _verifyingDl = false;
+  bool _verifyingGst = false;
+  bool _sendingAadhaarOtp = false;
+  bool _verifyingAadhaarOtp = false;
+
+  /// `refId` from `aadhaar/send-otp`; non-null while an OTP is outstanding.
+  String? _aadhaarRefId;
 
   late final TextEditingController _aadhaarController;
+  late final TextEditingController _aadhaarOtpController;
   late final TextEditingController _panController;
   late final TextEditingController _licenseController;
   late final TextEditingController _dobController;
@@ -175,7 +218,10 @@ class _DigilockerVerificationCardState
   late final TextEditingController _bankAccountController;
   late final TextEditingController _businessRegController;
 
-  bool get _isDriver => widget.role.trim().toLowerCase() == 'driver';
+  String get _roleKey => widget.role.trim().toLowerCase();
+  bool get _isDriver => _roleKey == 'driver';
+  bool get _isBroker => _roleKey == 'broker';
+  bool get _hasPathToggle => !_isDriver;
 
   /// True between opening DigiLocker and resolving the session: the user is
   /// (or was) away in the browser tab. Drives the resume / return-link check.
@@ -189,12 +235,14 @@ class _DigilockerVerificationCardState
   void initState() {
     super.initState();
     _required = digilockerRequiredDocs(widget.role);
-    for (final key in _required) {
+    _tracked = kycTrackedDocs(widget.role);
+    for (final key in _tracked) {
       final initial = widget.initialStatuses[key]?.trim().toLowerCase();
       _statuses[key] = initial?.isNotEmpty == true ? initial! : 'idle';
     }
     String initial(String key) => widget.initialValues[key] ?? '';
     _aadhaarController = TextEditingController(text: initial('aadhaar_number'));
+    _aadhaarOtpController = TextEditingController();
     _panController = TextEditingController(text: initial('pan_number'));
     _licenseController = TextEditingController(
       text: initial('license_number'),
@@ -213,6 +261,19 @@ class _DigilockerVerificationCardState
     _businessRegController = TextEditingController(
       text: initial('business_registration_number'),
     );
+    // Resume on the GST side when that's the path already verified (or the
+    // only one started).
+    if (_hasPathToggle) {
+      final identityVerified =
+          _statuses[kDigiDocAadhaar] == kDigiStatusVerified &&
+          _statuses[kDigiDocPan] == kDigiStatusVerified;
+      final gstStarted =
+          _statuses[kDigiDocGst] == kDigiStatusVerified ||
+          (initial('gst_number').isNotEmpty &&
+              initial('pan_number').isEmpty &&
+              initial('aadhaar_number').isEmpty);
+      if (!identityVerified && gstStarted) _path = KycPath.gst;
+    }
     WidgetsBinding.instance.addObserver(this);
     // The App Link fired: DigiLocker is done on its side. Close the browser
     // tab (iOS; Android's Custom Tab is closed by the OS returning to us) and
@@ -261,7 +322,7 @@ class _DigilockerVerificationCardState
   }
 
   Future<void> _resumePendingSession() async {
-    if (_allVerified || _verificationId != null) return;
+    if (_identityVerified || _verificationId != null) return;
     final pending = await DigilockerSessionStore.load(
       userId: _userId,
       role: widget.role,
@@ -283,6 +344,7 @@ class _DigilockerVerificationCardState
     WidgetsBinding.instance.removeObserver(this);
     _returnSub?.close();
     _aadhaarController.dispose();
+    _aadhaarOtpController.dispose();
     _panController.dispose();
     _licenseController.dispose();
     _dobController.dispose();
@@ -297,22 +359,26 @@ class _DigilockerVerificationCardState
   Map<String, String> _currentValues() {
     return {
       'aadhaar_number': _aadhaarController.text.replaceAll(' ', '').trim(),
-      'pan_number': _panController.text.trim(),
+      'pan_number': _panController.text.trim().toUpperCase(),
       'license_number': _licenseController.text.trim(),
       'date_of_birth': _dobController.text.trim(),
       'vehicle_registration_number': _vehicleRegController.text.trim(),
       'vehicle_insurance_number': _vehicleInsuranceController.text.trim(),
-      'gst_number': _gstController.text.trim(),
+      'gst_number': _gstController.text.trim().toUpperCase(),
       'bank_account_number': _bankAccountController.text.trim(),
       'business_registration_number': _businessRegController.text.trim(),
     };
   }
+
+  bool get _satisfied => isKycSatisfied(widget.role, _statuses);
 
   void _emit() {
     widget.onChanged?.call(
       DigilockerVerificationSnapshot(
         values: _currentValues(),
         statuses: Map<String, String>.of(_statuses),
+        path: _path,
+        satisfied: _satisfied,
       ),
     );
   }
@@ -326,26 +392,40 @@ class _DigilockerVerificationCardState
     _emit();
   }
 
-  /// A document shows its number-entry fallback once DigiLocker couldn't
-  /// supply it (or a number check on it just failed) — never up front, so
-  /// the normal path has nothing to type at all. ("loading" is only ever set
-  /// by these fallback checks themselves, so the fields stay visible through
-  /// it instead of vanishing mid-check.) Web `needsFallback`, verbatim.
-  bool _needsFallback(String key) {
-    return const {'missing', 'failed', 'error', 'loading'}.contains(
-      _statuses[key],
-    );
+  /// A manual check just succeeded: tell the host whether the requirement is
+  /// now met so driver/broker can submit straight away.
+  void _afterManualCheck(String key) {
+    if (_statuses[key] == kDigiStatusVerified) {
+      widget.onDigilockerDone?.call(_satisfied);
+    }
   }
 
-  bool get _allVerified =>
-      _required.every((key) => _statuses[key] == 'verified');
+  void _setPath(KycPath path) {
+    if (path == _path) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _path = path);
+    _emit();
+  }
+
+  bool _isVerified(String key) => _statuses[key] == kDigiStatusVerified;
+
+  /// Every document the DigiLocker session covers for this role verified.
+  bool get _identityVerified => _required.every(_isVerified);
+
+  /// 503 from a verify-* call means the provider is down, not that the
+  /// user's document is wrong (guide §7).
+  String _verifyError(Object error) {
+    if (error is ApiException && error.statusCode == 503) {
+      return 'Verification is temporarily unavailable. Please try again shortly.';
+    }
+    return userFacingError(error);
+  }
 
   // One DigiLocker sign-in covers every document this role needs (a browser
   // round trip, not inline entry): start → DigiLocker opens in an in-app
-  // browser tab → its redirect to the App Link brings the user back (or the
-  // app resumes) → status resolves it. Typed fallback values live in these
-  // controllers, which survive the trip as long as the app isn't killed;
-  // the verification id itself is persisted so the result never is lost.
+  // WebView → its redirect brings the user back (or the app resumes) →
+  // status resolves it. The verification id is persisted so the result is
+  // never lost.
   Future<void> _startDigilocker() async {
     if (_sessionStatus == 'loading') return;
     final l10n = AppLocalizations.of(context)!;
@@ -376,8 +456,7 @@ class _DigilockerVerificationCardState
       );
       if (!mounted) return;
       // In-app WebView: the app sees DigiLocker's redirect itself, so the
-      // user comes straight back with no App Link / backend setup needed
-      // (a Chrome tab left Play users stranded on the redirect page).
+      // user comes straight back with no App Link / backend setup needed.
       // While it's open the app stays resumed, so the resume check is off.
       _awaitingReturn = false;
       setState(() => _verificationId = verificationId);
@@ -389,8 +468,6 @@ class _DigilockerVerificationCardState
           ? result.verificationId!
           : verificationId;
       if (result.reachedRedirect) {
-        // Finished on DigiLocker's side: resolve now (short poll while
-        // Cashfree finishes processing), then the host auto-submits.
         await _checkDigilocker(id, 0);
       } else {
         // Closed early: one quick look in case they did finish; otherwise
@@ -400,26 +477,19 @@ class _DigilockerVerificationCardState
           setState(() => _sessionMessage = l10n.coreDigilockerAwaitingReturn);
         }
       }
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _sessionStatus = 'error';
-        _sessionMessage = userFacingError(error);
-        _verificationId = null;
-      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = userFacingError(error);
+        _sessionMessage = _verifyError(error);
         _verificationId = null;
       });
     }
   }
 
-  // 'pending' means the user hasn't finished in DigiLocker yet (or Cashfree
-  // is still processing) — poll briefly, then hand the retry to a manual
-  // button rather than spinning forever. Web `checkDigilocker`, verbatim.
+  // 'pending' means the user hasn't finished in DigiLocker yet (or the
+  // provider is still processing) — poll 4 × 3 s, then hand the retry to a
+  // manual button rather than spinning forever. Web `checkDigilocker`.
   Future<void> _checkDigilocker(String verificationId, int attempt) async {
     final token = ++_pollToken;
     if (!mounted) return;
@@ -461,25 +531,18 @@ class _DigilockerVerificationCardState
         _clearPending();
         setState(() {
           _sessionStatus = 'error';
-          _sessionMessage =
-              (message != null && message.trim().isNotEmpty)
+          _sessionMessage = (message != null && message.trim().isNotEmpty)
               ? message
               : l10n.coreDigilockerNotComplete;
           _verificationId = null;
         });
         return;
       }
-      // Done: verified documents are settled; missing ones fall back to
-      // entering the number.
+      // Done: verified documents are settled; missing ones are left for the
+      // manual checks below the DigiLocker button.
       _clearPending();
       final documents = data['documents'];
       final docsMap = documents is Map<String, dynamic> ? documents : const {};
-      if (kDebugMode) {
-        debugPrint(
-          'SSK.KYC DigiLocker status=$status documents=$docsMap '
-          'message=$message',
-        );
-      }
       var resolvedAny = false;
       String? firstProblem;
       setState(() {
@@ -500,9 +563,6 @@ class _DigilockerVerificationCardState
             _messages[key] = detailMessage;
             resolvedAny = true;
           } else if (docStatus != null && docStatus.isNotEmpty) {
-            // Anything else ('failed', a name mismatch, already linked to
-            // another account…) used to be ignored, leaving the card
-            // unchanged with no hint why. Show it and open the fallback.
             _statuses[key] = 'failed';
             _messages[key] =
                 (detailMessage != null && detailMessage.trim().isNotEmpty)
@@ -513,11 +573,8 @@ class _DigilockerVerificationCardState
           }
         }
         if (!resolvedAny) {
-          // 'done' (or an unknown status) with no usable documents: say so
-          // instead of silently going back to idle.
           _sessionStatus = 'error';
-          _sessionMessage =
-              (message != null && message.trim().isNotEmpty)
+          _sessionMessage = (message != null && message.trim().isNotEmpty)
               ? message
               : l10n.coreDigilockerNotComplete;
         } else {
@@ -526,31 +583,112 @@ class _DigilockerVerificationCardState
         }
         _verificationId = null;
       });
+      ref.invalidate(kycStatusProvider);
       _emit();
-      widget.onDigilockerDone?.call(_allVerified);
-    } on ApiException catch (error) {
-      if (!mounted || token != _pollToken) return;
-      setState(() {
-        _sessionStatus = 'error';
-        _sessionMessage = userFacingError(error);
-        _verificationId = verificationId;
-      });
+      widget.onDigilockerDone?.call(_satisfied);
     } catch (error) {
       if (!mounted || token != _pollToken) return;
       setState(() {
         _sessionStatus = 'error';
-        _sessionMessage = userFacingError(error);
+        _sessionMessage = _verifyError(error);
         _verificationId = verificationId;
       });
     }
   }
 
-  // Fallbacks for a document that isn't in the user's DigiLocker — verify
-  // just that one by number. Web `verifyPan` / `verifyDl`, verbatim.
+  // ── Manual checks (guide §2) ─────────────────────────────────────────
+
+  Future<void> _sendAadhaarOtp() async {
+    final aadhaar = _aadhaarController.text.replaceAll(' ', '').trim();
+    if (_sendingAadhaarOtp) return;
+    if (!RegExp(r'^\d{12}$').hasMatch(aadhaar)) {
+      _setDoc(kDigiDocAadhaar, 'error', 'Enter your 12-digit Aadhaar number.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _sendingAadhaarOtp = true;
+      _messages[kDigiDocAadhaar] = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .sendAadhaarOtp(
+            accessToken: widget.accessToken,
+            aadhaarNumber: aadhaar,
+          );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      final refId = (data['refId'] ?? data['ref_id'])?.toString() ?? '';
+      if (refId.isEmpty) {
+        final details = data['details'];
+        _setDoc(
+          kDigiDocAadhaar,
+          'failed',
+          details is Map ? details['message']?.toString() : null,
+        );
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _aadhaarRefId = refId;
+        _aadhaarOtpController.clear();
+        _statuses[kDigiDocAadhaar] = 'idle';
+        _messages[kDigiDocAadhaar] = null;
+      });
+    } catch (error) {
+      _setDoc(kDigiDocAadhaar, 'error', _verifyError(error));
+    } finally {
+      if (mounted) setState(() => _sendingAadhaarOtp = false);
+    }
+  }
+
+  Future<void> _verifyAadhaarOtp() async {
+    final refId = _aadhaarRefId;
+    final otp = _aadhaarOtpController.text.trim();
+    if (refId == null || _verifyingAadhaarOtp) return;
+    if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
+      _setDoc(kDigiDocAadhaar, 'error', 'Enter the 6-digit OTP.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _verifyingAadhaarOtp = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .verifyAadhaarOtp(
+            accessToken: widget.accessToken,
+            refId: refId,
+            otp: otp,
+          );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      final details = data['details'];
+      final status = data['status']?.toString().toLowerCase() ?? 'failed';
+      if (status == kDigiStatusVerified && mounted) {
+        setState(() => _aadhaarRefId = null);
+      }
+      _setDoc(
+        kDigiDocAadhaar,
+        status,
+        details is Map ? details['message']?.toString() : null,
+      );
+      ref.invalidate(kycStatusProvider);
+      _afterManualCheck(kDigiDocAadhaar);
+    } catch (error) {
+      _setDoc(kDigiDocAadhaar, 'error', _verifyError(error));
+    } finally {
+      if (mounted) setState(() => _verifyingAadhaarOtp = false);
+    }
+  }
+
   Future<void> _verifyPan() async {
-    final pan = _panController.text.trim();
-    if (pan.isEmpty || _verifyingPan) return;
-    _setDoc('pan', 'loading', null);
+    final pan = _panController.text.trim().toUpperCase();
+    if (_verifyingPan) return;
+    if (!RegExp(r'^[A-Z]{5}\d{4}[A-Z]$').hasMatch(pan)) {
+      _setDoc(kDigiDocPan, 'error', 'Enter a valid 10-character PAN.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    _setDoc(kDigiDocPan, 'loading', null);
     if (!mounted) return;
     setState(() => _verifyingPan = true);
     try {
@@ -564,23 +702,64 @@ class _DigilockerVerificationCardState
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final details = data['details'];
       _setDoc(
-        'pan',
-        data['status']?.toString() ?? 'failed',
-        details is Map<String, dynamic> ? details['message']?.toString() : null,
+        kDigiDocPan,
+        data['status']?.toString().toLowerCase() ?? 'failed',
+        details is Map ? details['message']?.toString() : null,
       );
       ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      _setDoc('pan', 'error', userFacingError(error));
+      _afterManualCheck(kDigiDocPan);
+    } catch (error) {
+      _setDoc(kDigiDocPan, 'error', _verifyError(error));
     } finally {
       if (mounted) setState(() => _verifyingPan = false);
+    }
+  }
+
+  Future<void> _verifyGst() async {
+    final gstin = _gstController.text.trim().toUpperCase();
+    if (_verifyingGst) return;
+    if (!RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$').hasMatch(gstin)) {
+      _setDoc(kDigiDocGst, 'error', 'Enter a valid 15-character GSTIN.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    _setDoc(kDigiDocGst, 'loading', null);
+    if (!mounted) return;
+    setState(() => _verifyingGst = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .verifyGst(accessToken: widget.accessToken, gstin: gstin);
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      final details = data['details'];
+      _setDoc(
+        kDigiDocGst,
+        data['status']?.toString().toLowerCase() ?? 'failed',
+        details is Map ? details['message']?.toString() : null,
+      );
+      ref.invalidate(kycStatusProvider);
+      _afterManualCheck(kDigiDocGst);
+    } catch (error) {
+      _setDoc(kDigiDocGst, 'error', _verifyError(error));
+    } finally {
+      if (mounted) setState(() => _verifyingGst = false);
     }
   }
 
   Future<void> _verifyDrivingLicense() async {
     final dlNumber = _licenseController.text.trim();
     final dob = _dobController.text.trim();
-    if (dlNumber.isEmpty || dob.isEmpty || _verifyingDl) return;
-    _setDoc('drivingLicense', 'loading', null);
+    if (_verifyingDl) return;
+    if (dlNumber.isEmpty || dob.isEmpty) {
+      _setDoc(
+        kDigiDocDrivingLicense,
+        'error',
+        'Enter your licence number and date of birth.',
+      );
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    _setDoc(kDigiDocDrivingLicense, 'loading', null);
     if (!mounted) return;
     setState(() => _verifyingDl = true);
     try {
@@ -594,233 +773,445 @@ class _DigilockerVerificationCardState
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final details = data['details'];
       _setDoc(
-        'drivingLicense',
-        data['status']?.toString() ?? 'failed',
-        details is Map<String, dynamic> ? details['message']?.toString() : null,
+        kDigiDocDrivingLicense,
+        data['status']?.toString().toLowerCase() ?? 'failed',
+        details is Map ? details['message']?.toString() : null,
       );
       ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      _setDoc('drivingLicense', 'error', userFacingError(error));
+      _afterManualCheck(kDigiDocDrivingLicense);
+    } catch (error) {
+      _setDoc(kDigiDocDrivingLicense, 'error', _verifyError(error));
     } finally {
       if (mounted) setState(() => _verifyingDl = false);
     }
   }
 
+  Future<void> _pickDob() async {
+    FocusScope.of(context).unfocus();
+    final now = DateTime.now();
+    final current = DateTime.tryParse(_dobController.text.trim());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? DateTime(now.year - 25),
+      firstDate: DateTime(now.year - 90),
+      lastDate: DateTime(now.year - 16, now.month, now.day),
+    );
+    if (picked == null || !mounted) return;
+    _dobController.text =
+        '${picked.year.toString().padLeft(4, '0')}-'
+        '${picked.month.toString().padLeft(2, '0')}-'
+        '${picked.day.toString().padLeft(2, '0')}';
+    setState(() {});
+    _emit();
+  }
+
+  // ── UI ───────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final showGst = _hasPathToggle && _path == KycPath.gst;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          _isDriver
-              ? l10n.coreDigilockerDriverIntro
-              : l10n.coreDigilockerBrokerIntro,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-            height: 1.45,
+        if (_hasPathToggle) ...[
+          LiquidSegmentedToggle(
+            labels: const ['Aadhaar + PAN', 'GST'],
+            icons: const [AppIcons.fingerprint_rounded, AppIcons.receipt_long_rounded],
+            selectedIndex: _path.index,
+            activeColor: AppColors.brand,
+            onChanged: (i) => _setPath(KycPath.values[i]),
           ),
-        ),
-        const SizedBox(height: 14),
-        for (var i = 0; i < _required.length; i++) ...[
-          _DocumentRow(
-            docKey: _required[i],
-            status: _statuses[_required[i]] ?? 'idle',
-            message: _messages[_required[i]],
-            fallback: _needsFallback(_required[i])
-                ? _fallbackFor(_required[i])
-                : null,
-          ),
-          if (i != _required.length - 1) const SizedBox(height: 10),
-        ],
-        if (!_allVerified) ...[
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: _sessionStatus == 'loading' ? null : _startDigilocker,
-              icon: _sessionStatus == 'loading'
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(AppIcons.verified_user_outlined, size: 18),
-              label: Text(
-                _sessionStatus == 'loading'
-                    ? l10n.coreDigilockerWorking
-                    : l10n.coreDigilockerVerifyButton,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.brand,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
+          const SizedBox(height: 10),
+          Text(
+            showGst
+                ? 'Verify your business GSTIN. GST alone is enough — no Aadhaar or PAN needed.'
+                : 'Verify Aadhaar and PAN together. Use DigiLocker for one-tap verification, or verify each one below.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.45,
             ),
           ),
-          if (_sessionStatus == 'error' && _sessionMessage != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ] else
+          Text(
+            'Aadhaar, PAN and Driving Licence are all required. Use DigiLocker for one-tap verification, or verify each one below.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+        const SizedBox(height: 14),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: KeyedSubtree(
+            key: ValueKey(showGst),
+            child: showGst ? _gstSection() : _identitySection(),
+          ),
+        ),
+        if (_isDriver || _isBroker) ...[
+          const SizedBox(height: 16),
+          _OptionalDetailsSection(
+            isDriver: _isDriver,
+            vehicleRegController: _vehicleRegController,
+            vehicleInsuranceController: _vehicleInsuranceController,
+            bankAccountController: _bankAccountController,
+            businessRegController: _businessRegController,
+            onChanged: (_) => _emit(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _identitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!_identityVerified) ...[
+          _digilockerBlock(),
+          const SizedBox(height: 14),
+          const _OrDivider(label: 'or verify manually'),
+          const SizedBox(height: 14),
+        ],
+        _DocumentRow(
+          docKey: kDigiDocAadhaar,
+          status: _statuses[kDigiDocAadhaar] ?? 'idle',
+          message: _messages[kDigiDocAadhaar],
+          fallback: _isVerified(kDigiDocAadhaar) ? null : _aadhaarManual(),
+        ),
+        const SizedBox(height: 10),
+        _DocumentRow(
+          docKey: kDigiDocPan,
+          status: _statuses[kDigiDocPan] ?? 'idle',
+          message: _messages[kDigiDocPan],
+          fallback: _isVerified(kDigiDocPan) ? null : _panManual(),
+        ),
+        if (_isDriver) ...[
+          const SizedBox(height: 10),
+          _DocumentRow(
+            docKey: kDigiDocDrivingLicense,
+            status: _statuses[kDigiDocDrivingLicense] ?? 'idle',
+            message: _messages[kDigiDocDrivingLicense],
+            fallback: _isVerified(kDigiDocDrivingLicense)
+                ? null
+                : _licenseManual(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _gstSection() {
+    return _DocumentRow(
+      docKey: kDigiDocGst,
+      status: _statuses[kDigiDocGst] ?? 'idle',
+      message: _messages[kDigiDocGst],
+      fallback: _isVerified(kDigiDocGst)
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  AppIcons.gpp_maybe_rounded,
-                  size: 14,
-                  color: Color(0xFFD97706),
+                _FallbackField(
+                  controller: _gstController,
+                  hintText: '27ABCDE1234F1Z5',
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+                    LengthLimitingTextInputFormatter(15),
+                  ],
+                  onChanged: (_) {
+                    setState(() {});
+                    _emit();
+                  },
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _sessionMessage!,
-                    style: const TextStyle(
-                      color: Color(0xFFD97706),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                _FallbackVerifyButton(
+                  label: 'Verify GST',
+                  loading: _verifyingGst,
+                  onPressed: _gstController.text.trim().isNotEmpty
+                      ? _verifyGst
+                      : null,
                 ),
-                if (_verificationId != null) ...[
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => _checkDigilocker(_verificationId!, 0),
-                    child: Text(
-                      l10n.coreDigilockerCheckStatus,
-                      style: TextStyle(
-                        color: AppColors.brand,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
-          ],
-        ],
-        const SizedBox(height: 16),
-        _OptionalDetailsSection(
-          isDriver: _isDriver,
-          vehicleRegController: _vehicleRegController,
-          vehicleInsuranceController: _vehicleInsuranceController,
-          gstController: _gstController,
-          bankAccountController: _bankAccountController,
-          businessRegController: _businessRegController,
-          onChanged: (_) => _emit(),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              AppIcons.info_outline_rounded,
-              size: 14,
-              color: AppColors.textTertiary,
+    );
+  }
+
+  Widget _digilockerBlock() {
+    final l10n = AppLocalizations.of(context)!;
+    final loading = _sessionStatus == 'loading';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 52,
+          child: FilledButton.icon(
+            onPressed: loading ? null : _startDigilocker,
+            icon: loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(AppIcons.verified_user_outlined, size: 18),
+            label: Text(
+              loading
+                  ? l10n.coreDigilockerWorking
+                  : 'Open with DigiLocker',
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                l10n.coreDigilockerInfoNote,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textTertiary,
-                  fontSize: 11,
-                  height: 1.5,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.brand,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _isDriver
+              ? 'Fetches Aadhaar, PAN and Driving Licence in one go.'
+              : 'Fetches Aadhaar and PAN in one go.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 11),
+        ),
+        if (_sessionStatus == 'error' && _sessionMessage != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                AppIcons.gpp_maybe_rounded,
+                size: 14,
+                color: Color(0xFFD97706),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _sessionMessage!,
+                  style: const TextStyle(
+                    color: Color(0xFFD97706),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
                 ),
               ),
+              if (_verificationId != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _checkDigilocker(_verificationId!, 0),
+                  child: Text(
+                    l10n.coreDigilockerCheckStatus,
+                    style: const TextStyle(
+                      color: AppColors.brand,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _aadhaarManual() {
+    final otpSent = _aadhaarRefId != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _FallbackField(
+                controller: _aadhaarController,
+                hintText: 'Aadhaar number',
+                keyboardType: TextInputType.number,
+                enabled: !otpSent,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(12),
+                ],
+                onChanged: (_) {
+                  setState(() {});
+                  _emit();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            _FallbackVerifyButton(
+              label: otpSent ? 'Resend' : 'Send OTP',
+              loading: _sendingAadhaarOtp,
+              onPressed:
+                  _aadhaarController.text.replaceAll(' ', '').length == 12
+                  ? _sendAadhaarOtp
+                  : null,
+            ),
+          ],
+        ),
+        if (otpSent) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Enter the OTP sent to the mobile number linked with this Aadhaar.',
+            style: const TextStyle(color: AppColors.textTertiary, fontSize: 11),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _FallbackField(
+                  controller: _aadhaarOtpController,
+                  hintText: '6-digit OTP',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(6),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _FallbackVerifyButton(
+                label: 'Verify OTP',
+                loading: _verifyingAadhaarOtp,
+                onPressed: _aadhaarOtpController.text.length == 6
+                    ? _verifyAadhaarOtp
+                    : null,
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _verifyingAadhaarOtp
+                  ? null
+                  : () => setState(() {
+                      _aadhaarRefId = null;
+                      _aadhaarOtpController.clear();
+                    }),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 32),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              child: const Text('Change Aadhaar number'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _panManual() {
+    return Row(
+      children: [
+        Expanded(
+          child: _FallbackField(
+            controller: _panController,
+            hintText: 'ABCDE1234F',
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+              LengthLimitingTextInputFormatter(10),
+            ],
+            onChanged: (_) {
+              setState(() {});
+              _emit();
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        _FallbackVerifyButton(
+          label: 'Verify',
+          loading: _verifyingPan,
+          onPressed: _panController.text.trim().length == 10
+              ? _verifyPan
+              : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _licenseManual() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _FallbackField(
+          controller: _licenseController,
+          hintText: 'Licence number, e.g. MH1220190012345',
+          textCapitalization: TextCapitalization.characters,
+          onChanged: (_) {
+            setState(() {});
+            _emit();
+          },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickDob,
+                child: AbsorbPointer(
+                  child: _FallbackField(
+                    controller: _dobController,
+                    hintText: 'Date of birth (YYYY-MM-DD)',
+                    keyboardType: TextInputType.datetime,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _FallbackVerifyButton(
+              label: 'Verify',
+              loading: _verifyingDl,
+              onPressed:
+                  _licenseController.text.trim().isNotEmpty &&
+                      _dobController.text.trim().isNotEmpty
+                  ? _verifyDrivingLicense
+                  : null,
             ),
           ],
         ),
       ],
     );
   }
+}
 
-  Widget? _fallbackFor(String key) {
-    final l10n = AppLocalizations.of(context)!;
-    switch (key) {
-      case 'aadhaar':
-        // Aadhaar has no number-check fallback (OTP isn't enabled on this
-        // account) — the typed number goes to manual review with the finish
-        // submission.
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.coreDigilockerAadhaarFallbackNote,
-              style: TextStyle(color: AppColors.textTertiary, fontSize: 11),
+class _OrDivider extends StatelessWidget {
+  const _OrDivider({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: AppColors.divider, height: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 8),
-            _FallbackField(
-              controller: _aadhaarController,
-              hintText: 'XXXX XXXX XXXX',
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(12),
-              ],
-              onChanged: (_) => _emit(),
-            ),
-          ],
-        );
-      case 'pan':
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _FallbackField(
-              controller: _panController,
-              hintText: 'ABCDE1234F',
-              textCapitalization: TextCapitalization.characters,
-              inputFormatters: [LengthLimitingTextInputFormatter(10)],
-              onChanged: (_) => _emit(),
-            ),
-            const SizedBox(height: 8),
-            _FallbackVerifyButton(
-              label: l10n.coreDigilockerVerifyPan,
-              loading: _verifyingPan,
-              onPressed: _panController.text.trim().isNotEmpty && !_verifyingPan
-                  ? _verifyPan
-                  : null,
-            ),
-          ],
-        );
-      case 'drivingLicense':
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _FallbackField(
-              controller: _licenseController,
-              hintText: 'MH-2020123456789',
-              textCapitalization: TextCapitalization.characters,
-              onChanged: (_) => _emit(),
-            ),
-            const SizedBox(height: 8),
-            _FallbackField(
-              controller: _dobController,
-              hintText: 'YYYY-MM-DD',
-              keyboardType: TextInputType.datetime,
-              onChanged: (_) => _emit(),
-            ),
-            const SizedBox(height: 8),
-            _FallbackVerifyButton(
-              label: l10n.coreDigilockerVerifyLicense,
-              loading: _verifyingDl,
-              onPressed:
-                  _licenseController.text.trim().isNotEmpty &&
-                      _dobController.text.trim().isNotEmpty &&
-                      !_verifyingDl
-                  ? _verifyDrivingLicense
-                  : null,
-            ),
-          ],
-        );
-      default:
-        return null;
-    }
+          ),
+        ),
+        const Expanded(child: Divider(color: AppColors.divider, height: 1)),
+      ],
+    );
   }
 }
 
@@ -829,6 +1220,7 @@ String _docLabel(String key, AppLocalizations l10n) {
     'aadhaar' => l10n.coreDigilockerDocAadhaar,
     'pan' => l10n.coreDigilockerDocPan,
     'drivingLicense' => l10n.coreDigilockerDocLicense,
+    'gst' => 'GSTIN',
     _ => key,
   };
 }
@@ -838,6 +1230,7 @@ IconData _docIcon(String key) {
     'aadhaar' => AppIcons.fingerprint_rounded,
     'pan' => AppIcons.account_balance_rounded,
     'drivingLicense' => AppIcons.credit_card_rounded,
+    'gst' => AppIcons.receipt_long_rounded,
     _ => AppIcons.badge_outlined,
   };
 }
@@ -1015,9 +1408,11 @@ class _FallbackField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
     this.onChanged,
+    this.enabled = true,
   });
 
   final TextEditingController controller;
+  final bool enabled;
   final String hintText;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
@@ -1028,6 +1423,7 @@ class _FallbackField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      enabled: enabled,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
@@ -1040,10 +1436,14 @@ class _FallbackField extends StatelessWidget {
       decoration: InputDecoration(
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: enabled ? Colors.white : AppColors.fillSubtle,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 13,
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.divider),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1113,7 +1513,6 @@ class _OptionalDetailsSection extends StatelessWidget {
     required this.isDriver,
     required this.vehicleRegController,
     required this.vehicleInsuranceController,
-    required this.gstController,
     required this.bankAccountController,
     required this.businessRegController,
     required this.onChanged,
@@ -1122,7 +1521,6 @@ class _OptionalDetailsSection extends StatelessWidget {
   final bool isDriver;
   final TextEditingController vehicleRegController;
   final TextEditingController vehicleInsuranceController;
-  final TextEditingController gstController;
   final TextEditingController bankAccountController;
   final TextEditingController businessRegController;
   final ValueChanged<String> onChanged;
@@ -1133,10 +1531,12 @@ class _OptionalDetailsSection extends StatelessWidget {
     final fields = isDriver
         ? [
             (vehicleRegController, l10n.coreDigilockerVehicleRegHint),
-            (vehicleInsuranceController, l10n.coreDigilockerVehicleInsuranceHint),
+            (
+              vehicleInsuranceController,
+              l10n.coreDigilockerVehicleInsuranceHint,
+            ),
           ]
         : [
-            (gstController, l10n.coreDigilockerGstHint),
             (bankAccountController, l10n.coreDigilockerBankAccountHint),
             (businessRegController, l10n.coreDigilockerBusinessRegHint),
           ];
@@ -1144,15 +1544,21 @@ class _OptionalDetailsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          isDriver ? l10n.coreDigilockerVehicleDetails : l10n.coreDigilockerBusinessDetails,
+          isDriver
+              ? l10n.coreDigilockerVehicleDetails
+              : l10n.coreDigilockerBusinessDetails,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
         ),
         Text(
-          l10n.coreDigilockerOptionalNote,
-          style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+          // Broker: bank account + business registration are required on
+          // either path (`POST /api/kyc/broker`).
+          isDriver
+              ? l10n.coreDigilockerOptionalNote
+              : 'Required to submit your KYC, whichever option you verify with.',
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
         ),
         const SizedBox(height: 10),
         for (var i = 0; i < fields.length; i++) ...[
