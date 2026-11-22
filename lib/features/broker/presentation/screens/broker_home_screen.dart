@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/utils/poll_visibility.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
+import '../../../shared/presentation/widgets/counter_note_field.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
 import 'package:gadidost/core/utils/user_facing_error.dart';
@@ -55,10 +57,21 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
         unawaited(_connectSocket());
       }
     });
+    // Web parity (pages/broker/JobRequests.jsx POLL_INTERVAL_MS = 8000):
+    // safety-net refresh alongside the socket, only while this tab is
+    // visible and the app is in the foreground.
+    _jobRequestPollTimer = Timer.periodic(jobRequestPollInterval, (_) {
+      if (!mounted || !shouldPollNow(context)) return;
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+    });
   }
+
+  static const jobRequestPollInterval = Duration(seconds: 8);
+  Timer? _jobRequestPollTimer;
 
   @override
   void dispose() {
+    _jobRequestPollTimer?.cancel();
     _searchController.dispose();
     _jobRequestSubscription?.cancel();
     _driverRequestSubscription?.cancel();
@@ -370,15 +383,20 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 
   Future<void> _counterRequest(BookingRequest request) async {
-    final amount = await _showCounterAmountSheet(request);
-    if (amount == null || amount <= 0) {
+    final result = await _showCounterAmountSheet(request);
+    if (result == null || result.amount <= 0) {
       return;
     }
     await _runRequestAction(
       request,
       (token) => ref
           .read(apiClientProvider)
-          .counterJobRequest(accessToken: token, id: request.id, amount: amount)
+          .counterJobRequest(
+            accessToken: token,
+            id: request.id,
+            amount: result.amount,
+            note: result.note,
+          )
           .then((_) {}),
       successMessage:
           AppLocalizations.of(context)!.brokerHomeFareChangeSent,
@@ -486,12 +504,14 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     );
   }
 
-  Future<double?> _showCounterAmountSheet(BookingRequest request) {
+  Future<({double amount, String note})?> _showCounterAmountSheet(
+    BookingRequest request,
+  ) {
     final initialAmount = _amountFromText(request.value);
     final initialText = initialAmount > 0
         ? initialAmount.toStringAsFixed(0)
         : '';
-    return showModalBottomSheet<double>(
+    return showModalBottomSheet<({double amount, String note})>(
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -679,6 +699,7 @@ class _HomeCounterSheet extends StatefulWidget {
 
 class _HomeCounterSheetState extends State<_HomeCounterSheet> {
   late final TextEditingController _controller;
+  final _note = TextEditingController();
 
   @override
   void initState() {
@@ -689,6 +710,7 @@ class _HomeCounterSheetState extends State<_HomeCounterSheet> {
   @override
   void dispose() {
     _controller.dispose();
+    _note.dispose();
     super.dispose();
   }
 
@@ -758,6 +780,8 @@ class _HomeCounterSheetState extends State<_HomeCounterSheet> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  CounterNoteField(controller: _note),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -772,7 +796,9 @@ class _HomeCounterSheetState extends State<_HomeCounterSheet> {
                         child: FilledButton(
                           onPressed: () {
                             final amount = _amountFromText(_controller.text);
-                            Navigator.of(context).pop(amount);
+                            Navigator.of(
+                              context,
+                            ).pop((amount: amount, note: _note.text));
                           },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.brand,

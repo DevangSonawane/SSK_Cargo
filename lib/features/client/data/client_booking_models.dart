@@ -1,5 +1,6 @@
 import '../../../l10n/app_localizations.dart';
 
+import '../../shared/data/driver_request_negotiation.dart';
 import '../../shared/data/trip_route_stop.dart';
 
 /// A single entry from `GET /api/config/vehicle-types` — the backend's live
@@ -157,119 +158,6 @@ class ClientBookingPage {
   final int limit;
   final int total;
   final int totalPages;
-}
-
-class ClientPricingConfig {
-  const ClientPricingConfig({
-    required this.interCity,
-    required this.intraCity,
-    required this.partTruck,
-  });
-
-  factory ClientPricingConfig.fromJson(Map<String, dynamic> json) {
-    final data = _asMap(json['data']);
-    return ClientPricingConfig(
-      interCity: ClientInterCityPricing.fromJson(_asMap(data['interCity'])),
-      intraCity: ClientIntraCityPricing.fromJson(_asMap(data['intraCity'])),
-      partTruck: ClientPartTruckPricing.fromJson(_asMap(data['partTruck'])),
-    );
-  }
-
-  final ClientInterCityPricing interCity;
-  final ClientIntraCityPricing intraCity;
-  final ClientPartTruckPricing partTruck;
-}
-
-class ClientInterCityPricing {
-  const ClientInterCityPricing({
-    required this.platformFee,
-    required this.tollHandling,
-    required this.baseRatePerKm,
-    required this.fuelSurcharge,
-    required this.tollFixedAmount,
-  });
-
-  factory ClientInterCityPricing.fromJson(Map<String, dynamic> json) {
-    return ClientInterCityPricing(
-      platformFee: _asDouble(json['platformFee']),
-      tollHandling: _readString(json, const ['tollHandling']),
-      baseRatePerKm: _asDouble(json['baseRatePerKm']),
-      fuelSurcharge: _asDouble(json['fuelSurcharge']),
-      tollFixedAmount: _asDouble(json['tollFixedAmount']),
-    );
-  }
-
-  final double platformFee;
-  final String tollHandling;
-  final double baseRatePerKm;
-  final double fuelSurcharge;
-  final double tollFixedAmount;
-}
-
-class ClientIntraCityPricing {
-  const ClientIntraCityPricing({
-    required this.large,
-    required this.small,
-    required this.medium,
-  });
-
-  factory ClientIntraCityPricing.fromJson(Map<String, dynamic> json) {
-    return ClientIntraCityPricing(
-      large: ClientTruckPricingTier.fromJson(_asMap(json['large'])),
-      small: ClientTruckPricingTier.fromJson(_asMap(json['small'])),
-      medium: ClientTruckPricingTier.fromJson(_asMap(json['medium'])),
-    );
-  }
-
-  final ClientTruckPricingTier large;
-  final ClientTruckPricingTier small;
-  final ClientTruckPricingTier medium;
-}
-
-class ClientTruckPricingTier {
-  const ClientTruckPricingTier({
-    required this.baseFare,
-    required this.perKmRate,
-    required this.platformFee,
-    required this.waitingCharge,
-    required this.demandMultiplier,
-    required this.tollFixedAmount,
-  });
-
-  factory ClientTruckPricingTier.fromJson(Map<String, dynamic> json) {
-    return ClientTruckPricingTier(
-      baseFare: _asDouble(json['baseFare']),
-      perKmRate: _asDouble(json['perKmRate']),
-      platformFee: _asDouble(json['platformFee']),
-      waitingCharge: _asDouble(json['waitingCharge']),
-      demandMultiplier: _asDouble(json['demandMultiplier']),
-      tollFixedAmount: _asDouble(json['tollFixedAmount']),
-    );
-  }
-
-  final double baseFare;
-  final double perKmRate;
-  final double platformFee;
-  final double waitingCharge;
-  final double demandMultiplier;
-  final double tollFixedAmount;
-}
-
-class ClientPartTruckPricing {
-  const ClientPartTruckPricing({
-    required this.baseFare,
-    required this.platformFee,
-  });
-
-  factory ClientPartTruckPricing.fromJson(Map<String, dynamic> json) {
-    return ClientPartTruckPricing(
-      baseFare: _asDouble(json['baseFare']),
-      platformFee: _asDouble(json['platformFee']),
-    );
-  }
-
-  final double baseFare;
-  final double platformFee;
 }
 
 class ClientBooking {
@@ -641,7 +529,16 @@ class ClientBookingOffer {
     this.truckCapacityTons,
     this.truckSpareTons,
     this.offerHistory = const [],
+    this.isAdminAssigned = false,
+    this.noNegotiation = false,
   });
+
+  /// Driver-request rows only: admin assigned this driver directly.
+  final bool isAdminAssigned;
+
+  /// Driver-request rows only: backend lock (broker- or admin-assigned) —
+  /// accept/decline only, `client-counter` would return 409.
+  final bool noNegotiation;
 
   factory ClientBookingOffer.fromJson(Map<String, dynamic> json) {
     final broker = _asMap(json['broker']);
@@ -687,7 +584,17 @@ class ClientBookingOffer {
       _readNestedName(broker, const ['name', 'full_name', 'display_name']),
     );
 
+    final isAdminAssigned = readIsAdminAssignedFlag(json);
+
     return ClientBookingOffer(
+      isAdminAssigned: isAdminAssigned,
+      // Strict read: this model is shared with broker job offers, whose own
+      // id may arrive as `job_request_id`, so never infer the lock from that.
+      noNegotiation: readNoNegotiationFlag(
+        json,
+        jobRequestId: '',
+        isAdminAssigned: isAdminAssigned,
+      ),
       id: _readString(json, const [
         'id',
         'request_id',

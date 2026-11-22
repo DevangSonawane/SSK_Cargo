@@ -4,6 +4,11 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 
+/// Web parity (BookTruck.jsx `minScheduleValue`): the earliest Book Later
+/// time is now + 5 minutes, so a client who picks "now" doesn't immediately
+/// fail the backend's "must be in the future" check.
+const kMinScheduleLead = Duration(minutes: 5);
+
 Future<DateTime?> showHomeScheduleSheet(
   BuildContext context, {
   required DateTime initialDateTime,
@@ -17,7 +22,7 @@ Future<DateTime?> showHomeScheduleSheet(
     barrierColor: Colors.black.withValues(alpha: 0.32),
     builder: (context) => HomeScheduleSheet(
       initialDateTime: initialDateTime,
-      firstDateTime: now,
+      firstDateTime: now.add(kMinScheduleLead),
       lastDateTime: now.add(const Duration(days: 180)),
     ),
   );

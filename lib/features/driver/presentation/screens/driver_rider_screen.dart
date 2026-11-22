@@ -18,6 +18,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart'
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_dashboard_models.dart';
+import '../widgets/driver_currency.dart';
 import '../widgets/history_segment_bar.dart';
 import '../widgets/trip_summary_card.dart';
 import 'package:gadidost/core/utils/user_facing_error.dart';
@@ -34,6 +35,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
 
   Future<void> _refresh(WidgetRef ref) {
     ref.invalidate(driverDashboardProvider);
+    ref.invalidate(driverDashboardSummaryProvider);
     return ref.refresh(driverDashboardProvider.future);
   }
 
@@ -792,18 +794,36 @@ List<MapEntry<String, List<DriverTripSummary>>> _groupTripsByDay(
   return [for (final key in keys) MapEntry(key, grouped[key]!)];
 }
 
-class _TripsStatsStrip extends StatelessWidget {
+/// Web parity (driver Home.jsx stat cards): Total Trips / Total Distance /
+/// Total Earnings come from `GET /api/trips/dashboard-summary`, the server's
+/// own lifetime totals. While that loads (or if it fails) we fall back to
+/// totals over the trips already on screen, so the strip never sits empty.
+class _TripsStatsStrip extends ConsumerWidget {
   const _TripsStatsStrip({required this.trips});
 
   final List<DriverTripSummary> trips;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final totalEarned = trips
-        .where((trip) => trip.amount > 0)
-        .fold<double>(0, (sum, trip) => sum + trip.amount);
-    final completed = trips.where(_isCompletedTrip).length;
+    final summary = ref.watch(driverDashboardSummaryProvider).valueOrNull;
+    final tripCount = summary?.trips ?? trips.length;
+    final distanceKm =
+        summary?.distanceKm ??
+        trips.fold<double>(0, (sum, trip) => sum + trip.distanceKm);
+    final earned =
+        summary?.earnings ??
+        trips
+            .where((trip) => trip.amount > 0 && _isCompletedTrip(trip))
+            .fold<double>(0, (sum, trip) => sum + trip.amount);
+
+    Widget divider() => Container(
+      width: 1,
+      height: 34,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color: Colors.white24,
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
@@ -818,22 +838,27 @@ class _TripsStatsStrip extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _StatCell(value: '${trips.length}', label: l10n.totalTrips),
-          ),
-          const SizedBox(width: 16),
-          Container(width: 1, height: 34, color: Colors.white24),
-          const SizedBox(width: 16),
-          Expanded(
             child: _StatCell(
-              value: '₹${totalEarned.round()}',
-              label: l10n.totalEarned,
+              value: '$tripCount',
+              label: l10n.totalTrips,
+              trend: summary?.tripsTrend,
             ),
           ),
-          const SizedBox(width: 16),
-          Container(width: 1, height: 34, color: Colors.white24),
-          const SizedBox(width: 16),
+          divider(),
           Expanded(
-            child: _StatCell(value: '$completed', label: l10n.completed),
+            child: _StatCell(
+              value: l10n.bookingRadiusKm(_groupIndian(distanceKm.round())),
+              label: l10n.totalDistance,
+              trend: summary?.distanceTrend,
+            ),
+          ),
+          divider(),
+          Expanded(
+            child: _StatCell(
+              value: formatDriverCurrencyCompact(earned),
+              label: l10n.totalEarned,
+              trend: summary?.earningsTrend,
+            ),
           ),
         ],
       ),
@@ -841,26 +866,46 @@ class _TripsStatsStrip extends StatelessWidget {
   }
 }
 
+/// en-IN digit grouping (web `toLocaleString("en-IN")`): 18,420 / 4,12,850.
+String _groupIndian(int value) {
+  final digits = value.abs().toString();
+  if (digits.length <= 3) return '${value < 0 ? '-' : ''}$digits';
+  final last3 = digits.substring(digits.length - 3);
+  var rest = digits.substring(0, digits.length - 3);
+  final parts = <String>[];
+  while (rest.length > 2) {
+    parts.insert(0, rest.substring(rest.length - 2));
+    rest = rest.substring(0, rest.length - 2);
+  }
+  if (rest.isNotEmpty) parts.insert(0, rest);
+  return '${value < 0 ? '-' : ''}${parts.join(',')},$last3';
+}
+
 class _StatCell extends StatelessWidget {
-  const _StatCell({required this.value, required this.label});
+  const _StatCell({required this.value, required this.label, this.trend});
 
   final String value;
   final String label;
+
+  /// Web parity: "+12% this month" under the card when the server sends it.
+  final double? trend;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          value,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+            ),
           ),
         ),
         const SizedBox(height: 2),
@@ -874,6 +919,24 @@ class _StatCell extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        if (trend != null) ...[
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              AppLocalizations.of(context)!.statTrendThisMonth(
+                '${trend! > 0 ? '+' : ''}${trend!.toStringAsFixed(trend! % 1 == 0 ? 0 : 1)}',
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

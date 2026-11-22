@@ -14,6 +14,7 @@ import 'package:gadidost/l10n/app_localizations.dart';
 import 'core/router/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/providers/app_providers.dart';
+import 'features/chat/data/chat_unread.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/utils/user_facing_error.dart';
 import 'core/providers/theme_provider.dart';
@@ -119,6 +120,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       unawaited(_syncDriverTracking());
       unawaited(_refreshChatUnreadCount());
     });
+    _startChatUnreadPolling();
   }
 
   void _refreshNotificationHistory() {
@@ -240,29 +242,38 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _refreshChatUnreadCount() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      ref.read(chatUnreadCountProvider.notifier).state = 0;
-      return;
-    }
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .getUnreadChatCount(accessToken: session.tokens.accessToken);
-      final data = response['data'];
-      final rawCount = data is Map
-          ? data['unreadCount'] ?? data['count']
-          : null;
-      final count = rawCount is num
-          ? rawCount.toInt()
-          : int.tryParse(rawCount?.toString() ?? '') ?? 0;
-      if (mounted) {
-        ref.read(chatUnreadCountProvider.notifier).state = count;
+  Future<void> _refreshChatUnreadCount() =>
+      ref.read(chatUnreadRefresherProvider).refresh();
+
+  /// Web parity: re-check the unread badge every 20s while the app is in
+  /// the foreground (ChatUnreadContext.jsx POLL_MS).
+  Timer? _chatUnreadPollTimer;
+
+  void _startChatUnreadPolling() {
+    _chatUnreadPollTimer?.cancel();
+    _chatUnreadPollTimer = Timer.periodic(kChatUnreadPollInterval, (_) {
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (!mounted ||
+          (lifecycle != null && lifecycle != AppLifecycleState.resumed)) {
+        return;
       }
-    } catch (_) {
-      // Chat badges are best-effort and should not interrupt app startup.
-    }
+      unawaited(_refreshChatUnreadCount());
+    });
+  }
+
+  /// A new message elsewhere: fetch the real count (debounced) rather than
+  /// guessing +1. Messages in the chat being read never touch the badge.
+  Timer? _chatUnreadDebounce;
+
+  void _onIncomingChatForBadge(Map<String, dynamic> payload) {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final senderId = payload['senderId']?.toString();
+    if (session != null && senderId == session.user.id) return;
+    if (ref.read(chatUnreadRefresherProvider).isForOpenThread(payload)) return;
+    _chatUnreadDebounce?.cancel();
+    _chatUnreadDebounce = Timer(const Duration(milliseconds: 800), () {
+      if (mounted) unawaited(_refreshChatUnreadCount());
+    });
   }
 
   Future<void> _handleUnauthorized(String? serverMessage) async {
@@ -307,7 +318,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   }
 
   void _handleChatMessage(Map<String, dynamic> payload) {
-    _incrementChatUnreadCount(payload);
+    _onIncomingChatForBadge(payload);
     final l10n = _l10n;
     final senderFallback = l10n.appChatSupportFallback;
     final text = _chatPreview(payload['message']?.toString() ?? '');
@@ -452,7 +463,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   }
 
   void _handleChatEscalated(Map<String, dynamic> payload) {
-    _incrementChatUnreadCount(payload);
+    _onIncomingChatForBadge(payload);
     final l10n = _l10n;
     final booking = payload['bookingNumber']?.toString();
     final byName = payload['byName']?.toString() ?? l10n.appChatClientFallback;
@@ -474,13 +485,6 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     );
   }
 
-  void _incrementChatUnreadCount(Map<String, dynamic> payload) {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    final senderId = payload['senderId']?.toString();
-    if (session != null && senderId == session.user.id) return;
-    final current = ref.read(chatUnreadCountProvider);
-    ref.read(chatUnreadCountProvider.notifier).state = current + 1;
-  }
 
   String _chatPreview(String text) {
     final normalized = text.trim();
@@ -757,6 +761,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     _pushMessages.dispose();
     _loginAttemptAlertSubscription?.cancel();
     _chatMessageSubscription?.cancel();
+    _chatUnreadPollTimer?.cancel();
+    _chatUnreadDebounce?.cancel();
     _chatEscalatedSubscription?.cancel();
     _driverRequestSubscription?.cancel();
     _jobRequestSubscription?.cancel();

@@ -170,8 +170,12 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
 
     final isConfirmTurn = request.isClientTurnToConfirm;
     final isWaiting = request.isWaitingForCounterpartyConfirmation;
+    // Web parity (DriverOfferCard.jsx): a broker- or admin-assigned row can
+    // land in this fan-out list too — the backend 409s a client-counter on
+    // it, so hide Change Fare whenever the server marks it noNegotiation.
     final canCounter =
-        request.normalizedStatus == 'pending' || request.isCountered;
+        !request.noNegotiation &&
+        (request.normalizedStatus == 'pending' || request.isCountered);
     // Actionable cards glow green like the selected inDrive bid; idle ones
     // stay neutral so attention lands where action is needed.
     final actionable = isConfirmTurn || request.isCountered;
@@ -350,7 +354,10 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                  child: Text(l10n.truckSearchBack, style: TextStyle(fontSize: 12)),
+                child: Text(
+                  l10n.truckSearchBack,
+                  style: TextStyle(fontSize: 12),
+                ),
               ),
             ),
           ] else if (_negotiating) ...[
@@ -428,7 +435,10 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                 ),
                 TextButton(
                   onPressed: _sending ? null : _closeNegotiate,
-                  child: Text(l10n.truckSearchCancel, style: TextStyle(fontSize: 12)),
+                  child: Text(
+                    l10n.truckSearchCancel,
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -549,6 +559,18 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                 ),
               ],
             ),
+            if (request.noNegotiation) ...[
+              const SizedBox(height: 8),
+              Text(
+                request.isAdminAssigned
+                    ? l10n.findTruckFixedPriceAdminAssigned
+                    : l10n.findTruckFixedPriceBrokerAgreed,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+              ),
+            ],
           ],
           if (widget.errorText != null && widget.errorText!.isNotEmpty) ...[
             const SizedBox(height: 8),

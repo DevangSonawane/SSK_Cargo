@@ -8042,4 +8042,124 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get errorVerificationUnavailable =>
       'हम अभी आपका नंबर सत्यापित नहीं कर सके। कृपया बाद में फिर से कोशिश करें।';
+
+  @override
+  String get noNegotiationAdminAssigned => 'एडमिन-असाइन्ड';
+
+  @override
+  String get noNegotiationAdminAssignedNoFareChange =>
+      'एडमिन-असाइन्ड - किराया नहीं बदलेगा';
+
+  @override
+  String get driverHomeAdminAssignedNotice =>
+      'एडमिन द्वारा सीधे सौंपा गया — स्वीकार करें या अस्वीकार करें, बातचीत नहीं होगी।';
+
+  @override
+  String get driverOrderAdminAssignedTrip => 'एडमिन द्वारा सौंपी गई ट्रिप';
+
+  @override
+  String get driverOrderAssignedDirectlyByAdmin =>
+      'एडमिन द्वारा सीधे सौंपा गया — स्वीकार करें या अस्वीकार करें, किराया नहीं बदल सकते।';
+
+  @override
+  String get findTruckFixedPriceAdminAssigned =>
+      'सीधे सौंपा गया — तय किराया, बातचीत नहीं होगी।';
+
+  @override
+  String get findTruckFixedPriceBrokerAgreed =>
+      'ब्रोकर के साथ पहले से तय — तय किराया, बातचीत नहीं होगी।';
+
+  @override
+  String get legalAndSupport => 'कानूनी जानकारी और सहायता';
+
+  @override
+  String get legalAndSupportSubtitle =>
+      'गोपनीयता, शर्तें, रिफंड, सुरक्षा और अकाउंट डिलीट करना';
+
+  @override
+  String get legalIndexSubtitle => 'GadiDost की नीतियाँ और सहायता जानकारी।';
+
+  @override
+  String get legalPrivacyPolicy => 'गोपनीयता नीति';
+
+  @override
+  String get legalTermsConditions => 'नियम और शर्तें';
+
+  @override
+  String get legalAccountDeletion => 'अकाउंट डिलीट करना';
+
+  @override
+  String get legalContactSupport => 'संपर्क / सहायता';
+
+  @override
+  String get legalRefundPolicy => 'रद्द करना और रिफंड';
+
+  @override
+  String get legalSafetyPolicy => 'सुरक्षा नीति';
+
+  @override
+  String get legalPageLoadError =>
+      'यह पेज लोड नहीं हो सका। कृपया बाद में फिर से कोशिश करें।';
+
+  @override
+  String get legalContentComingSoon => 'सामग्री जल्द आ रही है।';
+
+  @override
+  String get legalDeletionFormTitle => 'अकाउंट डिलीट करने का अनुरोध';
+
+  @override
+  String get legalDeletionFormSubtitle =>
+      'यह फ़ॉर्म भरें, हमारी टीम सत्यापन करके आपका अनुरोध पूरा करेगी।';
+
+  @override
+  String get legalDeletionName => 'नाम';
+
+  @override
+  String get legalDeletionPhone => 'फ़ोन';
+
+  @override
+  String get legalDeletionPhoneHint => '10 अंकों का नंबर';
+
+  @override
+  String get legalDeletionReason => 'कारण (वैकल्पिक)';
+
+  @override
+  String get legalDeletionSubmit => 'अनुरोध भेजें';
+
+  @override
+  String get legalDeletionSubmitting => 'भेजा जा रहा है...';
+
+  @override
+  String get legalDeletionNeedContact =>
+      'कृपया ईमेल या फ़ोन नंबर दें ताकि हम आपसे संपर्क कर सकें।';
+
+  @override
+  String get legalDeletionReceived => 'आपका अनुरोध मिल गया है।';
+
+  @override
+  String get legalDeletionFailed =>
+      'अनुरोध नहीं भेजा जा सका। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get totalDistance => 'कुल दूरी';
+
+  @override
+  String statTrendThisMonth(String percent) {
+    return 'इस महीने $percent%';
+  }
+
+  @override
+  String get counterLimitReachedNotice =>
+      'आपके सभी काउंटर-ऑफ़र इस्तेमाल हो चुके हैं — अब स्वीकार या अस्वीकार करें।';
+
+  @override
+  String get counterNoteHint => 'काउंटर-ऑफ़र का कारण... (वैकल्पिक)';
+
+  @override
+  String get quoteNotReady =>
+      'किराये का अनुमान अभी तैयार नहीं है — कृपया थोड़ी देर बाद फिर कोशिश करें।';
+
+  @override
+  String get quoteRouteUnconfirmed =>
+      'आपका रूट कन्फ़र्म नहीं हो सका — कृपया पिकअप और ड्रॉप लोकेशन फिर से जांचें।';
 }

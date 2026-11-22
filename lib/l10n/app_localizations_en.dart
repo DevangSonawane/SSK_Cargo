@@ -8048,4 +8048,125 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorVerificationUnavailable =>
       'We couldn\'t verify your number right now. Please try again later.';
+
+  @override
+  String get noNegotiationAdminAssigned => 'Admin-assigned';
+
+  @override
+  String get noNegotiationAdminAssignedNoFareChange =>
+      'Admin-assigned - no fare change';
+
+  @override
+  String get driverHomeAdminAssignedNotice =>
+      'Assigned directly by admin - accept or decline, no negotiation.';
+
+  @override
+  String get driverOrderAdminAssignedTrip => 'Admin-assigned trip';
+
+  @override
+  String get driverOrderAssignedDirectlyByAdmin =>
+      'Assigned directly by admin - accept or decline, no fare changes.';
+
+  @override
+  String get findTruckFixedPriceAdminAssigned =>
+      'Assigned directly - fixed price, no negotiation.';
+
+  @override
+  String get findTruckFixedPriceBrokerAgreed =>
+      'Already agreed with the broker - fixed price, no negotiation.';
+
+  @override
+  String get legalAndSupport => 'Legal & Support';
+
+  @override
+  String get legalAndSupportSubtitle =>
+      'Privacy, terms, refunds, safety and account deletion';
+
+  @override
+  String get legalIndexSubtitle =>
+      'Policies and support information for GadiDost.';
+
+  @override
+  String get legalPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get legalTermsConditions => 'Terms & Conditions';
+
+  @override
+  String get legalAccountDeletion => 'Account Deletion';
+
+  @override
+  String get legalContactSupport => 'Contact / Support';
+
+  @override
+  String get legalRefundPolicy => 'Cancellation & Refund';
+
+  @override
+  String get legalSafetyPolicy => 'Safety Policy';
+
+  @override
+  String get legalPageLoadError =>
+      'Couldn\'t load this page. Please try again later.';
+
+  @override
+  String get legalContentComingSoon => 'Content coming soon.';
+
+  @override
+  String get legalDeletionFormTitle => 'Request Account Deletion';
+
+  @override
+  String get legalDeletionFormSubtitle =>
+      'Fill this out and our team will follow up to verify and complete your request.';
+
+  @override
+  String get legalDeletionName => 'Name';
+
+  @override
+  String get legalDeletionPhone => 'Phone';
+
+  @override
+  String get legalDeletionPhoneHint => '10-digit number';
+
+  @override
+  String get legalDeletionReason => 'Reason (optional)';
+
+  @override
+  String get legalDeletionSubmit => 'Submit Request';
+
+  @override
+  String get legalDeletionSubmitting => 'Submitting...';
+
+  @override
+  String get legalDeletionNeedContact =>
+      'Please provide an email or phone number so we can follow up.';
+
+  @override
+  String get legalDeletionReceived => 'Your request has been received.';
+
+  @override
+  String get legalDeletionFailed =>
+      'Failed to submit request. Please try again.';
+
+  @override
+  String get totalDistance => 'Total distance';
+
+  @override
+  String statTrendThisMonth(String percent) {
+    return '$percent% this month';
+  }
+
+  @override
+  String get counterLimitReachedNotice =>
+      'You\'ve used all your counter-offers - accept or decline instead.';
+
+  @override
+  String get counterNoteHint => 'Reason for the counter-offer... (optional)';
+
+  @override
+  String get quoteNotReady =>
+      'Price quote isn\'t ready yet - please wait a moment and try again.';
+
+  @override
+  String get quoteRouteUnconfirmed =>
+      'Couldn\'t confirm your route - please re-check your pickup and drop locations.';
 }

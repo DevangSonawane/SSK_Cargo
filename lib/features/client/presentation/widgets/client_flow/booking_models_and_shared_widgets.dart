@@ -36,7 +36,7 @@ class BookingData {
     this.truckId = '',
     this.isScheduled = false,
     this.searchMode,
-    this.searchRadiusKm = 15,
+    this.searchRadiusKm = 50,
     this.selectedBrokerId = '',
     this.paymentMode = PaymentMode.payLater,
     this.selectedPaymentLabel = '',
@@ -940,14 +940,12 @@ String localizedPaymentStatus(AppLocalizations l10n, String status) {
 
 List<VehicleOption> resolveVehicleOptions({
   required TripType tripType,
-  ClientPricingConfig? pricing,
   required bool isLoading,
   List<VehicleType>? vehicleTypes,
   AppLocalizations? l10n,
 }) {
   // Live taxonomy (web parity: built from GET /api/config/vehicle-types).
-  // Takes precedence over the legacy hardcoded list + admin-pricing tiers —
-  // the response already carries the correct per-type `basePrice`.
+  // The response already carries the correct per-type `basePrice`.
   if (vehicleTypes != null && vehicleTypes.isNotEmpty) {
     if (isLoading) {
       return vehicleOptionsFromTypes(vehicleTypes, l10n)
@@ -981,59 +979,9 @@ List<VehicleOption> resolveVehicleOptions({
         .toList(growable: false);
   }
 
-  if (pricing == null) {
-    return vehicleOptions;
-  }
-
-  return vehicleOptions
-      .map(
-        (vehicle) => VehicleOption(
-          id: vehicle.id,
-          label: vehicle.label,
-          capacity: vehicle.capacity,
-          price: _vehiclePriceLabel(
-            label: vehicle.label,
-            tripType: tripType,
-            pricing: pricing,
-            fallback: vehicle.price,
-            l10n: l10n,
-          ),
-          accentColor: vehicle.accentColor,
-          assetPath: vehicle.assetPath,
-        ),
-      )
-      .toList(growable: false);
-}
-
-String _vehiclePriceLabel({
-  required String label,
-  required TripType tripType,
-  required ClientPricingConfig pricing,
-  required String fallback,
-  AppLocalizations? l10n,
-}) {
-  if (tripType == TripType.intraCity) {
-    final tier = _intraCityTierForVehicle(pricing, label);
-    final baseFare = tier?.baseFare ?? 0;
-    if (baseFare > 0) {
-      final toll = tier?.tollFixedAmount ?? 0;
-      if (toll > 0) {
-        final base = _formatRupees(baseFare);
-        final tollText = _formatRupees(toll);
-        return l10n?.vehiclePriceWithToll(base, tollText) ??
-            '$base + toll $tollText';
-      }
-      return _formatRupees(baseFare);
-    }
-    return fallback;
-  }
-
-  final interCityRate = pricing.interCity.baseRatePerKm;
-  if (interCityRate > 0) {
-    return '${_formatRupees(interCityRate)}/km';
-  }
-
-  return fallback;
+  // Web parity (BookTruck.jsx): prices come only from vehicle-types; the
+  // static list is the last-resort fallback. No admin-only pricing call.
+  return vehicleOptions;
 }
 
 String _formatRupees(double amount) {
@@ -1057,19 +1005,6 @@ String _formatDateTime(DateTime value) {
 
 String _formatDateOnly(DateTime value) {
   return '${value.day}/${value.month}/${value.year}';
-}
-
-ClientTruckPricingTier? _intraCityTierForVehicle(
-  ClientPricingConfig pricing,
-  String label,
-) {
-  final text = label.toLowerCase();
-  if (text.contains('small')) return pricing.intraCity.small;
-  if (text.contains('medium')) return pricing.intraCity.medium;
-  if (text.contains('big') || text.contains('large')) {
-    return pricing.intraCity.large;
-  }
-  return pricing.intraCity.small;
 }
 
 class TrackingDemoShipment {

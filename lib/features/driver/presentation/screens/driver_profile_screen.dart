@@ -319,6 +319,13 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     accent: AppColors.brand,
                     onTap: () => context.push('/driver/help-support'),
                   ),
+                  _ProfileMenuTile(
+                    title: l10n.legalAndSupport,
+                    subtitle: l10n.legalAndSupportSubtitle,
+                    icon: AppIcons.description_outlined,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/legal'),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

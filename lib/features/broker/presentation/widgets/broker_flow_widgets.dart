@@ -11,6 +11,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../shared/data/driver_request_negotiation.dart';
 import '../../../shared/data/trip_route_stop.dart';
 
 typedef BrokerTrucksQuery = ({String? status, int page, int limit});
@@ -288,11 +289,32 @@ class BrokerDriverRequest {
     this.isPartLoad = false,
     this.truckCapacityTons,
     this.truckSpareTons,
+    this.isAdminAssigned = false,
+    this.noNegotiation = false,
+    this.respondentCountersUsed = 0,
+    this.maxCountersPerSide = 0,
   });
 
   final String id;
   final String bookingId;
   final String jobRequestId;
+
+  /// Counter-offers the responding side (driver/broker) has already used,
+  /// and the server's per-side cap (0 = not sent → unlimited).
+  final int respondentCountersUsed;
+  final int maxCountersPerSide;
+
+  /// Web parity (DriverRequestCard.jsx `respondentCounterLimitReached`):
+  /// once the cap is used up only Accept/Decline remain.
+  bool get counterLimitReached =>
+      maxCountersPerSide > 0 && respondentCountersUsed >= maxCountersPerSide;
+
+  /// Set by the backend only for admin-assign origin rows.
+  final bool isAdminAssigned;
+
+  /// Backend-provided lock: true for broker-assigned AND admin-assigned rows.
+  /// Use this (not [jobRequestId]) to decide whether Counter is allowed.
+  final bool noNegotiation;
   final String bookingNumber;
   final String pendingConfirmationBy;
   final String clientName;
@@ -369,13 +391,31 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
   final status = _readString(payload, const ['status']).isEmpty
       ? 'requested'
       : _readString(payload, const ['status']);
+  final jobRequestId = _firstNonEmpty([
+    _readString(payload, const ['jobRequestId', 'job_request_id']),
+    _readString(source, const ['jobRequestId', 'job_request_id']),
+  ]);
+  final isAdminAssigned =
+      readIsAdminAssignedFlag(payload) || readIsAdminAssignedFlag(source);
+  final noNegotiationSource = hasNoNegotiationFlag(payload) ? payload : source;
   return BrokerDriverRequest(
     id: requestId.isNotEmpty ? requestId : bookingId,
     bookingId: bookingId,
-    jobRequestId: _firstNonEmpty([
-      _readString(payload, const ['jobRequestId', 'job_request_id']),
-      _readString(source, const ['jobRequestId', 'job_request_id']),
-    ]),
+    jobRequestId: jobRequestId,
+    isAdminAssigned: isAdminAssigned,
+    noNegotiation: readNoNegotiationFlag(
+      noNegotiationSource,
+      jobRequestId: jobRequestId,
+      isAdminAssigned: isAdminAssigned,
+    ),
+    respondentCountersUsed:
+        _readInt(payload, _respondentCountersUsedKeys) ??
+        _readInt(source, _respondentCountersUsedKeys) ??
+        0,
+    maxCountersPerSide:
+        _readInt(payload, _maxCountersPerSideKeys) ??
+        _readInt(source, _maxCountersPerSideKeys) ??
+        0,
     bookingNumber: bookingNumber,
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: contact.name,
@@ -1229,6 +1269,12 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   );
 }
 
+const _respondentCountersUsedKeys = [
+  'respondentCountersUsed',
+  'respondent_counters_used',
+];
+const _maxCountersPerSideKeys = ['maxCountersPerSide', 'max_counters_per_side'];
+
 BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
   final offerHistory = _asList(json['offerHistory'] ?? json['offer_history']);
   final driverTimedOut =
@@ -1243,6 +1289,11 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
     'pendingConfirmationBy',
     'pending_confirmation_by',
   ]).toLowerCase();
+  final jobRequestId = _readString(json, const [
+    'jobRequestId',
+    'job_request_id',
+  ]);
+  final isAdminAssigned = readIsAdminAssignedFlag(json);
   return BrokerDriverRequest(
     id: _readString(json, const [
       'id',
@@ -1251,7 +1302,15 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
       'uuid',
     ]),
     bookingId: _readString(json, const ['bookingId', 'booking_id']),
-    jobRequestId: _readString(json, const ['jobRequestId', 'job_request_id']),
+    jobRequestId: jobRequestId,
+    isAdminAssigned: isAdminAssigned,
+    noNegotiation: readNoNegotiationFlag(
+      json,
+      jobRequestId: jobRequestId,
+      isAdminAssigned: isAdminAssigned,
+    ),
+    respondentCountersUsed: _readInt(json, _respondentCountersUsedKeys) ?? 0,
+    maxCountersPerSide: _readInt(json, _maxCountersPerSideKeys) ?? 0,
     bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: contact.name,

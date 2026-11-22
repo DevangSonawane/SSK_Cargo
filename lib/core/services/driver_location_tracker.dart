@@ -17,6 +17,24 @@ class DriverLocationTracker {
 
   final Ref _ref;
 
+  /// Web parity (`useDriverLocationTracking.js` MIN_INTERVAL_MS): publish at
+  /// most every 3s while stationary — matches the client map's 3s marker
+  /// tween, and stays under the backend's 60 req/min driver-location limit.
+  static const minPublishInterval = Duration(seconds: 3);
+
+  /// Web parity (MIN_DISTANCE_M): ...unless the driver moved at least 50m.
+  static const minPublishDistanceMeters = 50.0;
+
+  /// Web parity (HEARTBEAT_MS): re-send the last known fix every 90s even if
+  /// the OS delivers no new position (iOS often goes quiet while parked).
+  /// Without it the backend's 5-minute staleDriverLocationSweep flips a
+  /// waiting driver to offline, and the trip's current_lat/lng (used by the
+  /// pickup/delivery proximity gate) goes stale. Overridable for tests.
+  @visibleForTesting
+  static Duration heartbeatInterval = const Duration(seconds: 90);
+
+  Timer? _heartbeat;
+
   /// Localizations for the user-facing messages this tracker returns. The
   /// tracker has no BuildContext, so it looks them up for the current app
   /// locale directly.
@@ -107,10 +125,15 @@ class DriverLocationTracker {
               }
             },
             onDone: () {
-              if (generation == _generation) _subscription = null;
+              if (generation == _generation) {
+                _subscription = null;
+                _heartbeat?.cancel();
+                _heartbeat = null;
+              }
             },
             cancelOnError: true,
           );
+      _startHeartbeat(generation);
       unawaited(_publishCurrentLocation(settings, generation: generation));
       return null;
     } catch (error, stackTrace) {
@@ -156,6 +179,8 @@ class DriverLocationTracker {
   Future<void> stopTracking() async {
     _generation++;
     _pendingStart = null;
+    _heartbeat?.cancel();
+    _heartbeat = null;
     final subscription = _subscription;
     _subscription = null;
     _activeTripId = null;
@@ -195,6 +220,18 @@ class DriverLocationTracker {
     final settings = _trackingSettings();
     await _publishCurrentLocation(settings, generation: _generation);
     return null;
+  }
+
+  void _startHeartbeat(int generation) {
+    _heartbeat?.cancel();
+    _heartbeat = Timer.periodic(heartbeatInterval, (_) {
+      if (!_canPublish(generation)) return;
+      final last = _lastPublishedPosition;
+      // No fix yet at all — nothing to keep alive (same as web).
+      if (last == null) return;
+      developer.log('Driver location heartbeat', name: 'SSK.Location');
+      unawaited(_sendPosition(last, generation: generation, force: true));
+    });
   }
 
   void setActiveTripId(String? tripId) {
@@ -325,7 +362,8 @@ class DriverLocationTracker {
       position.longitude,
     );
 
-    if (timeElapsed >= const Duration(seconds: 8) || movedMeters >= 50) {
+    if (timeElapsed >= minPublishInterval ||
+        movedMeters >= minPublishDistanceMeters) {
       return true;
     }
 

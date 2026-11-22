@@ -510,6 +510,17 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         (paymentStatus == 'pending' || paymentStatus == 'partial');
   }
 
+  /// Web parity (BookingDetail.jsx `isDisputable`): any booking except one
+  /// still "Requested" (raw `pending`) or cancelled can raise a dispute.
+  bool get _isDisputable {
+    final status = _shipment.bookingStatus?.toLowerCase();
+    return _shipment.bookingId != null &&
+        !_isBookingCancelled &&
+        status != null &&
+        status != 'pending' &&
+        status != 'cancelled';
+  }
+
   bool get _isRatable {
     final status = _shipment.bookingStatus?.toLowerCase();
     return _shipment.bookingId != null &&
@@ -1641,6 +1652,46 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                     ),
                                   ),
                                 ),
+                              // Web parity: BookingDetail.jsx shows a
+                              // "Contact Support" button (opens the dispute
+                              // form) whenever the booking is disputable.
+                              // The form existed here but nothing opened it.
+                              if (_isDisputable) ...[
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _raiseDispute,
+                                    icon: const Icon(
+                                      AppIcons.warning_amber_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.raiseDispute,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      side: BorderSide(
+                                        color: context.colors.line,
+                                      ),
+                                      foregroundColor:
+                                          context.colors.textPrimary,
+                                      backgroundColor: context.colors.surface,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -5843,7 +5894,9 @@ class _BookingNegotiationSheetState
   }
 
   Future<void> _counterDriverRequest(ClientBookingOffer request) async {
-    if (_busy || !_isClientActionable(request)) return;
+    if (_busy || !_isClientActionable(request) || request.noNegotiation) {
+      return;
+    }
 
     // Web parity (DriverOfferCard.openNegotiate): counters go down from the
     // current offer — min 78%, max the offer itself.
@@ -6572,14 +6625,15 @@ extension on _BookingNegotiationSheetState {
           ),
           child: Text(AppLocalizations.of(context)!.reject),
         ),
-        OutlinedButton(
-          onPressed: _busy ? null : () => _counterDriverRequest(request),
-          child: Text(
-            AppLocalizations.of(context)!.changeFare,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        if (!request.noNegotiation)
+          OutlinedButton(
+            onPressed: _busy ? null : () => _counterDriverRequest(request),
+            child: Text(
+              AppLocalizations.of(context)!.changeFare,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
       ];
     }
 

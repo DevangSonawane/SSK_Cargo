@@ -19,6 +19,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import '../../../shared/presentation/widgets/counter_note_field.dart';
 import '../widgets/driver_currency.dart';
 import 'package:gadidost/core/utils/user_facing_error.dart';
 
@@ -42,6 +43,9 @@ class _DriverOrderAcceptedScreenState
   bool _clientConfirmationDialogVisible = false;
   bool _suppressClientConfirmationDialog = false;
   late double _counterAmount;
+
+  /// Optional counter-offer reason — web parity (`note` on `/counter`).
+  final _counterNote = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
   Timer? _requestRefreshTimer;
@@ -114,6 +118,7 @@ class _DriverOrderAcceptedScreenState
     _countdownTimer?.cancel();
     _requestRefreshTimer?.cancel();
     _handoffPollTimer?.cancel();
+    _counterNote.dispose();
     super.dispose();
   }
 
@@ -1094,6 +1099,7 @@ class _DriverOrderAcceptedScreenState
       }
 
       if (isCounter && mounted) {
+        _counterNote.clear();
         setState(() {
           _counterLocked = true;
         });
@@ -1349,9 +1355,7 @@ class _DriverOrderAcceptedScreenState
                   ),
                 ),
                 Text(
-                  l10n.driverOrderBaseAmount(
-                    formatDriverCurrency(baseAmount),
-                  ),
+                  l10n.driverOrderBaseAmount(formatDriverCurrency(baseAmount)),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textTertiary,
                     fontWeight: FontWeight.w700,
@@ -1416,6 +1420,8 @@ class _DriverOrderAcceptedScreenState
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            CounterNoteField(controller: _counterNote, enabled: !actionLocked),
             const SizedBox(height: 18),
           ],
           if (_handoffInProgress) ...[
@@ -1580,6 +1586,7 @@ class _DriverOrderAcceptedScreenState
                               accessToken: token,
                               id: request.id,
                               amount: selectedAmount,
+                              note: _counterNote.text,
                             ),
                         isCounter: true,
                       ),
@@ -1678,7 +1685,8 @@ class _DriverOrderAcceptedScreenState
         serverTimedOut ||
         _waitingOnClient ||
         _awaitingDriverConfirmation;
-    final brokerAssigned = request.jobRequestId.isNotEmpty;
+    // Backend flag covers both broker- and admin-assigned rows.
+    final brokerAssigned = request.noNegotiation;
     final counterLimitReached =
         request.maxCountersPerSide > 0 &&
         request.respondentCountersUsed >= request.maxCountersPerSide;
@@ -1733,8 +1741,12 @@ class _DriverOrderAcceptedScreenState
             children: [
               _StatusHero(
                 icon: AppIcons.assignment_turned_in_rounded,
-                title: l10n.driverOrderBrokerAssignedTrip,
-                subtitle: l10n.driverOrderAlreadyAgreedWithBroker,
+                title: request.isAdminAssigned
+                    ? l10n.driverOrderAdminAssignedTrip
+                    : l10n.driverOrderBrokerAssignedTrip,
+                subtitle: request.isAdminAssigned
+                    ? l10n.driverOrderAssignedDirectlyByAdmin
+                    : l10n.driverOrderAlreadyAgreedWithBroker,
                 chipLabel: l10n.driverOrderFixedPrice,
               ),
               const SizedBox(height: 14),

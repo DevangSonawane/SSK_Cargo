@@ -216,6 +216,13 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     onTap: () => context.push('/broker/help-support'),
                   ),
                   _ProfileMenuTile(
+                    title: l10n.legalAndSupport,
+                    subtitle: l10n.legalAndSupportSubtitle,
+                    icon: AppIcons.description_outlined,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/broker/legal'),
+                  ),
+                  _ProfileMenuTile(
                     title: l10n.deleteAccount,
                     subtitle: l10n.deleteAccountSubtitle,
                     icon: AppIcons.delete_outline_rounded,

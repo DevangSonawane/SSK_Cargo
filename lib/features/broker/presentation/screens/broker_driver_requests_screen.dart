@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,9 +7,12 @@ import 'package:gadidost/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/utils/poll_visibility.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
+import '../../../shared/presentation/widgets/counter_note_field.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
 import 'package:gadidost/core/utils/user_facing_error.dart';
@@ -24,7 +28,61 @@ class BrokerDriverRequestsScreen extends ConsumerStatefulWidget {
 class _BrokerDriverRequestsScreenState
     extends ConsumerState<BrokerDriverRequestsScreen> {
   static const _query = (page: 1, limit: 100);
+
+  /// Web parity (pages/broker/DriverRequests.jsx POLL_INTERVAL_MS): a 30s
+  /// safety-net refresh on top of the live socket, in case it drops quietly.
+  static const pollInterval = Duration(seconds: 30);
+
   final Set<String> _actioningIds = <String>{};
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(pollInterval, (_) => _pollTick());
+    unawaited(_connectSocket());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Web parity (`useDriverRequestSocket`): any `driver-request-created` /
+  /// `driver-request-updated` push reloads the list, so a request handed to
+  /// the broker after the driver times out appears without pull-to-refresh.
+  Future<void> _connectSocket() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    try {
+      final socketService = ref.read(appSocketServiceProvider);
+      await socketService.ensureConnected(
+        accessToken: session.tokens.accessToken,
+      );
+      if (!mounted) return;
+      await _driverRequestSubscription?.cancel();
+      _driverRequestSubscription = socketService.driverRequestStream.listen(
+        (_) => _silentRefresh(),
+      );
+    } catch (_) {
+      // The 30s poll still keeps the list fresh without the socket.
+    }
+  }
+
+  /// Re-fetches in place — `.when` keeps showing the current cards while
+  /// the refresh runs, so the poll never flashes a spinner.
+  void _silentRefresh() {
+    if (!mounted || _actioningIds.isNotEmpty) return;
+    ref.invalidate(brokerDriverRequestsProvider(_query));
+  }
+
+  void _pollTick() {
+    if (!mounted || !shouldPollNow(context)) return;
+    _silentRefresh();
+  }
 
   Future<void> _refresh() async {
     ref.invalidate(brokerDriverRequestsProvider(_query));
@@ -96,7 +154,10 @@ class _BrokerDriverRequestsScreenState
         context,
       )!.brokerDriverRequestsDeclined,
       action: (api, token) {
-        return api.rejectDriverRequest(accessToken: token, id: request.id);
+        return api.rejectDriverRequestAsDriver(
+          accessToken: token,
+          id: request.id,
+        );
       },
     );
   }
@@ -104,7 +165,7 @@ class _BrokerDriverRequestsScreenState
   Future<void> _openCounterSheet(BrokerDriverRequest request) async {
     if (_isActioning(request.id)) return;
 
-    final amount = await showModalBottomSheet<double>(
+    final result = await showModalBottomSheet<({double amount, String note})>(
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -113,16 +174,17 @@ class _BrokerDriverRequestsScreenState
       builder: (_) => _BrokerCounterSheet(request: request),
     );
 
-    if (amount == null) return;
+    if (result == null) return;
 
     await _runAction(
       request: request,
       successMessage: 'Fare change sent.',
       action: (api, token) {
-        return api.counterDriverRequest(
+        return api.counterDriverRequestAsDriver(
           accessToken: token,
           id: request.id,
-          amount: amount,
+          amount: result.amount,
+          note: result.note,
         );
       },
     );
@@ -284,14 +346,18 @@ class _BrokerRequestTile extends StatelessWidget {
     final waitingOnClient =
         awaitingConfirmation && pendingConfirmationBy == 'broker';
     final yourTurn = awaitingConfirmation && pendingConfirmationBy == 'client';
-    final brokerAssigned = request.jobRequestId.isNotEmpty;
+    // Backend flag covers both broker- and admin-assigned rows.
+    final brokerAssigned = request.noNegotiation;
     final canAct =
         !busy &&
         (status.isEmpty ||
             status == 'requested' ||
             status == 'pending' ||
             awaitingConfirmation);
-    final canCounter = canAct && !brokerAssigned;
+    // Web parity (DriverRequestCard.jsx): no Counter once the server's
+    // per-side counter cap is used up — only Accept/Decline remain.
+    final counterLimitReached = request.counterLimitReached;
+    final canCounter = canAct && !brokerAssigned && !counterLimitReached;
 
     return Container(
       width: double.infinity,
@@ -345,7 +411,9 @@ class _BrokerRequestTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (brokerAssigned) ...[
-                    _BrokerAssignedBadge(),
+                    _BrokerAssignedBadge(
+                      adminAssigned: request.isAdminAssigned,
+                    ),
                     const SizedBox(height: 6),
                   ],
                   Container(
@@ -480,7 +548,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 ),
               ],
             ),
-          ] else if (brokerAssigned) ...[
+          ] else if (brokerAssigned || counterLimitReached) ...[
             Row(
               children: [
                 Expanded(
@@ -506,9 +574,14 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              AppLocalizations.of(
-                context,
-              )!.brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr,
+              // Web parity (DriverRequestCard.jsx): admin rows say why.
+              request.isAdminAssigned
+                  ? AppLocalizations.of(context)!.driverHomeAdminAssignedNotice
+                  : brokerAssigned
+                  ? AppLocalizations.of(
+                      context,
+                    )!.brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr
+                  : AppLocalizations.of(context)!.counterLimitReachedNotice,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -671,7 +744,9 @@ class _WaitingBadge extends StatelessWidget {
 }
 
 class _BrokerAssignedBadge extends StatelessWidget {
-  const _BrokerAssignedBadge();
+  const _BrokerAssignedBadge({this.adminAssigned = false});
+
+  final bool adminAssigned;
 
   @override
   Widget build(BuildContext context) {
@@ -684,7 +759,9 @@ class _BrokerAssignedBadge extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
-        l10n.brokerDriverReqBrokerAssigned,
+        adminAssigned
+            ? l10n.noNegotiationAdminAssigned
+            : l10n.brokerDriverReqBrokerAssigned,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.brand,
           fontWeight: FontWeight.w900,
@@ -816,6 +893,13 @@ class _BrokerCounterSheet extends StatefulWidget {
 
 class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
   late double _value;
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -940,6 +1024,8 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                CounterNoteField(controller: _note),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -954,7 +1040,9 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(clamped),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pop((amount: clamped, note: _note.text)),
                         child: Text(
                           AppLocalizations.of(
                             context,

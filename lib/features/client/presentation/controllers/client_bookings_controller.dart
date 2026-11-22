@@ -34,24 +34,6 @@ final clientBookingsProvider = FutureProvider.autoDispose
       return ClientBookingPage.fromJson(response);
     });
 
-final clientPricingProvider = FutureProvider.autoDispose<ClientPricingConfig?>((
-  ref,
-) async {
-  final session = ref.watch(authSessionProvider).valueOrNull;
-  if (session == null) {
-    return null;
-  }
-
-  try {
-    final response = await ref
-        .watch(apiClientProvider)
-        .getAdminPricing(accessToken: session.tokens.accessToken);
-    return ClientPricingConfig.fromJson(response);
-  } catch (_) {
-    return null;
-  }
-});
-
 /// Live truck taxonomy for pickers — `GET /api/config/vehicle-types`,
 /// same endpoint the web `BookTruck.jsx` picker is built from. Each entry
 /// carries its own `id` (the real `truck_category` string), display `name`,

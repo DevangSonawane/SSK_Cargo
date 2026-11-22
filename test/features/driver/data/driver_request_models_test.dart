@@ -84,9 +84,35 @@ void main() {
         'driverTimedOut': false,
       });
 
-      expect(request.isBrokerAssigned, isTrue);
+      expect(request.noNegotiation, isTrue);
+      expect(request.isAdminAssigned, isFalse);
       expect(request.isVisibleInNewTravel, isTrue);
       expect(request.canNegotiate, isFalse);
+    });
+
+    test('admin-assigned requests are locked via noNegotiation', () {
+      final request = DriverRequestItem.fromMap({
+        'id': 'request-id',
+        'status': 'pending',
+        'isAdminAssigned': true,
+        'noNegotiation': true,
+      });
+
+      expect(request.jobRequestId, isEmpty);
+      expect(request.isAdminAssigned, isTrue);
+      expect(request.noNegotiation, isTrue);
+      expect(request.canNegotiate, isFalse);
+    });
+
+    test('explicit noNegotiation=false keeps negotiable rows open', () {
+      final request = DriverRequestItem.fromMap({
+        'id': 'request-id',
+        'status': 'pending',
+        'noNegotiation': false,
+      });
+
+      expect(request.noNegotiation, isFalse);
+      expect(request.canNegotiate, isTrue);
     });
 
     test(
@@ -101,7 +127,7 @@ void main() {
 
         expect(request.id, 'driver-request-id');
         expect(request.jobRequestId, 'job-request-id');
-        expect(request.isBrokerAssigned, isTrue);
+        expect(request.noNegotiation, isTrue);
       },
     );
   });

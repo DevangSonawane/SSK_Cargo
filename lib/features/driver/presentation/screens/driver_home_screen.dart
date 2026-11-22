@@ -478,8 +478,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         _optimisticAcceptingLoads == serverAcceptingLoads) {
       _optimisticAcceptingLoads = null;
     }
-    final acceptingLoads =
-        _optimisticAcceptingLoads ?? serverAcceptingLoads;
+    final acceptingLoads = _optimisticAcceptingLoads ?? serverAcceptingLoads;
     _syncActiveTripReconciliation(activeTripId);
 
     ref.listen(driverRequestFeedProvider, (previous, next) {
@@ -885,8 +884,8 @@ class _TruckModeCard extends StatelessWidget {
                 togglingLoads
                     ? 'Updating…'
                     : acceptingLoads
-                        ? 'Mark Truck as Full'
-                        : 'Truck Full — Tap to Accept More',
+                    ? 'Mark Truck as Full'
+                    : 'Truck Full — Tap to Accept More',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1103,7 +1102,7 @@ class _DeliveryOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final amount = request.amount > 0 ? request.amount : 0.0;
-    final brokerAssigned = request.isBrokerAssigned;
+    final brokerAssigned = request.noNegotiation;
     final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(l10n, request);
 
@@ -1196,7 +1195,7 @@ class _DeliveryOrderCard extends StatelessWidget {
           ],
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
-            _BrokerAssignedNotice(),
+            _BrokerAssignedNotice(adminAssigned: request.isAdminAssigned),
           ],
           if (request.isPartLoad) ...[
             const SizedBox(height: 12),
@@ -1277,7 +1276,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
     final l10n = AppLocalizations.of(context)!;
     final request = widget.request;
     final amount = request.amount > 0 ? request.amount : 0.0;
-    final brokerAssigned = request.isBrokerAssigned;
+    final brokerAssigned = request.noNegotiation;
     final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(l10n, request);
 
@@ -1392,7 +1391,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           ],
           if (brokerAssigned) ...[
             const SizedBox(height: 12),
-            _BrokerAssignedNotice(),
+            _BrokerAssignedNotice(adminAssigned: request.isAdminAssigned),
           ],
           if (request.isPartLoad) ...[
             const SizedBox(height: 12),
@@ -1563,7 +1562,9 @@ class _DriverPartLoadNotice extends StatelessWidget {
 }
 
 class _BrokerAssignedNotice extends StatelessWidget {
-  const _BrokerAssignedNotice();
+  const _BrokerAssignedNotice({this.adminAssigned = false});
+
+  final bool adminAssigned;
 
   @override
   Widget build(BuildContext context) {
@@ -1585,7 +1586,11 @@ class _BrokerAssignedNotice extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              AppLocalizations.of(context)!.driverHomeBrokerAssignedNotice,
+              adminAssigned
+                  ? AppLocalizations.of(context)!.driverHomeAdminAssignedNotice
+                  : AppLocalizations.of(
+                      context,
+                    )!.driverHomeBrokerAssignedNotice,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.brand,
                 fontWeight: FontWeight.w800,

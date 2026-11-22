@@ -1,0 +1,121 @@
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_BASE = BASE;
+
+// Plain `fetch` has no timeout of its own — if the backend is slow to respond or briefly
+// unreachable (a cold DB connection, a deploy in progress, a flaky mobile network), a request
+// just hangs forever with no error and no way out, which is exactly what "stuck on the login
+// screen" turned out to be: the login button's loading spinner never clears because the
+// underlying fetch() never resolves OR rejects. Wrapping every call in an AbortController-based
+// timeout guarantees it does one or the other within a bounded time. Uploads get a longer budget
+// since a KYC document/QR photo can legitimately take longer than a plain JSON call, especially
+// on a driver's mobile connection.
+const DEFAULT_TIMEOUT_MS = 20000;
+const UPLOAD_TIMEOUT_MS = 60000;
+const fetchWithTimeout = async (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out — please check your connection and try again.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Fires once on the first 401 seen for an already-authenticated call (force-logout, a naturally
+// expired access token, anything that makes the current session invalid) — useAuth.jsx's
+// AuthProvider registers the actual clear-session-and-redirect-to-login handler. Before this,
+// nothing looked at the response status at all: every page just got back
+// { success: false, message: "..." } same as any other failure, showed its own generic error
+// toast, and left the driver sitting on a broken page with a token that would never start
+// working again — never actually logged out client-side despite the server having ended the
+// session, no matter how many more requests they tried.
+let unauthorizedHandler = null;
+export const setUnauthorizedHandler = (fn) => { unauthorizedHandler = fn; };
+
+// A 422 validation failure's `message` is always the generic "Validation failed" — the actually
+// useful, field-specific reason (e.g. "PAN number must be in the format ABCDE1234F") lives in
+// `errors[].msg` instead. Every call site just does `throw new Error(res.message)`, so folding
+// the specific reason into `message` here — the two places every request passes through — fixes
+// it everywhere at once, with no changes needed at any individual call site.
+const withValidationDetail = (data) => {
+  if (data?.success === false && Array.isArray(data.errors) && data.errors.length > 0) {
+    const detail = data.errors.map((e) => e?.msg).filter(Boolean).join('; ');
+    if (detail) data.message = detail;
+  }
+  return data;
+};
+
+const request = async (method, path, body, token) => {
+  const res = await fetchWithTimeout(`${BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    ...(body && { body: JSON.stringify(body) }),
+  });
+  const data = withValidationDetail(await res.json());
+  // Only for a call that actually carried a token — a 401 from /api/auth/login (wrong password)
+  // or /api/auth/refresh-token (expired refresh token, handled separately by refreshTokens) is a
+  // normal login-attempt failure, not an existing session dying, and neither call passes `token`.
+  if (res.status === 401 && token) unauthorizedHandler?.(data.message);
+  return data;
+};
+
+// Multipart upload — no Content-Type set manually so the browser fills in the
+// multipart boundary itself (setting it here would break the upload).
+const uploadFile = async (path, formData, token) => {
+  const res = await fetchWithTimeout(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+    body: formData,
+  }, UPLOAD_TIMEOUT_MS);
+  const data = withValidationDetail(await res.json());
+  if (res.status === 401 && token) unauthorizedHandler?.(data.message);
+  return data;
+};
+
+// Fetches a file (e.g. the driver's payment QR) with the auth header attached and returns
+// a local blob URL — needed because the file-serving routes require a Bearer token, so a
+// plain <img src="..."> can't load them directly.
+const getFileBlobUrl = async (url, token) => {
+  const res = await fetchWithTimeout(url, { headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+  if (!res.ok) throw new Error(`Failed to load file (${res.status})`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+};
+
+// Same as getFileBlobUrl but returns the raw Blob — needed to build a File for the native
+// Web Share API (sharing to WhatsApp etc. with the actual PDF attached), where an object URL
+// string isn't usable.
+const getFileBlob = async (url, token) => {
+  const res = await fetchWithTimeout(url, { headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+  if (!res.ok) throw new Error(`Failed to load file (${res.status})`);
+  return res.blob();
+};
+
+export const api = {
+  post:   (path, body, token) => request('POST',   path, body, token),
+  get:    (path, token)       => request('GET',    path, null, token),
+  put:    (path, body, token) => request('PUT',    path, body, token),
+  patch:  (path, body, token) => request('PATCH',  path, body, token),
+  delete: (path, body, token) => request('DELETE', path, body, token),
+  upload: uploadFile,
+  getFileBlobUrl,
+  getFileBlob,
+};
+
+export const getStoredAuth = () => {
+  try {
+    const b = localStorage.getItem('ssk_broker_auth');
+    if (b) return { ...JSON.parse(b), role: 'broker' };
+    const d = localStorage.getItem('ssk_driver_auth');
+    if (d) return { ...JSON.parse(d), role: 'driver' };
+    return null;
+  } catch { return null; }
+};
+
+export const getToken = () => getStoredAuth()?.tokens?.access_token || null;

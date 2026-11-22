@@ -13,8 +13,30 @@ final dioProvider = Provider<Dio>((ref) {
       sendTimeout: const Duration(seconds: 15),
       headers: const {'Accept': 'application/json'},
     ),
-  );
+  )..interceptors.add(const UploadTimeoutInterceptor());
 });
+
+/// Web parity (`services/api.js` UPLOAD_TIMEOUT_MS = 60000): multipart
+/// uploads — POD photos/videos, KYC documents, payment QR — get 60s to send
+/// and 60s for the server to answer, instead of the 15s/30s JSON defaults
+/// that a batch of POD media on a weak mobile connection can blow through.
+const kUploadTimeout = Duration(seconds: 60);
+
+class UploadTimeoutInterceptor extends Interceptor {
+  const UploadTimeoutInterceptor();
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (options.data is FormData) {
+      options.sendTimeout = _atLeast(options.sendTimeout, kUploadTimeout);
+      options.receiveTimeout = _atLeast(options.receiveTimeout, kUploadTimeout);
+    }
+    handler.next(options);
+  }
+
+  static Duration _atLeast(Duration? current, Duration minimum) =>
+      current != null && current > minimum ? current : minimum;
+}
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode, this.code});
@@ -50,23 +72,58 @@ class SskApiClient {
     return _request(() => _dio.get<Map<String, dynamic>>('/api/health'));
   }
 
-  /// Public support content shared with the broker React app.
-  Future<Map<String, dynamic>> getBrokerSupportPage() async {
+  /// Public, admin-managed legal/support page — same endpoint the web
+  /// `LegalPage.jsx` reads (`GET /api/legal-pages/:audience/:pageKey`).
+  /// [audience] is `client`, `broker` or `driver`; [pageKey] is one of
+  /// `privacy_policy`, `terms_conditions`, `account_deletion`,
+  /// `contact_support`, `refund_policy`, `safety_policy`.
+  /// Response: `{ success, data: { page: { title, content (HTML) } } }`.
+  Future<Map<String, dynamic>> getLegalPage({
+    required String audience,
+    required String pageKey,
+  }) async {
+    developer.log('GET /api/legal-pages/$audience/$pageKey', name: 'SSK.API');
     return _request(
-      () => _dio.get<Map<String, dynamic>>(
-        '/api/legal-pages/broker/contact_support',
+      () =>
+          _dio.get<Map<String, dynamic>>('/api/legal-pages/$audience/$pageKey'),
+    );
+  }
+
+  /// Public account-deletion request from the legal page — web parity with
+  /// `LegalPage.jsx`'s AccountDeletionForm. At least email or phone needed.
+  Future<Map<String, dynamic>> submitLegalAccountDeletionRequest({
+    required String audience,
+    String? name,
+    String? email,
+    String? phone,
+    String? reason,
+  }) async {
+    developer.log(
+      'POST /api/legal-pages/$audience/account-deletion-request',
+      name: 'SSK.API',
+    );
+    String? clean(String? v) =>
+        (v == null || v.trim().isEmpty) ? null : v.trim();
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/legal-pages/$audience/account-deletion-request',
+        data: {
+          if (clean(name) != null) 'name': clean(name),
+          if (clean(email) != null) 'email': clean(email),
+          if (clean(phone) != null) 'phone': clean(phone),
+          if (clean(reason) != null) 'reason': clean(reason),
+        },
       ),
     );
   }
 
+  /// Public support content shared with the broker React app.
+  Future<Map<String, dynamic>> getBrokerSupportPage() =>
+      getLegalPage(audience: 'broker', pageKey: 'contact_support');
+
   /// Public support content shared with the driver React app.
-  Future<Map<String, dynamic>> getDriverSupportPage() async {
-    return _request(
-      () => _dio.get<Map<String, dynamic>>(
-        '/api/legal-pages/driver/contact_support',
-      ),
-    );
-  }
+  Future<Map<String, dynamic>> getDriverSupportPage() =>
+      getLegalPage(audience: 'driver', pageKey: 'contact_support');
 
   Future<Map<String, dynamic>> login({
     required String email,
@@ -1625,19 +1682,26 @@ class SskApiClient {
     );
   }
 
+  /// Driver/broker counter — web parity: `{ amount, note? }` (note is the
+  /// optional "reason for the counter-offer", omitted when blank).
   Future<Map<String, dynamic>> counterDriverRequestAsDriver({
     required String accessToken,
     required String id,
     required num amount,
+    String? note,
   }) async {
+    final trimmedNote = note?.trim() ?? '';
     developer.log(
-      'PATCH /api/driver-requests/$id/counter amount=$amount',
+      'PATCH /api/driver-requests/$id/counter amount=$amount noteSet=${trimmedNote.isNotEmpty}',
       name: 'SSK.API',
     );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/driver-requests/$id/counter',
-        data: {'amount': amount},
+        data: {
+          'amount': amount,
+          if (trimmedNote.isNotEmpty) 'note': trimmedNote,
+        },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -1706,6 +1770,22 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/trips/upcoming',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Driver lifetime totals + month-over-month trend — the same endpoint the
+  /// web driver `Home.jsx` stat cards read. Response `data`:
+  /// `{ trips, distance, earnings, trend: { trips, distance, earnings } }`
+  /// (trend values are % change this month, or null).
+  Future<Map<String, dynamic>> getDriverDashboardSummary({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/trips/dashboard-summary', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips/dashboard-summary',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -2173,7 +2253,7 @@ class SskApiClient {
         '/api/jobs/requests/$id/counter',
         data: {
           'amount': amount,
-          if (note != null && note.isNotEmpty) 'note': note,
+          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -2298,7 +2378,7 @@ class SskApiClient {
         '/api/jobs/requests/$id/client-counter',
         data: {
           'amount': amount,
-          if (note != null && note.isNotEmpty) 'note': note,
+          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -3034,18 +3114,6 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/kyc/status',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      ),
-    );
-  }
-
-  Future<Map<String, dynamic>> getAdminPricing({
-    required String accessToken,
-  }) async {
-    developer.log('GET /api/admin/pricing', name: 'SSK.API');
-    return _request(
-      () => _dio.get<Map<String, dynamic>>(
-        '/api/admin/pricing',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

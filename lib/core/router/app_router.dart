@@ -74,7 +74,8 @@ import '../../features/client/presentation/screens/client_payment_method_add_scr
 import '../../features/client/presentation/screens/client_payment_methods_screen.dart';
 import '../../features/client/presentation/screens/client_saved_addresses_screen.dart';
 import '../../features/client/presentation/screens/client_settings_screen.dart';
-import '../../features/client/presentation/screens/client_static_info_screen.dart';
+import '../../features/shared/presentation/screens/help_support_screen.dart';
+import '../../features/shared/presentation/screens/legal_pages_screen.dart';
 import '../../features/client/presentation/screens/client_monthly_hiring_screen.dart';
 import '../../features/client/presentation/screens/client_monthly_hiring_form_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
@@ -136,11 +137,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     // card then picks the persisted session up when KYC is reopened.
     onEnter: (context, currentState, nextState, goRouter) {
       if (nextState.uri.path == kDigilockerReturnPath) {
-        ref.read(digilockerReturnProvider.notifier).state =
-            DigilockerReturnEvent(
-              verificationId: nextState.uri.queryParameters['verification_id'],
-              at: DateTime.now(),
-            );
+        ref
+            .read(digilockerReturnProvider.notifier)
+            .state = DigilockerReturnEvent(
+          verificationId: nextState.uri.queryParameters['verification_id'],
+          at: DateTime.now(),
+        );
         return const Block.stop();
       }
       return const Allow();
@@ -561,15 +563,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/client/help-support',
         pageBuilder: (context, state) => const NoTransitionPage(
-          child: ClientStaticInfoScreen(kind: ClientInfoPageKind.help),
+          child: HelpSupportScreen(audience: SupportAudience.client),
         ),
       ),
-      GoRoute(
-        path: '/client/terms-privacy',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: ClientStaticInfoScreen(kind: ClientInfoPageKind.terms),
+      // Web parity: admin-managed legal pages for every role
+      // (`/legal` + `/legal/:pageKey` in both web apps).
+      for (final audience in SupportAudience.values) ...[
+        GoRoute(
+          path: '/${audience.name}/legal',
+          pageBuilder: (context, state) => NoTransitionPage(
+            child: audience == SupportAudience.client
+                ? LegalIndexScreen(audience: audience)
+                : _lightFlow(LegalIndexScreen(audience: audience)),
+          ),
         ),
-      ),
+        GoRoute(
+          path: '/${audience.name}/legal/:pageKey',
+          pageBuilder: (context, state) {
+            final screen = LegalPageScreen(
+              audience: audience,
+              pageKey: state.pathParameters['pageKey'] ?? '',
+            );
+            return NoTransitionPage(
+              child: audience == SupportAudience.client
+                  ? screen
+                  : _lightFlow(screen),
+            );
+          },
+        ),
+      ],
       GoRoute(
         path: '/chats',
         pageBuilder: (context, state) => const NoTransitionPage(

@@ -1,0 +1,93 @@
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// Plain `fetch` has no timeout of its own — if the backend is slow to respond or briefly
+// unreachable (a cold DB connection, a deploy in progress, a flaky mobile network), a request
+// just hangs forever with no error and no way out, which is exactly what "stuck on the login
+// screen" turned out to be: the login button's loading spinner never clears because the
+// underlying fetch() never resolves OR rejects. Wrapping every call in an AbortController-based
+// timeout guarantees it does one or the other within a bounded time.
+const DEFAULT_TIMEOUT_MS = 20000;
+const fetchWithTimeout = async (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out — please check your connection and try again.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Session-expired signal for AUTHENTICATED calls only (token was sent, and the server still
+// rejected it) — a 401 on a call that never carried a token (login/register/forgot-password)
+// just means bad credentials, not an expired session, and must not trigger this. Listened for
+// once, globally, by SessionExpiredModal.jsx (mounted in App.jsx) so any page's expired-session
+// call surfaces the same re-login popup instead of a silent/generic error.
+export const SESSION_EXPIRED_EVENT = 'auth:session-expired';
+
+// A 422 validation failure's `message` is always the generic "Validation failed" — the actually
+// useful, field-specific reason (e.g. "PAN number must be in the format ABCDE1234F") lives in
+// `errors[].msg` instead. Every call site just does `throw new Error(res.message)`, so folding
+// the specific reason into `message` here — the one place every request passes through — fixes
+// it everywhere at once, with no changes needed at any individual call site.
+const withValidationDetail = (data) => {
+  if (data?.success === false && Array.isArray(data.errors) && data.errors.length > 0) {
+    const detail = data.errors.map((e) => e?.msg).filter(Boolean).join('; ');
+    if (detail) data.message = detail;
+  }
+  return data;
+};
+
+const request = async (method, path, body, token) => {
+  const res = await fetchWithTimeout(`${BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    ...(body && { body: JSON.stringify(body) }),
+  });
+  if (res.status === 401 && token) {
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  }
+  return withValidationDetail(await res.json());
+};
+
+// Fetches a file (e.g. a proof-of-delivery photo) with the auth header attached and
+// returns a local blob URL — needed because the file-serving routes require a Bearer
+// token, so a plain <img src="..."> or <a href="..."> can't load them directly.
+const getFileBlobUrl = async (url, token) => {
+  const res = await fetchWithTimeout(url, { headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+  if (res.status === 401 && token) window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  if (!res.ok) throw new Error(`Failed to load file (${res.status})`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+};
+
+// Same as getFileBlobUrl but returns the raw Blob — needed to build a File for the native
+// Web Share API (sharing to WhatsApp etc. with the actual PDF attached), where an object URL
+// string isn't usable.
+const getFileBlob = async (url, token) => {
+  const res = await fetchWithTimeout(url, { headers: { ...(token && { Authorization: `Bearer ${token}` }) } });
+  if (res.status === 401 && token) window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  if (!res.ok) throw new Error(`Failed to load file (${res.status})`);
+  return res.blob();
+};
+
+export const api = {
+  post:   (path, body, token) => request('POST',   path, body, token),
+  get:    (path, token)       => request('GET',    path, null, token),
+  put:    (path, body, token) => request('PUT',    path, body, token),
+  patch:  (path, body, token) => request('PATCH',  path, body, token),
+  delete: (path, body, token) => request('DELETE', path, body, token),
+  getFileBlobUrl,
+  getFileBlob,
+};
+
+export const getStoredAuth = () => {
+  try { return JSON.parse(localStorage.getItem('ssk_client_auth')); } catch { return null; }
+};
+
+export const getToken = () => getStoredAuth()?.tokens?.access_token || null;

@@ -8,6 +8,67 @@ import '../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../shared/data/trip_route_stop.dart';
 import '../../../../core/network/api_client.dart';
 
+/// Server-side driver totals (`GET /api/trips/dashboard-summary`) — web
+/// driver Home.jsx parity. Kept separate from [driverDashboardProvider] so a
+/// failure here never blanks the rest of the dashboard.
+class DriverDashboardSummary {
+  const DriverDashboardSummary({
+    required this.trips,
+    required this.distanceKm,
+    required this.earnings,
+    this.tripsTrend,
+    this.distanceTrend,
+    this.earningsTrend,
+  });
+
+  factory DriverDashboardSummary.fromResponse(Map<String, dynamic> response) {
+    final rawData = response['data'];
+    final data = rawData is Map<String, dynamic> ? rawData : response;
+    final rawTrend = data['trend'];
+    final trend = rawTrend is Map<String, dynamic>
+        ? rawTrend
+        : const <String, dynamic>{};
+    double number(Object? v) =>
+        v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
+    double? optional(Object? v) =>
+        v is num ? v.toDouble() : double.tryParse('${v ?? ''}');
+    return DriverDashboardSummary(
+      trips: number(data['trips']).round(),
+      distanceKm: number(data['distance']),
+      earnings: number(data['earnings']),
+      tripsTrend: optional(trend['trips']),
+      distanceTrend: optional(trend['distance']),
+      earningsTrend: optional(trend['earnings']),
+    );
+  }
+
+  final int trips;
+  final double distanceKm;
+  final double earnings;
+
+  /// % change this month; null when the backend has no comparison yet.
+  final double? tripsTrend;
+  final double? distanceTrend;
+  final double? earningsTrend;
+}
+
+final driverDashboardSummaryProvider =
+    FutureProvider.autoDispose<DriverDashboardSummary>((ref) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverDashboardSummary(accessToken: session.tokens.accessToken);
+      if (response['success'] == false) {
+        throw ApiException(
+          response['message']?.toString() ?? 'Could not load summary',
+        );
+      }
+      return DriverDashboardSummary.fromResponse(response);
+    });
+
 class DriverDashboardData {
   const DriverDashboardData({
     required this.activeTrip,

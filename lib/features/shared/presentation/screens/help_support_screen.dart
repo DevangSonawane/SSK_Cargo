@@ -9,15 +9,16 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_icons.dart';
 
-enum SupportAudience { broker, driver }
+/// Also the `:audience` segment of `/api/legal-pages/:audience/...`.
+enum SupportAudience { client, broker, driver }
 
 final _supportPageProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, SupportAudience>((ref, audience) async {
       final api = ref.watch(apiClientProvider);
-      final response = await switch (audience) {
-        SupportAudience.broker => api.getBrokerSupportPage(),
-        SupportAudience.driver => api.getDriverSupportPage(),
-      };
+      final response = await api.getLegalPage(
+        audience: audience.name,
+        pageKey: 'contact_support',
+      );
       final data = response['data'];
       final page = data is Map ? data['page'] : null;
       if (response['success'] != true || page is! Map) {

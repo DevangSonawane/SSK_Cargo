@@ -189,7 +189,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                         _ProfileMenuTile(
                           icon: AppIcons.description_outlined,
                           title: l10n.termsPrivacy,
-                          onTap: () => context.push('/client/terms-privacy'),
+                          onTap: () => context.push('/client/legal'),
                         ),
                       ],
                     ),

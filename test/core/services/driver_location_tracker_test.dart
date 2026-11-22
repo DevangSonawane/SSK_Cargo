@@ -292,4 +292,85 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox());
   });
+
+  group('web parity: publish throttle + heartbeat', () {
+    Position at(double lat, double lng) => Position(
+      latitude: lat,
+      longitude: lng,
+      timestamp: DateTime.now(),
+      accuracy: 5,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+
+    test(
+      'stationary fixes inside 3s are throttled, 50m move is sent',
+      () async {
+        await tracker.startTracking(tripId: 'trip-1');
+        platform.positions.add(at(19.07, 72.87));
+        await Future<void>.delayed(Duration.zero);
+        expect(api.driverUpdates, 1);
+
+        // Same spot, immediately again: dropped (< 3s, < 50m).
+        platform.positions.add(at(19.07, 72.87));
+        await Future<void>.delayed(Duration.zero);
+        expect(api.driverUpdates, 1);
+
+        // ~111m north: sent at once even though < 3s passed.
+        platform.positions.add(at(19.071, 72.87));
+        await Future<void>.delayed(Duration.zero);
+        expect(api.driverUpdates, 2);
+        expect(api.tripUpdates, ['trip-1', 'trip-1']);
+      },
+    );
+
+    test('3s floor matches web MIN_INTERVAL_MS', () {
+      expect(
+        DriverLocationTracker.minPublishInterval,
+        const Duration(seconds: 3),
+      );
+      expect(DriverLocationTracker.minPublishDistanceMeters, 50);
+    });
+
+    test('heartbeat re-sends last fix with no new GPS events', () async {
+      final previous = DriverLocationTracker.heartbeatInterval;
+      DriverLocationTracker.heartbeatInterval = const Duration(
+        milliseconds: 40,
+      );
+      addTearDown(() => DriverLocationTracker.heartbeatInterval = previous);
+
+      await tracker.startTracking(tripId: 'trip-9');
+      platform.positions.add(at(19.07, 72.87));
+      await Future<void>.delayed(Duration.zero);
+      expect(api.driverUpdates, 1);
+
+      // No new positions — only the heartbeat can produce more updates.
+      await Future<void>.delayed(const Duration(milliseconds: 130));
+      expect(api.driverUpdates, greaterThanOrEqualTo(3));
+      expect(api.tripUpdates.every((id) => id == 'trip-9'), isTrue);
+      expect(api.tripUpdates.length, api.driverUpdates);
+
+      // Stopping cancels the heartbeat.
+      await tracker.stopTracking();
+      final afterStop = api.driverUpdates;
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(api.driverUpdates, afterStop);
+    });
+
+    test('heartbeat sends nothing before the first fix', () async {
+      final previous = DriverLocationTracker.heartbeatInterval;
+      DriverLocationTracker.heartbeatInterval = const Duration(
+        milliseconds: 30,
+      );
+      addTearDown(() => DriverLocationTracker.heartbeatInterval = previous);
+
+      await tracker.startTracking();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(api.driverUpdates, 0);
+    });
+  });
 }

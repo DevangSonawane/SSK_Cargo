@@ -14542,6 +14542,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t verify your number right now. Please try again later.'**
   String get errorVerificationUnavailable;
+
+  /// No description provided for @noNegotiationAdminAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin-assigned'**
+  String get noNegotiationAdminAssigned;
+
+  /// No description provided for @noNegotiationAdminAssignedNoFareChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin-assigned - no fare change'**
+  String get noNegotiationAdminAssignedNoFareChange;
+
+  /// No description provided for @driverHomeAdminAssignedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned directly by admin - accept or decline, no negotiation.'**
+  String get driverHomeAdminAssignedNotice;
+
+  /// No description provided for @driverOrderAdminAssignedTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin-assigned trip'**
+  String get driverOrderAdminAssignedTrip;
+
+  /// No description provided for @driverOrderAssignedDirectlyByAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned directly by admin - accept or decline, no fare changes.'**
+  String get driverOrderAssignedDirectlyByAdmin;
+
+  /// No description provided for @findTruckFixedPriceAdminAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned directly - fixed price, no negotiation.'**
+  String get findTruckFixedPriceAdminAssigned;
+
+  /// No description provided for @findTruckFixedPriceBrokerAgreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Already agreed with the broker - fixed price, no negotiation.'**
+  String get findTruckFixedPriceBrokerAgreed;
+
+  /// No description provided for @legalAndSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal & Support'**
+  String get legalAndSupport;
+
+  /// No description provided for @legalAndSupportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy, terms, refunds, safety and account deletion'**
+  String get legalAndSupportSubtitle;
+
+  /// No description provided for @legalIndexSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Policies and support information for GadiDost.'**
+  String get legalIndexSubtitle;
+
+  /// No description provided for @legalPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get legalPrivacyPolicy;
+
+  /// No description provided for @legalTermsConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms & Conditions'**
+  String get legalTermsConditions;
+
+  /// No description provided for @legalAccountDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Deletion'**
+  String get legalAccountDeletion;
+
+  /// No description provided for @legalContactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact / Support'**
+  String get legalContactSupport;
+
+  /// No description provided for @legalRefundPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation & Refund'**
+  String get legalRefundPolicy;
+
+  /// No description provided for @legalSafetyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety Policy'**
+  String get legalSafetyPolicy;
+
+  /// No description provided for @legalPageLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this page. Please try again later.'**
+  String get legalPageLoadError;
+
+  /// No description provided for @legalContentComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Content coming soon.'**
+  String get legalContentComingSoon;
+
+  /// No description provided for @legalDeletionFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Account Deletion'**
+  String get legalDeletionFormTitle;
+
+  /// No description provided for @legalDeletionFormSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill this out and our team will follow up to verify and complete your request.'**
+  String get legalDeletionFormSubtitle;
+
+  /// No description provided for @legalDeletionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get legalDeletionName;
+
+  /// No description provided for @legalDeletionPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get legalDeletionPhone;
+
+  /// No description provided for @legalDeletionPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'10-digit number'**
+  String get legalDeletionPhoneHint;
+
+  /// No description provided for @legalDeletionReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get legalDeletionReason;
+
+  /// No description provided for @legalDeletionSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Request'**
+  String get legalDeletionSubmit;
+
+  /// No description provided for @legalDeletionSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get legalDeletionSubmitting;
+
+  /// No description provided for @legalDeletionNeedContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide an email or phone number so we can follow up.'**
+  String get legalDeletionNeedContact;
+
+  /// No description provided for @legalDeletionReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request has been received.'**
+  String get legalDeletionReceived;
+
+  /// No description provided for @legalDeletionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit request. Please try again.'**
+  String get legalDeletionFailed;
+
+  /// No description provided for @totalDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Total distance'**
+  String get totalDistance;
+
+  /// No description provided for @statTrendThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% this month'**
+  String statTrendThisMonth(String percent);
+
+  /// No description provided for @counterLimitReachedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used all your counter-offers - accept or decline instead.'**
+  String get counterLimitReachedNotice;
+
+  /// No description provided for @counterNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for the counter-offer... (optional)'**
+  String get counterNoteHint;
+
+  /// No description provided for @quoteNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Price quote isn\'t ready yet - please wait a moment and try again.'**
+  String get quoteNotReady;
+
+  /// No description provided for @quoteRouteUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm your route - please re-check your pickup and drop locations.'**
+  String get quoteRouteUnconfirmed;
 }
 
 class _AppLocalizationsDelegate

@@ -64,6 +64,7 @@ abstract final class AppIcons {
   static const IconData credit_card_rounded = LucideIcons.credit_card;
   static const IconData currency_rupee_rounded = LucideIcons.indian_rupee;
   static const IconData delete_outline_rounded = LucideIcons.trash_2;
+  static const IconData person_remove_rounded = LucideIcons.user_x;
   static const IconData description_outlined = LucideIcons.file_text;
   static const IconData description_rounded = LucideIcons.file_text;
   static const IconData do_not_disturb_on_outlined = LucideIcons.circle_minus;
@@ -190,6 +191,7 @@ abstract final class AppIcons {
   static const IconData remove_shopping_cart_outlined =
       LucideIcons.shopping_cart;
   static const IconData refresh_rounded = LucideIcons.refresh_cw;
+  static const IconData rotate_ccw_rounded = LucideIcons.rotate_ccw;
   static const IconData repeat_rounded = LucideIcons.repeat;
   static const IconData report_gmailerrorred_outlined =
       LucideIcons.message_circle_warning;

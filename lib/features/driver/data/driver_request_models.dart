@@ -7,12 +7,15 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../auth/data/auth_models.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
+import '../../shared/data/driver_request_negotiation.dart';
 
 class DriverRequestItem {
   const DriverRequestItem({
     required this.id,
     required this.bookingId,
     required this.jobRequestId,
+    this.isAdminAssigned = false,
+    this.noNegotiation = false,
     required this.bookingNumber,
     required this.driverId,
     required this.pendingConfirmationBy,
@@ -46,6 +49,14 @@ class DriverRequestItem {
   final String id;
   final String bookingId;
   final String jobRequestId;
+
+  /// Set by the backend only for admin-assign origin rows
+  /// (`POST /api/admin/bookings/{id}/assign-driver`).
+  final bool isAdminAssigned;
+
+  /// Backend-provided lock: true for broker-assigned AND admin-assigned rows.
+  /// This is the single source of truth for hiding Counter.
+  final bool noNegotiation;
   final String bookingNumber;
   final String driverId;
   final String pendingConfirmationBy;
@@ -86,7 +97,7 @@ class DriverRequestItem {
     final normalizedStatus = status.trim().toLowerCase();
     final latestBy = latestOfferBy;
     return !driverTimedOut &&
-        jobRequestId.isEmpty &&
+        !noNegotiation &&
         (normalizedStatus.isEmpty ||
             normalizedStatus == 'requested' ||
             normalizedStatus == 'pending' ||
@@ -95,8 +106,6 @@ class DriverRequestItem {
             (normalizedStatus == 'awaiting_confirmation' &&
                 pendingConfirmationBy.toLowerCase() == 'client'));
   }
-
-  bool get isBrokerAssigned => jobRequestId.isNotEmpty;
 
   bool get isVisibleInNewTravel {
     final normalized = status.trim().toLowerCase();
@@ -135,6 +144,12 @@ class DriverRequestItem {
       'pending_confirmation_by',
     ]).toLowerCase();
 
+    final jobRequestId = _readString(json, const [
+      'jobRequestId',
+      'job_request_id',
+    ]);
+    final isAdminAssigned = readIsAdminAssignedFlag(json);
+
     return DriverRequestItem(
       id: _readString(json, const [
         'driverRequestId',
@@ -144,7 +159,13 @@ class DriverRequestItem {
         'uuid',
       ]),
       bookingId: _readString(json, const ['bookingId', 'booking_id']),
-      jobRequestId: _readString(json, const ['jobRequestId', 'job_request_id']),
+      jobRequestId: jobRequestId,
+      isAdminAssigned: isAdminAssigned,
+      noNegotiation: readNoNegotiationFlag(
+        json,
+        jobRequestId: jobRequestId,
+        isAdminAssigned: isAdminAssigned,
+      ),
       bookingNumber: _readString(json, const [
         'bookingNumber',
         'booking_number',

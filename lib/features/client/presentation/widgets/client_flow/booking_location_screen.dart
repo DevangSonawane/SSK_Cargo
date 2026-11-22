@@ -272,12 +272,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
     });
     _vehicleIndex = widget.initialVehicleIndex;
-    final initialPricingState = ref.read(clientPricingProvider);
     final initialTypesState = ref.read(vehicleTypesProvider);
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
-      pricing: initialPricingState.valueOrNull,
-      isLoading: initialTypesState.isLoading || initialPricingState.isLoading,
+      isLoading: initialTypesState.isLoading,
       vehicleTypes: initialTypesState.valueOrNull,
     );
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
@@ -829,11 +827,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   /// quote effect). Recompute the chained pickup → stops → drop distance and
   /// re-quote so the amount the client confirms includes the extra legs.
   Future<void> _refreshStopsPricing() async {
-    // Part-Load: price comes from the candidate, never from re-quotes.
-    if ((_draft.searchMode ?? BookingSearchMode.truck) ==
-        BookingSearchMode.partLoad) {
-      return;
-    }
     final session = ref.read(authSessionProvider).valueOrNull;
     final accessToken = session?.tokens.accessToken ?? '';
     if (accessToken.isEmpty || !mounted) return;
@@ -1041,7 +1034,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _SchedulePickerSheet(
         initialDateTime: current,
-        firstDateTime: now,
+        // Web parity: earliest Book Later time is now + 5 minutes.
+        firstDateTime: now.add(const Duration(minutes: 5)),
         lastDateTime: now.add(const Duration(days: 180)),
       ),
     );
@@ -1133,7 +1127,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void _selectVehicleForSearchStep(int index) {
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
-      pricing: ref.read(clientPricingProvider).valueOrNull,
       isLoading: ref.read(vehicleTypesProvider).isLoading,
       vehicleTypes: ref.read(vehicleTypesProvider).valueOrNull,
     );
@@ -1245,6 +1238,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _resetUnpaidPaymentBookingForRetry(searchMode: BookingSearchMode.broker);
     }
     if (!_validateScheduledDate()) {
+      return;
+    }
+    if (!await _ensureFreshQuote() || !mounted) {
       return;
     }
 
@@ -1378,6 +1374,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       );
     }
     if (!_validateScheduledDate()) {
+      return;
+    }
+    if (!await _ensureFreshQuote() || !mounted) {
       return;
     }
 
@@ -3176,25 +3175,104 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  /// What the current amount was quoted for (truck category incl. Part,
+  /// transport type, express, pickup/drop/stops and distance). Web parity
+  /// with BookTruck.jsx's stale-quote check: if any input changed since the
+  /// quote, the amount must not be submitted as-is.
+  String? _quotedSignature;
+
+  bool get _isPartLoadQuote =>
+      (_draft.searchMode ?? BookingSearchMode.truck) ==
+      BookingSearchMode.partLoad;
+
+  String _quoteCategory() =>
+      _isPartLoadQuote ? 'part' : categoryForVehicleOption(_vehicle);
+
+  String _quoteSignature(double distance) {
+    String point(LatLng? p) => p == null
+        ? '-'
+        : '${p.latitude.toStringAsFixed(5)},${p.longitude.toStringAsFixed(5)}';
+    return [
+      _quoteCategory(),
+      _draft.transportType,
+      _draft.transportType == 'intra' && _draft.isExpress,
+      point(_pickupLatLng),
+      point(_dropLatLng),
+      for (final stop in _draft.loadingStops) point(stop.latLng),
+      for (final stop in _draft.unloadingStops) point(stop.latLng),
+      distance.toStringAsFixed(1),
+    ].join('|');
+  }
+
+  /// Distance the booking would be priced on right now: the chained
+  /// pickup → stops → drop distance when stops exist, else the quoted
+  /// pickup → drop distance (same choice the location step makes).
+  double? _currentQuoteDistance() {
+    final hasStops =
+        _draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty;
+    if (hasStops) return _routeDistanceKm(_bookingRoutePoints());
+    return _draft.distance > 0 ? _draft.distance : null;
+  }
+
+  /// Web parity (BookTruck.jsx handleConfirm): never create a booking on a
+  /// missing or out-of-date price. Web blocks and asks the client to tap
+  /// again once its quote effect catches up; this app re-quotes right here
+  /// and only continues if a fresh, non-zero price comes back.
+  Future<bool> _ensureFreshQuote() async {
+    final l10n = AppLocalizations.of(context)!;
+    void notice(String message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+
+    final distance = _currentQuoteDistance();
+    if (distance == null || distance <= 0) {
+      notice(l10n.quoteRouteUnconfirmed);
+      return false;
+    }
+    if (_draft.amount > 0 && _quotedSignature == _quoteSignature(distance)) {
+      return true;
+    }
+    final accessToken =
+        ref.read(authSessionProvider).valueOrNull?.tokens.accessToken ?? '';
+    if (accessToken.isEmpty) return false;
+    final amount = await _estimateBookingAmount(
+      accessToken: accessToken,
+      distance: distance,
+      durationMin: _draft.durationMin,
+      durationInTrafficMin: _draft.durationInTrafficMin,
+    );
+    if (!mounted) return false;
+    if (amount == null || amount <= 0) {
+      notice(l10n.quoteNotReady);
+      return false;
+    }
+    setState(() {
+      _draft = _draft.copyWith(distance: distance, amount: amount);
+      _amountController.text = _priceInputText(amount.toString());
+    });
+    return true;
+  }
+
   Future<double?> _estimateBookingAmount({
     required String accessToken,
     required double distance,
     required int? durationMin,
     required int? durationInTrafficMin,
   }) async {
-    // Part-Load has no per-size quote — the fare is the chosen candidate's
-    // fixed estimatedPrice. Never run the full-truck pricer here, it only
-    // produces bogus amounts (e.g. ₹3.33).
-    if ((_draft.searchMode ?? BookingSearchMode.truck) ==
-        BookingSearchMode.partLoad) {
-      return null;
-    }
+    // Web parity (BookTruck.jsx quote effect): Part Truck is quoted like any
+    // other truck type, just with `truck_category: "part"`. Skipping it used
+    // to create Part Truck bookings at ₹0 (the Part card zeroes the amount
+    // and goes straight to booking creation).
+    final isPart = _isPartLoadQuote;
     try {
       final payload = <String, dynamic>{
         'distance': distance,
-        'truck_category': categoryForVehicleOption(_vehicle),
+        'truck_category': _quoteCategory(),
         'transport_type': _draft.transportType,
-        'truck_type': _vehicle.label,
+        if (!isPart) 'truck_type': _vehicle.label,
         'is_express': _draft.transportType == 'intra'
             ? _draft.isExpress
             : false,
@@ -3213,6 +3291,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (mounted) {
         final data = response['data'];
         final amount = _readMoneyValue(data, response);
+        if (amount > 0) _quotedSignature = _quoteSignature(distance);
         setState(() {
           _haltingNote = _haltingNoteFromQuote(response);
           _draft = _draft.copyWith(
@@ -3398,6 +3477,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
     if (!_validateScheduledDate()) {
+      return;
+    }
+    if (!await _ensureFreshQuote() || !mounted) {
       return;
     }
 
@@ -3886,7 +3968,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (types == null || types.isEmpty || !mounted) return;
       final vehicles = resolveVehicleOptions(
         tripType: widget.tripType,
-        pricing: ref.read(clientPricingProvider).valueOrNull,
         isLoading: false,
         vehicleTypes: types,
       );
@@ -3912,34 +3993,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     ref.listen(vehicleTypesProvider, (previous, next) {
       syncVehicleFromTypes(next.valueOrNull);
-    });
-    ref.listen(clientPricingProvider, (previous, next) {
-      final pricing = next.valueOrNull;
-      if (pricing == null || !mounted) {
-        return;
-      }
-      // Live taxonomy already drives the picker — the legacy pricing tiers
-      // are only a fallback for when vehicle-types is unavailable.
-      final types = ref.read(vehicleTypesProvider).valueOrNull;
-      if (types != null && types.isNotEmpty) return;
-      final vehicles = resolveVehicleOptions(
-        tripType: widget.tripType,
-        pricing: pricing,
-        isLoading: false,
-      );
-      if (vehicles.isEmpty) return;
-      final safeIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
-      final updatedVehicle = vehicles[safeIndex];
-      setState(() {
-        _vehicleIndex = safeIndex;
-        _vehicle = updatedVehicle;
-        _draft = _draft.copyWith(
-          vehicle: updatedVehicle,
-          truckCategory: categoryForVehicleOption(updatedVehicle),
-          amount: _priceValue(updatedVehicle.price),
-        );
-        _amountController.text = _priceInputText(updatedVehicle.price);
-      });
     });
 
     final hideInitialAutoLocationFrame =
@@ -4944,11 +4997,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildTruckCategoryPicker(BuildContext context) {
-    final pricingState = ref.watch(clientPricingProvider);
     final typesState = ref.watch(vehicleTypesProvider);
     final allVehicles = resolveVehicleOptions(
       tripType: widget.tripType,
-      pricing: pricingState.valueOrNull,
       isLoading: typesState.isLoading,
       vehicleTypes: typesState.valueOrNull,
     );

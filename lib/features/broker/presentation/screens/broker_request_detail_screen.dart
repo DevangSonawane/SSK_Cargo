@@ -11,6 +11,8 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../../core/widgets/map_route_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../shared/data/driver_request_negotiation.dart';
+import '../../../shared/presentation/widgets/counter_note_field.dart';
 import '../widgets/broker_flow_widgets.dart';
 import '../../../driver/data/driver_trip_handoff_utils.dart';
 import 'package:gadidost/l10n/app_localizations.dart';
@@ -30,6 +32,9 @@ class _BrokerRequestDetailScreenState
     extends ConsumerState<BrokerRequestDetailScreen> {
   bool _submitting = false;
   double _counterAmount = 0;
+
+  /// Optional counter-offer reason (web parity: `note` on `/counter`).
+  final _counterNote = TextEditingController();
   bool _jobRequestAwaitingConfirmation = false;
   BookingRequest? _liveBookingRequest;
   BrokerDriverRequest? _liveDriverRequest;
@@ -70,8 +75,17 @@ class _BrokerRequestDetailScreenState
 
   bool get _isDriverNegotiation => _driverRequest != null;
 
+  /// Accept/decline only — backend `noNegotiation` covers broker- and
+  /// admin-assigned origins.
+  /// Web parity: per-side counter cap used up → Accept/Decline only.
+  bool get _driverCounterLimitReached =>
+      _driverRequest?.counterLimitReached == true;
+
   bool get _isBrokerAssignedDriverRequest =>
-      _driverRequest?.jobRequestId.isNotEmpty == true;
+      _driverRequest?.noNegotiation == true;
+
+  bool get _isAdminAssignedDriverRequest =>
+      _driverRequest?.isAdminAssigned == true;
 
   bool get _isExpressRequest => _driverRequest?.isExpress ?? _request.isExpress;
 
@@ -199,6 +213,7 @@ class _BrokerRequestDetailScreenState
     _driverRequestSubscription?.cancel();
     _tripStatusSubscription?.cancel();
     _countdownTimer?.cancel();
+    _counterNote.dispose();
     super.dispose();
   }
 
@@ -426,6 +441,16 @@ class _BrokerRequestDetailScreenState
     return '';
   }
 
+  int? _readInt(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key];
+      if (value is num) return value.toInt();
+      final parsed = int.tryParse(value?.toString().trim() ?? '');
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
   bool _readBool(Map<String, dynamic> payload, List<String> keys) {
     for (final key in keys) {
       final value = payload[key];
@@ -543,6 +568,27 @@ class _BrokerRequestDetailScreenState
       id: current.id,
       bookingId: current.bookingId,
       jobRequestId: current.jobRequestId,
+      isAdminAssigned:
+          current.isAdminAssigned || readIsAdminAssignedFlag(payload),
+      noNegotiation: hasNoNegotiationFlag(payload)
+          ? readNoNegotiationFlag(
+              payload,
+              jobRequestId: current.jobRequestId,
+              isAdminAssigned: current.isAdminAssigned,
+            )
+          : current.noNegotiation,
+      respondentCountersUsed:
+          _readInt(payload, const [
+            'respondentCountersUsed',
+            'respondent_counters_used',
+          ]) ??
+          current.respondentCountersUsed,
+      maxCountersPerSide:
+          _readInt(payload, const [
+            'maxCountersPerSide',
+            'max_counters_per_side',
+          ]) ??
+          current.maxCountersPerSide,
       bookingNumber: current.bookingNumber,
       pendingConfirmationBy: pendingConfirmationBy.isEmpty
           ? current.pendingConfirmationBy
@@ -582,7 +628,7 @@ class _BrokerRequestDetailScreenState
       if (_isDriverNegotiation) {
         await ref
             .read(apiClientProvider)
-            .rejectDriverRequest(
+            .rejectDriverRequestAsDriver(
               accessToken: session.tokens.accessToken,
               id: _driverRequest!.id,
             );
@@ -622,6 +668,7 @@ class _BrokerRequestDetailScreenState
   Future<void> _counter() async {
     if (!_canTakeAction ||
         _isBrokerAssignedDriverRequest ||
+        _driverCounterLimitReached ||
         _normalizedStatus == 'awaiting_confirmation') {
       return;
     }
@@ -638,10 +685,11 @@ class _BrokerRequestDetailScreenState
       if (_isDriverNegotiation) {
         await ref
             .read(apiClientProvider)
-            .counterDriverRequest(
+            .counterDriverRequestAsDriver(
               accessToken: session.tokens.accessToken,
               id: _driverRequest!.id,
               amount: amount,
+              note: _counterNote.text,
             );
         ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
       } else {
@@ -651,10 +699,12 @@ class _BrokerRequestDetailScreenState
               accessToken: session.tokens.accessToken,
               id: _request.id,
               amount: amount,
+              note: _counterNote.text,
             );
         ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
       }
       if (!mounted) return;
+      _counterNote.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1239,7 +1289,13 @@ class _BrokerRequestDetailScreenState
                     border: Border.all(color: AppColors.brandBorder),
                   ),
                   child: Text(
-                    AppLocalizations.of(context)!.brokerReqDetailBrokerAssigned,
+                    _isAdminAssignedDriverRequest
+                        ? AppLocalizations.of(
+                            context,
+                          )!.noNegotiationAdminAssigned
+                        : AppLocalizations.of(
+                            context,
+                          )!.brokerReqDetailBrokerAssigned,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.brand,
                       fontWeight: FontWeight.w700,
@@ -1332,6 +1388,15 @@ class _BrokerRequestDetailScreenState
             ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 14),
+          if (_driverCounterLimitReached)
+            Text(
+              AppLocalizations.of(context)!.counterLimitReachedNotice,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else
           _CounterAmountSlider(
             label: AppLocalizations.of(context)!.brokerReqDetailFareAmount,
             amount: _counterAmount,
@@ -1345,6 +1410,10 @@ class _BrokerRequestDetailScreenState
                 ? null
                 : (value) => setState(() => _counterAmount = value),
           ),
+          if (!_driverCounterLimitReached) ...[
+            const SizedBox(height: 12),
+            CounterNoteField(controller: _counterNote, enabled: !_submitting),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
@@ -1360,24 +1429,26 @@ class _BrokerRequestDetailScreenState
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submitting ? null : _counter,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.brand,
-                    side: const BorderSide(
-                      color: AppColors.brandBorder,
-                      width: 1.4,
+              if (!_driverCounterLimitReached) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _counter,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.brand,
+                      side: const BorderSide(
+                        color: AppColors.brandBorder,
+                        width: 1.4,
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.brokerReqDetailChangeFare,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  child: Text(
-                    AppLocalizations.of(context)!.brokerReqDetailChangeFare,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -1550,6 +1621,8 @@ class _BrokerRequestDetailScreenState
                   ? null
                   : (value) => setState(() => _counterAmount = value),
             ),
+            const SizedBox(height: 12),
+            CounterNoteField(controller: _counterNote, enabled: !_submitting),
           ],
           const SizedBox(height: 14),
           if (!isAcceptedAssignment) ...[

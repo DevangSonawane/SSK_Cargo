@@ -8,6 +8,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../../core/network/api_client.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/chat_models.dart';
+import '../../data/chat_unread.dart';
 import 'package:gadidost/core/utils/user_facing_error.dart';
 
 class BookingChatView extends ConsumerStatefulWidget {
@@ -71,11 +72,28 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
   @override
   void initState() {
     super.initState();
+    _openThreadController = ref.read(openChatThreadIdProvider.notifier);
+    _unreadRefresher = ref.read(chatUnreadRefresherProvider);
     _loadChat();
   }
 
+  late final StateController<String?> _openThreadController;
+  late final ChatUnreadRefresher _unreadRefresher;
+  String? _openThreadId;
+
   @override
   void dispose() {
+    // This chat is no longer on screen — new messages for it count again.
+    final closing = _openThreadId;
+    if (closing != null) {
+      final controller = _openThreadController;
+      final refresher = _unreadRefresher;
+      // Providers can't change while the tree is tearing down; defer.
+      Future.microtask(() {
+        if (controller.state == closing) controller.state = null;
+        unawaited(refresher.refresh());
+      });
+    }
     _typingTimer?.cancel();
     _socket?.dispose();
     _messageController.dispose();
@@ -124,11 +142,16 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
         _messages = messages;
       });
 
+      _openThreadId = threadId;
+      _openThreadController.state = threadId;
       if (!widget.readOnly) {
         await api.markChatThreadRead(
           accessToken: widget.accessToken,
           threadId: threadId,
         );
+        // Web parity: refresh the badge right after marking read instead of
+        // waiting for the next 20s poll.
+        unawaited(_unreadRefresher.refresh());
       }
       await _connectSocket(threadId);
       _scrollToBottom();

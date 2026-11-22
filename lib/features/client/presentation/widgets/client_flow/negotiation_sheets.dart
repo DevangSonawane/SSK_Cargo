@@ -1555,7 +1555,7 @@ class _BrokerNegotiationSheetState
             acceptLabel: request!.isClientTurnToConfirm
                 ? l10n.negotiationConfirm
                 : l10n.negotiationAccept,
-            canCounter: request.isCountered,
+            canCounter: request.isCountered && !request.noNegotiation,
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
             onCounter: _counterRequest,
@@ -2293,7 +2293,7 @@ class _FindTruckNegotiationSheetState
                       acceptLabel: request.isClientTurnToConfirm
                           ? l10n.negotiationConfirm
                           : l10n.negotiationAccept,
-                      canCounter: request.isCountered,
+                      canCounter: request.isCountered && !request.noNegotiation,
                       isBusy: _busy,
                       onAccept: _acceptRequest,
                       onCounter: _counterRequest,

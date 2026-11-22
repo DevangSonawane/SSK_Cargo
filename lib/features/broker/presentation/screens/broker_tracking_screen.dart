@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gadidost/core/theme/app_icons.dart';
 import 'package:gadidost/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1196,7 +1197,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                           const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final request = requests[index];
-                        final brokerAssigned = request.jobRequestId.isNotEmpty;
+                        final brokerAssigned = request.noNegotiation;
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -1235,7 +1236,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                               ),
                               if (brokerAssigned) ...[
                                 const SizedBox(height: 8),
-                                _BrokerAssignedInlineBadge(),
+                                _BrokerAssignedInlineBadge(
+                                  adminAssigned: request.isAdminAssigned,
+                                ),
                               ],
                               const SizedBox(height: 6),
                               Text(
@@ -1257,7 +1260,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                       onPressed: () => _runAction(
                                         request: request,
                                         action: (api, token) =>
-                                            api.acceptDriverRequest(
+                                            api.acceptDriverRequestAsDriver(
                                               accessToken: token,
                                               id: request.id,
                                             ),
@@ -1273,7 +1276,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                       onPressed: () => _runAction(
                                         request: request,
                                         action: (api, token) =>
-                                            api.rejectDriverRequest(
+                                            api.rejectDriverRequestAsDriver(
                                               accessToken: token,
                                               id: request.id,
                                             ),
@@ -1283,25 +1286,36 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                       ),
                                     ),
                                   ),
-                                  if (!brokerAssigned) ...[
+                                  if (!brokerAssigned &&
+                                      !request.counterLimitReached) ...[
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: FilledButton(
                                         onPressed: _countering
                                             ? null
                                             : () async {
-                                                final counter = await showDialog<double?>(
-                                                  context: context,
-                                                  useRootNavigator: true,
-                                                  barrierColor: Colors.black.withValues(
-                                                    alpha: 0.35,
-                                                  ),
-                                                  builder: (dialogContext) =>
-                                                      _CounterFareDialog(
-                                                    initialAmount: request.amount
-                                                        .toStringAsFixed(0),
-                                                  ),
-                                                );
+                                                final counter =
+                                                    await showDialog<
+                                                      ({
+                                                        double amount,
+                                                        String note,
+                                                      })
+                                                    >(
+                                                      context: context,
+                                                      useRootNavigator: true,
+                                                      barrierColor: Colors.black
+                                                          .withValues(
+                                                            alpha: 0.35,
+                                                          ),
+                                                      builder: (dialogContext) =>
+                                                          _CounterFareDialog(
+                                                            initialAmount: request
+                                                                .amount
+                                                                .toStringAsFixed(
+                                                                  0,
+                                                                ),
+                                                          ),
+                                                    );
                                                 if (counter == null) return;
                                                 setState(
                                                   () => _countering = true,
@@ -1310,10 +1324,15 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                   await _runAction(
                                                     request: request,
                                                     action: (api, token) => api
-                                                        .counterDriverRequest(
+                                                        .counterDriverRequestAsDriver(
                                                           accessToken: token,
                                                           id: request.id,
-                                                          amount: counter,
+                                                          amount: counter
+                                                              .amount,
+                                                          // The dialog's note was
+                                                          // collected but dropped
+                                                          // before — web sends it.
+                                                          note: counter.note,
                                                         ),
                                                   );
                                                 } finally {
@@ -1351,7 +1370,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
 }
 
 class _BrokerAssignedInlineBadge extends StatelessWidget {
-  _BrokerAssignedInlineBadge();
+  const _BrokerAssignedInlineBadge({this.adminAssigned = false});
+
+  final bool adminAssigned;
 
   @override
   Widget build(BuildContext context) {
@@ -1364,7 +1385,9 @@ class _BrokerAssignedInlineBadge extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
-        l10n.brokerTrackingBrokerAssignedNoFareChange,
+        adminAssigned
+            ? l10n.noNegotiationAdminAssignedNoFareChange
+            : l10n.brokerTrackingBrokerAssignedNoFareChange,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.brand,
           fontWeight: FontWeight.w900,
@@ -1425,9 +1448,9 @@ class _CounterFareDialogState extends State<_CounterFareDialog> {
               controller: _noteController,
               cursorColor: AppColors.brand,
               style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: l10n.brokerTrackingNote,
-              ),
+              maxLines: 2,
+              inputFormatters: [LengthLimitingTextInputFormatter(500)],
+              decoration: InputDecoration(labelText: l10n.brokerTrackingNote),
             ),
           ],
         ),
@@ -1440,7 +1463,13 @@ class _CounterFareDialogState extends State<_CounterFareDialog> {
         FilledButton(
           onPressed: () {
             final amount = double.tryParse(_amountController.text.trim());
-            Navigator.of(context).pop(amount);
+            if (amount == null || amount <= 0) {
+              Navigator.of(context).pop();
+              return;
+            }
+            Navigator.of(
+              context,
+            ).pop((amount: amount, note: _noteController.text));
           },
           child: Text(l10n.brokerTrackingSend),
         ),
@@ -1678,16 +1707,16 @@ class _BrokerDriverTripSheetState
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
-    } catch (error) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(userFacingError(error)),
         ),
       );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() => _reassigning = false);
@@ -1905,16 +1934,16 @@ class _BrokerDriverTripSheetState
       await _refresh();
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
-    } catch (error) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(userFacingError(error)),
         ),
       );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() => _completingStopIndex = null);
@@ -3322,7 +3351,6 @@ int? _tripInt(Map<String, dynamic> json, List<String> keys) {
   }
   return null;
 }
-
 bool _tripBool(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
