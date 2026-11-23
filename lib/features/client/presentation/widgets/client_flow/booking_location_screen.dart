@@ -2715,28 +2715,40 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             dropPincode: _draft.dropPincode,
           );
 
-      final response = await ref
-          .read(apiClientProvider)
-          .getDistanceEstimate(
-            accessToken: session.tokens.accessToken,
-            pickup: pickup,
-            drop: drop,
-          );
-      final data = response['data'];
-      final directDistance = _readDistanceValue(data, response);
-      final stopChainDistance = _routeDistanceKm(_bookingRoutePoints());
-      final distance =
-          (_draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty)
-          ? (stopChainDistance ?? directDistance)
-          : directDistance;
-      final durationMin = _readIntValue(data, response, const [
-        'durationMin',
-        'duration_min',
-      ]);
-      final durationInTrafficMin = _readIntValue(data, response, const [
-        'durationInTrafficMin',
-        'duration_in_traffic_min',
-      ]);
+      // Web BookTruck.jsx parity: prefer a client-side estimate from the
+      // pickup/drop (+ stops) coordinates. POST /api/config/distance is only
+      // a fallback for when coordinates aren't known — its fake location
+      // provider recognises just a few hardcoded city pairs and otherwise
+      // answers 404 or distance 0, which left _draft.distance at 0 and
+      // blocked every booking with "Couldn't confirm your route".
+      double distance;
+      int? durationMin;
+      int? durationInTrafficMin;
+      final coordinateDistance =
+          _pickupLatLng != null && _dropLatLng != null
+          ? _routeDistanceKm(_bookingRoutePoints())
+          : null;
+      if (coordinateDistance != null && coordinateDistance > 0) {
+        distance = coordinateDistance;
+      } else {
+        final response = await ref
+            .read(apiClientProvider)
+            .getDistanceEstimate(
+              accessToken: session.tokens.accessToken,
+              pickup: pickup,
+              drop: drop,
+            );
+        final data = response['data'];
+        distance = _readDistanceValue(data, response);
+        durationMin = _readIntValue(data, response, const [
+          'durationMin',
+          'duration_min',
+        ]);
+        durationInTrafficMin = _readIntValue(data, response, const [
+          'durationInTrafficMin',
+          'duration_in_traffic_min',
+        ]);
+      }
       final estimatedAmount = await _estimateBookingAmount(
         accessToken: session.tokens.accessToken,
         distance: distance,
@@ -3211,7 +3223,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final hasStops =
         _draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty;
     if (hasStops) return _routeDistanceKm(_bookingRoutePoints());
-    return _draft.distance > 0 ? _draft.distance : null;
+    if (_draft.distance > 0) return _draft.distance;
+    // Web parity: derive it from coordinates rather than blocking.
+    if (_pickupLatLng == null || _dropLatLng == null) return null;
+    return _routeDistanceKm(_bookingRoutePoints());
   }
 
   /// Web parity (BookTruck.jsx handleConfirm): never create a booking on a

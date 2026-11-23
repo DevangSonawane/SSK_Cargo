@@ -224,6 +224,13 @@ class BookingData {
   }
 }
 
+/// Road-distance correction applied to straight-line legs (web `utils.js`
+/// `ROAD_DISTANCE_FACTOR` parity): real roads are never perfectly straight.
+const double _roadDistanceFactor = 1.3;
+
+/// Estimated road distance (km) for pickup → stops → drop, summed leg by leg
+/// from coordinates — web `chainDistanceKm` parity (straight line × 1.3,
+/// rounded to 0.1 km). Null when fewer than two points are known.
 double? _routeDistanceKm(Iterable<LatLng> points) {
   final values = points.toList(growable: false);
   if (values.length < 2) {
@@ -241,7 +248,7 @@ double? _routeDistanceKm(Iterable<LatLng> points) {
       current.longitude,
     );
   }
-  return meters / 1000;
+  return (meters / 1000 * _roadDistanceFactor * 10).round() / 10;
 }
 
 class _IntermediateStopsList extends StatelessWidget {
