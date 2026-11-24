@@ -18,7 +18,7 @@ abstract final class AppIcons {
   static const IconData add_road_rounded = LucideIcons.route;
   static const IconData add_rounded = LucideIcons.plus;
   static const IconData add_task_rounded = LucideIcons.list_checks;
-  static const IconData apartment_rounded = LucideIcons.building_2;
+  static const IconData apartment_rounded = LucideIcons.building;
   static const IconData apple = LucideIcons.apple;
   static const IconData arrow_back_rounded = LucideIcons.arrow_left;
   static const IconData arrow_downward_rounded = LucideIcons.arrow_down;
@@ -36,7 +36,7 @@ abstract final class AppIcons {
   static const IconData book_open_text = LucideIcons.book_open_text;
   static const IconData build_circle_outlined = LucideIcons.badge;
   static const IconData build_rounded = LucideIcons.wrench;
-  static const IconData business_outlined = LucideIcons.building_2;
+  static const IconData business_outlined = LucideIcons.building;
   static const IconData calendar_month_outlined = LucideIcons.calendar_days;
   static const IconData calendar_month_rounded = LucideIcons.calendar_days;
   static const IconData calendar_today_rounded = LucideIcons.calendar;
@@ -63,7 +63,7 @@ abstract final class AppIcons {
   static const IconData credit_card_outlined = LucideIcons.credit_card;
   static const IconData credit_card_rounded = LucideIcons.credit_card;
   static const IconData currency_rupee_rounded = LucideIcons.indian_rupee;
-  static const IconData delete_outline_rounded = LucideIcons.trash_2;
+  static const IconData delete_outline_rounded = LucideIcons.trash;
   static const IconData person_remove_rounded = LucideIcons.user_x;
   static const IconData description_outlined = LucideIcons.file_text;
   static const IconData description_rounded = LucideIcons.file_text;
@@ -75,7 +75,8 @@ abstract final class AppIcons {
   static const IconData edit_outlined = LucideIcons.pen;
   static const IconData edit_rounded = LucideIcons.pen;
   static const IconData email_rounded = LucideIcons.mail;
-  static const IconData error_outline_rounded = LucideIcons.circle_alert;
+  static const IconData error_outline_rounded =
+      LucideIcons.circle_exclamation_point;
   static const IconData event_available_rounded = LucideIcons.calendar_check;
   static const IconData event_rounded = LucideIcons.calendar;
   static const IconData fact_check_outlined = LucideIcons.clipboard_check;
@@ -90,7 +91,8 @@ abstract final class AppIcons {
   static const IconData flash_on_rounded = LucideIcons.zap;
   static const IconData folder_copy_rounded = LucideIcons.folders;
   static const IconData forum_outlined = LucideIcons.messages_square;
-  static const IconData gpp_maybe_rounded = LucideIcons.shield_alert;
+  static const IconData gpp_maybe_rounded =
+      LucideIcons.shield_exclamation_point;
   static const IconData gps_fixed_rounded = LucideIcons.locate_fixed;
   static const IconData grid_view_rounded = LucideIcons.layout_grid;
   static const IconData groups_rounded = LucideIcons.users_round;
@@ -98,7 +100,7 @@ abstract final class AppIcons {
   static const IconData handshake_rounded = LucideIcons.handshake;
   static const IconData headset_mic_outlined = LucideIcons.headset;
   static const IconData help_outline_rounded = LucideIcons.circle_question_mark;
-  static const IconData history_rounded = LucideIcons.history;
+  static const IconData history_rounded = LucideIcons.clock_3;
   static const IconData home_rounded = LucideIcons.house;
   static const IconData hourglass_top_rounded = LucideIcons.hourglass;
   static const IconData house = LucideIcons.house;
@@ -126,7 +128,7 @@ abstract final class AppIcons {
   static const IconData local_police_rounded = LucideIcons.shield;
   static const IconData local_shipping_outlined = LucideIcons.truck;
   static const IconData local_shipping_rounded = LucideIcons.truck;
-  static const IconData location_city_rounded = LucideIcons.building_2;
+  static const IconData location_city_rounded = LucideIcons.building;
   static const IconData location_off_outlined = LucideIcons.map_pin_off;
   static const IconData location_on_outlined = LucideIcons.map_pin;
   static const IconData location_on_rounded = LucideIcons.map_pin;
@@ -194,9 +196,11 @@ abstract final class AppIcons {
   static const IconData rotate_ccw_rounded = LucideIcons.rotate_ccw;
   static const IconData repeat_rounded = LucideIcons.repeat;
   static const IconData report_gmailerrorred_outlined =
-      LucideIcons.message_circle_warning;
-  static const IconData report_outlined = LucideIcons.triangle_alert;
-  static const IconData report_problem_rounded = LucideIcons.triangle_alert;
+      LucideIcons.message_circle_exclamation_point;
+  static const IconData report_outlined =
+      LucideIcons.triangle_exclamation_point;
+  static const IconData report_problem_rounded =
+      LucideIcons.triangle_exclamation_point;
   static const IconData route_outlined = LucideIcons.route;
   static const IconData route_rounded = LucideIcons.route;
   static const IconData save_rounded = LucideIcons.save;
@@ -247,7 +251,8 @@ abstract final class AppIcons {
   static const IconData visibility_outlined = LucideIcons.eye;
   static const IconData visibility_rounded = LucideIcons.eye;
   static const IconData wallet = LucideIcons.wallet;
-  static const IconData warning_amber_rounded = LucideIcons.triangle_alert;
+  static const IconData warning_amber_rounded =
+      LucideIcons.triangle_exclamation_point;
   static const IconData wifi_off_rounded = LucideIcons.wifi_off;
   static const IconData wifi_rounded = LucideIcons.wifi;
 }

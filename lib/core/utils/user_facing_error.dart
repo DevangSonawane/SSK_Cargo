@@ -100,6 +100,7 @@ String _fromDio(DioException error, String generic) {
     case DioExceptionType.connectionTimeout:
     case DioExceptionType.sendTimeout:
     case DioExceptionType.receiveTimeout:
+    case DioExceptionType.transformTimeout:
       return _l10n.errorTimeout;
     case DioExceptionType.connectionError:
       return _l10n.errorNoInternet;
