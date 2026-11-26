@@ -510,11 +510,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -902,11 +900,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Future<void> _advanceFromWeightStep({required bool unknown}) async {
     if (!_validateBillingParty()) return;
+    // E-Way Bill is optional at booking: the client often doesn't have one yet
+    // this far ahead of pickup. If it's still missing at pickup, the driver is
+    // asked for it then (PATCH /api/trips/{id}/status, EWAY_BILL_REQUIRED).
     final ewayBillNumber = _ewayBillController.text.trim();
-    if (ewayBillNumber.isEmpty) {
-      setState(() => _ewayBillError = 'E-Way Bill No. is required.');
-      return;
-    }
     final rawWeight = _weightController.text.trim();
     final parsedWeight = double.tryParse(rawWeight);
 
@@ -1748,11 +1745,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted || silent) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     }
   }
 
@@ -1784,11 +1779,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       _searchingAgainLive.value = false;
       if (mounted) setState(() => _searchingFindTruckAgain = false);
@@ -2158,11 +2151,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _cancellingFindTruckSearch = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     }
   }
 
@@ -2724,8 +2715,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       double distance;
       int? durationMin;
       int? durationInTrafficMin;
-      final coordinateDistance =
-          _pickupLatLng != null && _dropLatLng != null
+      final coordinateDistance = _pickupLatLng != null && _dropLatLng != null
           ? _routeDistanceKm(_bookingRoutePoints())
           : null;
       if (coordinateDistance != null && coordinateDistance > 0) {
@@ -2803,11 +2793,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -3173,11 +3161,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -3662,11 +3648,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _submitting = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userFacingError(error)),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userFacingError(error))));
     }
   }
 
@@ -5945,8 +5929,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           },
           decoration: _weightStepInputDecoration(
             context,
-            label: 'E-Way Bill No.',
-            hint: 'Enter E-Way Bill number',
+            label: 'E-Way Bill No. (optional)',
+            hint: 'Enter now if you already have it',
             prefixIcon: const Icon(AppIcons.receipt_long_rounded),
             errorText: _ewayBillError,
           ),

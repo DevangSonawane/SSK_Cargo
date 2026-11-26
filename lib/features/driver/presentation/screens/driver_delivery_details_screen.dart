@@ -345,10 +345,8 @@ class _DriverDeliveryDetailsScreenState
     return keys;
   }
 
-  String _normalizeRef(String value) => value
-      .trim()
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]'), '');
+  String _normalizeRef(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 
   bool _isRequestForKnownTrip(DriverRequestItem request) {
     final keys = _knownTripKeys();
@@ -909,9 +907,9 @@ class _DriverDeliveryDetailsScreenState
     // Never act on mixed state: right after switching loads the shared
     // _tripStatus still describes the previous load until reload finishes.
     if (_loadingTrip) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tripStillSyncing)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.tripStillSyncing)));
       return;
     }
     final nextStatus = _nextStatusForCurrentTrip();
@@ -1074,9 +1072,9 @@ class _DriverDeliveryDetailsScreenState
     // Stops shown belong to the loaded trip — refuse while a load switch is
     // still resolving, else the index lands on the wrong trip.
     if (_loadingTrip) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tripStillSyncing)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.tripStillSyncing)));
       return;
     }
 
@@ -1163,16 +1161,31 @@ class _DriverDeliveryDetailsScreenState
     // Pin the OTP to this load: the dialog can outlive a load switch, and
     // submitting against the newly viewed trip would advance the wrong load.
     final otpTripId = _tripId;
+    // The client may not have had an E-Way Bill number at booking time; if the
+    // trip still has none, the driver must supply it with the pickup code.
+    final needsEwayBill = _readString(_tripRaw, const [
+      'ewayBillNumber',
+      'eway_bill_number',
+    ]).trim().isEmpty;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (_) => _PickupOtpDialog(
-        onSubmit: (pickupOtp) => _submitPickupOtp(pickupOtp, tripId: otpTripId),
+        requireEwayBill: needsEwayBill,
+        onSubmit: (pickupOtp, ewayBillNumber) => _submitPickupOtp(
+          pickupOtp,
+          tripId: otpTripId,
+          ewayBillNumber: ewayBillNumber,
+        ),
       ),
     );
   }
 
-  Future<String?> _submitPickupOtp(String pickupOtp, {String tripId = ''}) async {
+  Future<_PickupSubmitResult> _submitPickupOtp(
+    String pickupOtp, {
+    String tripId = '',
+    String? ewayBillNumber,
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
     final stopwatch = Stopwatch()..start();
@@ -1184,19 +1197,19 @@ class _DriverDeliveryDetailsScreenState
     if (resolvedTripId.isEmpty) {
       await _loadTrip();
       if (_tripId.isEmpty) {
-        return l10n.tripStillSyncing;
+        return _PickupSubmitResult.error(l10n.tripStillSyncing);
       }
       resolvedTripId = _tripId;
     }
     // Driver swiped to another load while the dialog was open — refuse
     // rather than advancing the wrong trip.
     if (resolvedTripId != _tripId) {
-      return l10n.tripStillSyncing;
+      return _PickupSubmitResult.error(l10n.tripStillSyncing);
     }
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      return l10n.deliveryDetailsSignInToContinue;
+      return _PickupSubmitResult.error(l10n.deliveryDetailsSignInToContinue);
     }
 
     setState(() => _loadingTrip = true);
@@ -1217,6 +1230,7 @@ class _DriverDeliveryDetailsScreenState
             tripId: resolvedTripId,
             status: 'picked_up',
             pickupOtp: pickupOtp,
+            ewayBillNumber: ewayBillNumber,
           );
       apiStopwatch.stop();
       developer.log(
@@ -1224,14 +1238,16 @@ class _DriverDeliveryDetailsScreenState
         name: 'driver.deliveryDetails',
       );
       // Driver switched loads mid-flight — drop the stale snapshot.
-      if (!mounted || _tripId != resolvedTripId) return null;
+      if (!mounted || _tripId != resolvedTripId) {
+        return const _PickupSubmitResult.success();
+      }
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
                 ? data['trip'] as Map<String, dynamic>
                 : data)
           : response;
-      if (!mounted) return null;
+      if (!mounted) return const _PickupSubmitResult.success();
 
       final updatedStatus = _effectiveTripStatus(
         _normalizeTripStatus(_readString(trip, const ['status', 'rawStatus'])),
@@ -1283,7 +1299,7 @@ class _DriverDeliveryDetailsScreenState
         'Pickup OTP confirmation completed. tripId=$_tripId resolvedStatus=$resolvedStatus totalElapsedMs=${stopwatch.elapsedMilliseconds}',
         name: 'driver.deliveryDetails',
       );
-      return null;
+      return const _PickupSubmitResult.success();
     } on ApiException catch (error) {
       if (mounted) {
         setState(() => _loadingTrip = false);
@@ -1292,7 +1308,15 @@ class _DriverDeliveryDetailsScreenState
         'Pickup OTP confirmation failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${userFacingError(error)}',
         name: 'driver.deliveryDetails',
       );
-      return userFacingError(error);
+      // Our cached trip said an E-Way Bill was on file but the server says
+      // it's still missing (409) — have the dialog reveal the field.
+      if (error.code == 'EWAY_BILL_REQUIRED') {
+        return _PickupSubmitResult.error(
+          l10n.deliveryDetailsEwayBillRequiredError,
+          ewayBillRequired: true,
+        );
+      }
+      return _PickupSubmitResult.error(userFacingError(error));
     } catch (error) {
       if (mounted) {
         setState(() => _loadingTrip = false);
@@ -1301,7 +1325,7 @@ class _DriverDeliveryDetailsScreenState
         'Pickup OTP confirmation failed after ${stopwatch.elapsedMilliseconds}ms: $error',
         name: 'driver.deliveryDetails',
       );
-      return userFacingError(error);
+      return _PickupSubmitResult.error(userFacingError(error));
     }
   }
 
@@ -1870,9 +1894,7 @@ class _DriverDeliveryDetailsScreenState
           });
           _setTripSession(tripId: nextTripId);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.tripDeclined),
-            ),
+            SnackBar(content: Text(AppLocalizations.of(context)!.tripDeclined)),
           );
           unawaited(_loadTrip());
           unawaited(_loadSiblingTrips());
@@ -2720,8 +2742,7 @@ class _DriverDeliveryDetailsScreenState
         _optimisticAcceptingLoads == serverAcceptingLoads) {
       _optimisticAcceptingLoads = null;
     }
-    final acceptingLoads =
-        _optimisticAcceptingLoads ?? serverAcceptingLoads;
+    final acceptingLoads = _optimisticAcceptingLoads ?? serverAcceptingLoads;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -3229,8 +3250,10 @@ class _DualTripPagerState extends State<_DualTripPager> {
   void _scrollToCurrent() {
     if (!_scrollController.hasClients || widget.trips.isEmpty) return;
     final maxOffset = _scrollController.position.maxScrollExtent;
-    final target =
-        (widget.currentIndex * (_pillWidth + _pillGap) - 40).clamp(0.0, maxOffset);
+    final target = (widget.currentIndex * (_pillWidth + _pillGap) - 40).clamp(
+      0.0,
+      maxOffset,
+    );
     _scrollController.animateTo(
       target,
       duration: const Duration(milliseconds: 220),
@@ -3283,9 +3306,8 @@ class _DualTripPagerState extends State<_DualTripPager> {
                       width: _pillWidth,
                       child: _LoadPill(
                         label: 'Load ${i + 1}',
-                        typeLabel: widget.partKeys.contains(
-                          _pagerKey(widget.trips[i]),
-                        )
+                        typeLabel:
+                            widget.partKeys.contains(_pagerKey(widget.trips[i]))
                             ? 'Part'
                             : 'Full',
                         route:
@@ -3446,10 +3468,36 @@ class _FloatingRoundButton extends StatelessWidget {
   }
 }
 
-class _PickupOtpDialog extends StatefulWidget {
-  const _PickupOtpDialog({required this.onSubmit});
+class _PickupSubmitResult {
+  const _PickupSubmitResult.success()
+    : errorText = null,
+      ewayBillRequired = false;
+  const _PickupSubmitResult.error(
+    String this.errorText, {
+    this.ewayBillRequired = false,
+  });
 
-  final Future<String?> Function(String pickupOtp) onSubmit;
+  final String? errorText;
+
+  /// Server rejected the pickup with `EWAY_BILL_REQUIRED`.
+  final bool ewayBillRequired;
+}
+
+class _PickupOtpDialog extends StatefulWidget {
+  const _PickupOtpDialog({
+    required this.onSubmit,
+    this.requireEwayBill = false,
+  });
+
+  final Future<_PickupSubmitResult> Function(
+    String pickupOtp,
+    String? ewayBillNumber,
+  )
+  onSubmit;
+
+  /// Shown/required only when the trip has no `ewayBillNumber` yet (client
+  /// didn't supply one at booking).
+  final bool requireEwayBill;
 
   @override
   State<_PickupOtpDialog> createState() => _PickupOtpDialogState();
@@ -3458,6 +3506,9 @@ class _PickupOtpDialog extends StatefulWidget {
 class _PickupOtpDialogState extends State<_PickupOtpDialog> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
+  final TextEditingController _ewayBillController = TextEditingController();
+  final FocusNode _ewayBillFocusNode = FocusNode();
+  late bool _requireEwayBill;
   bool _submitting = false;
   String _errorText = '';
 
@@ -3466,10 +3517,13 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
     super.initState();
     _controllers = List.generate(4, (_) => TextEditingController());
     _focusNodes = List.generate(4, (_) => FocusNode());
+    _requireEwayBill = widget.requireEwayBill;
   }
 
   @override
   void dispose() {
+    _ewayBillController.dispose();
+    _ewayBillFocusNode.dispose();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -3481,7 +3535,10 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
 
   String get _code => _controllers.map((c) => c.text).join();
 
-  bool get _isComplete => _code.length == 4;
+  String get _ewayBill => _ewayBillController.text.trim();
+
+  bool get _isComplete =>
+      _code.length == 4 && (!_requireEwayBill || _ewayBill.isNotEmpty);
 
   void _onDigitChanged(int index, String value) {
     if (_errorText.isNotEmpty) {
@@ -3492,6 +3549,10 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
     }
     if (index < 3) {
       _focusNodes[index + 1].requestFocus();
+    } else if (_requireEwayBill && _ewayBill.isEmpty) {
+      // Code done but the E-Way Bill is still needed — move there instead
+      // of auto-submitting.
+      _ewayBillFocusNode.requestFocus();
     } else {
       _focusNodes[index].unfocus();
       unawaited(_submit());
@@ -3507,17 +3568,33 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
   Future<void> _submit() async {
     final code = _code;
     if (code.length != 4 || _submitting) return;
+    if (_requireEwayBill && _ewayBill.isEmpty) {
+      setState(() {
+        _errorText = AppLocalizations.of(
+          context,
+        )!.deliveryDetailsEwayBillRequiredError;
+      });
+      _ewayBillFocusNode.requestFocus();
+      return;
+    }
     setState(() => _submitting = true);
-    final error = await widget.onSubmit(code);
+    final result = await widget.onSubmit(
+      code,
+      _requireEwayBill ? _ewayBill : null,
+    );
     if (!mounted) return;
+    final error = result.errorText;
     if (error == null) {
       Navigator.of(context).pop();
       return;
     }
+    final revealEwayBill = result.ewayBillRequired && !_requireEwayBill;
     setState(() {
       _submitting = false;
       _errorText = error;
+      if (result.ewayBillRequired) _requireEwayBill = true;
     });
+    if (revealEwayBill) _ewayBillFocusNode.requestFocus();
   }
 
   @override
@@ -3642,6 +3719,54 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
                       ],
                     ],
                   ),
+                  if (_requireEwayBill) ...[
+                    const SizedBox(height: 18),
+                    Text.rich(
+                      TextSpan(
+                        text: AppLocalizations.of(
+                          context,
+                        )!.deliveryDetailsEwayBillLabel,
+                        children: [
+                          TextSpan(
+                            text:
+                                ' ${AppLocalizations.of(context)!.deliveryDetailsEwayBillRequiredHint}',
+                            style: const TextStyle(
+                              color: AppColors.dangerText,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _ewayBillController,
+                      focusNode: _ewayBillFocusNode,
+                      enabled: !_submitting,
+                      textInputAction: TextInputAction.done,
+                      onChanged: (_) => setState(() {
+                        _errorText = '';
+                      }),
+                      onSubmitted: (_) {
+                        if (_isComplete) unawaited(_submit());
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 123456789012',
+                        isDense: true,
+                        prefixIcon: const Icon(
+                          AppIcons.receipt_long_rounded,
+                          size: 18,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ],
                   AnimatedSize(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOutCubic,

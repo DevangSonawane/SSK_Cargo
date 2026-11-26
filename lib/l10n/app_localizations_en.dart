@@ -5687,6 +5687,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deliveryDetailsConfirmPickup => 'Confirm pickup';
 
   @override
+  String get deliveryDetailsEwayBillLabel => 'E-Way Bill No.';
+
+  @override
+  String get deliveryDetailsEwayBillRequiredHint =>
+      '(required — not provided at booking)';
+
+  @override
+  String get deliveryDetailsEwayBillRequiredError =>
+      'Enter the E-Way Bill number to confirm pickup.';
+
+  @override
   String get deliveryDetailsOpenPickupInMaps => 'Open pickup in Google Maps';
 
   @override

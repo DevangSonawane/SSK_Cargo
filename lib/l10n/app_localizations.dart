@@ -10403,6 +10403,24 @@ abstract class AppLocalizations {
   /// **'Confirm pickup'**
   String get deliveryDetailsConfirmPickup;
 
+  /// No description provided for @deliveryDetailsEwayBillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'E-Way Bill No.'**
+  String get deliveryDetailsEwayBillLabel;
+
+  /// No description provided for @deliveryDetailsEwayBillRequiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'(required — not provided at booking)'**
+  String get deliveryDetailsEwayBillRequiredHint;
+
+  /// No description provided for @deliveryDetailsEwayBillRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the E-Way Bill number to confirm pickup.'**
+  String get deliveryDetailsEwayBillRequiredError;
+
   /// No description provided for @deliveryDetailsOpenPickupInMaps.
   ///
   /// In en, this message translates to:

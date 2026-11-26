@@ -5681,6 +5681,17 @@ class AppLocalizationsHi extends AppLocalizations {
   String get deliveryDetailsConfirmPickup => 'पिकअप की पुष्टि करें';
 
   @override
+  String get deliveryDetailsEwayBillLabel => 'ई-वे बिल नंबर';
+
+  @override
+  String get deliveryDetailsEwayBillRequiredHint =>
+      '(ज़रूरी — बुकिंग के समय नहीं दिया गया)';
+
+  @override
+  String get deliveryDetailsEwayBillRequiredError =>
+      'पिकअप की पुष्टि के लिए ई-वे बिल नंबर दर्ज करें।';
+
+  @override
   String get deliveryDetailsOpenPickupInMaps => 'पिकअप Google मैप्स में खोलें';
 
   @override

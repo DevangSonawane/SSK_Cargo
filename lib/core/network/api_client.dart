@@ -2768,6 +2768,11 @@ class SskApiClient {
     required String tripId,
     required String status,
     String? pickupOtp,
+
+    /// Only for `picked_up`, and only when the trip's `ewayBillNumber` is
+    /// still null (client didn't supply one at booking). Omitting it then
+    /// gets a 409 with `errors.code == EWAY_BILL_REQUIRED`.
+    String? ewayBillNumber,
   }) async {
     developer.log(
       'PATCH /api/trips/$tripId/status status=$status',
@@ -2780,6 +2785,9 @@ class SskApiClient {
           'status': status,
           ...(pickupOtp != null
               ? {'pickup_otp': pickupOtp}
+              : const <String, dynamic>{}),
+          ...(ewayBillNumber != null && ewayBillNumber.trim().isNotEmpty
+              ? {'eway_bill_number': ewayBillNumber.trim()}
               : const <String, dynamic>{}),
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
